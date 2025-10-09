@@ -17,6 +17,9 @@ function App() {
         </a>
       </div>
       <h1>Task của hùng</h1>
+        <a href='https://dev-portfolio.fleeforezz.site' target='_blank'>
+          click me
+        </a>
       <div className="card">
         <button onClick={() => setCount((count) => count + 1)}>
           count is {count}
