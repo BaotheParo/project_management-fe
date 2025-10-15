@@ -3,8 +3,8 @@ import { NavLink } from 'react-router-dom'
 import { House, ClipboardText, List, User } from 'phosphor-react'
 import logo from '../../assets/group4.png'
 
-const NavItem = ({ to, icon: Icon, label }) => (
-  <NavLink to={to} className={({ isActive }) => `flex items-center gap-3 w-52 px-4 py-3 rounded-full justify-start cursor-pointer transition-colors ${isActive ? 'bg-indigo-600 text-white' : 'text-gray-600'}`}>
+const NavItem = ({ to, icon: Icon, label, end }) => (
+  <NavLink end={end} to={to} className={({ isActive }) => `flex items-center gap-3 w-52 px-4 py-3 rounded-full justify-start cursor-pointer transition-colors ${isActive ? 'bg-indigo-600 text-white' : 'text-gray-600'}`}>
     {({ isActive }) => (
       <>
         <div className={`flex items-center justify-center w-8 h-8 ${isActive ? 'text-white' : 'text-gray-500'}`}>
@@ -26,13 +26,13 @@ export default function Sidebar() {
 
         <nav className="pl-6 flex flex-col gap-3">
           <div className="py-2">
-            <NavItem to="/sc-technician" icon={House} label="Dashboard" />
+            <NavItem end={true} to="/sc-technician" icon={House} label="Dashboard" />
           </div>
           <div className="py-2">
             <NavItem to="/sc-technician/tasks" icon={List} label="Task List" />
           </div>
           <div className="py-2">
-            <NavItem to="/sc-technician/tasks" icon={ClipboardText} label="Claim Requests" />
+            <NavItem to="/sc-technician/claims" icon={ClipboardText} label="Claim Requests" />
           </div>
           <div className="py-2">
             <NavItem to="/sc-technician/profile" icon={User} label="Profile" />
@@ -49,5 +49,6 @@ export default function Sidebar() {
     </aside>
   )
 }
+
 
 
