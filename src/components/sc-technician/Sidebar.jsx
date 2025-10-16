@@ -18,7 +18,7 @@ const NavItem = ({ to, icon: Icon, label, end }) => (
 
 export default function Sidebar() {
   return (
-    <aside className="w-64 h-screen border-r-2 border-gray-200 bg-white flex flex-col justify-between">
+    <aside className="fixed w-64 h-screen border-r-2 border-gray-200 bg-white flex flex-col justify-between">
       <div>
         <div className="flex items-center justify-center py-6">
           <img src={logo} alt="logo" className="w-24 h-24 object-contain" />
