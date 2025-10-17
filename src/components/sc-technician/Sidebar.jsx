@@ -1,6 +1,6 @@
 import React from 'react'
 import { NavLink } from 'react-router-dom'
-import { House, ClipboardText, List, User } from 'phosphor-react'
+import { HouseIcon, ListIcon, ClipboardTextIcon, UserIcon } from '@phosphor-icons/react'
 import logo from '../../assets/group4.png'
 
 const NavItem = ({ to, icon: Icon, label, end }) => (
@@ -26,23 +26,23 @@ export default function Sidebar() {
 
         <nav className="pl-6 flex flex-col gap-3">
           <div className="py-2">
-            <NavItem end={true} to="/sc-technician" icon={House} label="Dashboard" />
+            <NavItem end={true} to="/sc-technician" icon={HouseIcon} label="Dashboard" />
           </div>
           <div className="py-2">
-            <NavItem to="/sc-technician/tasks" icon={List} label="Task List" />
+            <NavItem to="/sc-technician/tasks" icon={ListIcon} label="Task List" />
           </div>
           <div className="py-2">
-            <NavItem to="/sc-technician/claims" icon={ClipboardText} label="Claim Requests" />
+            <NavItem to="/sc-technician/claims" icon={ClipboardTextIcon} label="Claim Requests" />
           </div>
           <div className="py-2">
-            <NavItem to="/sc-technician/profile" icon={User} label="Profile" />
+            <NavItem to="/sc-technician/profile" icon={UserIcon} label="Profile" />
           </div>
         </nav>
       </div>
 
       <div className="px-6 py-6">
         <button className="flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-md text-gray-700">
-          <User size={18} />
+          <UserIcon size={18} />
           <span className="text-sm">Logout</span>
         </button>
       </div>

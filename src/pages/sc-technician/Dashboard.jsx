@@ -1,5 +1,5 @@
 import React from 'react'
-import { Wrench, CheckCircle, CaretLeft, CaretRight } from 'phosphor-react'
+import { CheckCircleIcon, WrenchIcon, CaretLeftIcon, CaretRightIcon } from '@phosphor-icons/react'
 
 const stats = [
   { id: 1, title: 'Assigned Orders', value: '12', subtitle: 'Currently in your queue' },
@@ -37,10 +37,10 @@ export default function Dashboard() {
             </div>
             <div className="text-gray-300">
               {s.id === 2 ? (
-                <CheckCircle size={27} color="#686262" weight="bold" />
+                <CheckCircleIcon size={27} color="#686262" weight="bold" />
               ) : (
                 <span>
-                  <Wrench size={27} color="#686262" weight="bold" />
+                  <WrenchIcon size={27} color="#686262" weight="bold" />
                 </span>
               )}
             </div>
@@ -95,7 +95,7 @@ export default function Dashboard() {
           <div>Showing 1 to 10 of 247 results</div>
           <div className="flex items-center gap-3">
             <button className="flex gap-1 items-center px-3 py-1 rounded-full bg-transparent border text-gray-600">
-              <CaretLeft size={15} />
+              <CaretLeftIcon size={15} />
               Previous
             </button>
             <button className="px-3 py-1 rounded-full bg-indigo-600 text-white">
@@ -112,7 +112,7 @@ export default function Dashboard() {
             </button>
             <button className="flex items-center gap-1 px-3 py-1 rounded-full bg-transparent border text-gray-600">
               Next
-              <CaretRight size={15} />
+              <CaretRightIcon size={15} />
             </button>
           </div>
         </div>
