@@ -1,14 +1,6 @@
-import Login from './pages/Login'
-import ForgotPassword from './pages/ForgotPassword'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import AppRouter from './routes/AppRouter'
+import './App.css'
 
 export default function App() {
-  return (
-    <Routes>
-      <Route path="/" element={<Login />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
-  )
+  return <AppRouter />
 }
