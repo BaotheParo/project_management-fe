@@ -8,7 +8,10 @@ export default function AppRouter() {
     <BrowserRouter>
       <MainLayout>
         <Routes>
-          <Route path="/" element={<Navigate to="/sc-technician" replace />} />
+          <Route path="/sc-technician" element={<Navigate to="/sc-technician" replace />} />
+          <Route path="/" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
           {scTechnicianRoutes}
         </Routes>
       </MainLayout>
