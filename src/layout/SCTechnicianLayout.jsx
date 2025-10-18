@@ -5,7 +5,7 @@ export default function SCTechnicianLayout() {
   return (
     <div className="h-screen">
       <Sidebar />
-      <main className="p-14 flex-1 bg-gray-50 ml-[250px] overflow-y-auto min-h-screen">
+      <main className="p-14 flex-1 bg-white ml-[250px] overflow-y-auto min-h-screen">
         <Outlet />
       </main>
     </div>

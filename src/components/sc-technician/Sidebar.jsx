@@ -25,7 +25,7 @@ export default function Sidebar() {
         </div>
 
         <nav className="pl-6 flex flex-col gap-3">
-          <div className="pt-2">
+          <div className="pt-13">
             <NavItem end={true} to="/sc-technician" icon={HouseIcon} label="Dashboard" />
           </div>
           <div className="py-0">
