@@ -4,7 +4,7 @@ import { HouseIcon, ListIcon, ClipboardTextIcon, UserIcon, MinusCircleIcon } fro
 import logo from '../../assets/group4.png'
 
 const NavItem = ({ to, icon: Icon, label, end }) => (
-  <NavLink end={end} to={to} className={({ isActive }) => `flex items-center gap-3 w-52 px-4 py-3 rounded-full justify-start cursor-pointer transition-colors ${isActive ? 'bg-indigo-600 text-white' : 'text-gray-600'}`}>
+  <NavLink end={end} to={to} className={({ isActive }) => `flex items-center gap-3 w-52 px-4 py-3 rounded-full justify-start cursor-pointer transition-colors ${isActive ? 'bg-indigo-600 text-white' :  'hover:bg-[#F1F3F4] text-gray-600'}`}>
     {({ isActive }) => (
       <>
         <div className={`flex items-center justify-center w-8 h-8 ${isActive ? 'text-white' : 'text-gray-500'}`}>
