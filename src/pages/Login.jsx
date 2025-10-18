@@ -2,10 +2,12 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import logo from '../assets/Login/Logo.png'
 import car from '../assets/Login/car.png'
+import Notification from "../components/system-components/ErrorNotification";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [notification, setNotification] = useState(null);
   const navigate = useNavigate();
 
   // Sample static credentials
@@ -19,18 +21,34 @@ export default function Login() {
 
     // Simple validation
     if (email === sampleUser.email && password === sampleUser.password) {
-      console.log("✅ Login successful!");
       localStorage.setItem("isLoggedIn", "true"); // optional: persist session
+      setNotification({
+        message: "Login successfull",
+        subText: new Date().toLocaleString(),
+        actionText: "Undo",
+        onAction: () => {
+          localStorage.removeItem("isLoggedIn");
+          setNotification(null);
+        },
+      });
       navigate("/sc-technician"); // ✅ navigate to technician dashboard
     } else {
-      alert("❌ Invalid email or password");
+      setNotification({
+        message: "Login failed",
+        subText: "Email or Password is wrong",
+        actionText: "Undo",
+        onAction: () => {
+          localStorage.removeItem("isLoggedIn");
+          setNotification(null);
+        },
+      });
     }
   }
 
   return (
     <div className="w-screen h-screen flex overflow-hidden bg-white">
-      {/* Left hero ~42.5% */}
-      <div className="basis-[42.5%] min-w-[420px] relative bg-black flex items-start">
+      {/* Left hero ~32.5% */}
+      <div className="basis-[32.5%] min-w-[420px] relative bg-black flex items-start">
         <div className="absolute top-[39px] left-[50px] z-10 flex items-center gap-[17px]">
           <img src={logo} alt="ELV logo" />
         </div>
@@ -41,7 +59,7 @@ export default function Login() {
       </div>
 
       {/* Right form ~57.5% */}
-      <div className="basis-[57.5%] flex items-center justify-center border-l border-gray-100">
+      <div className="basis-[67.5%] flex items-center justify-center border-l border-gray-100">
         <div className="w-[520px] max-w-[92%] text-center px-6">
           <h1 className="text-4xl font-extrabold mb-2 whitespace-nowrap">
             Welcome back to ELV
@@ -91,6 +109,17 @@ export default function Login() {
             >
               Login
             </button>
+
+            {/* ✅ Error notification */}
+            {notification && (
+              <Notification
+                message={notification.message}
+                subText={notification.subText}
+                actionText={notification.actionText}
+                onAction={notification.onAction}
+                onClose={() => setNotification(null)}
+              />
+            )}
           </form>
         </div>
       </div>

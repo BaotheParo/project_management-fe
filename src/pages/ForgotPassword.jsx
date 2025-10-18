@@ -14,8 +14,8 @@ export default function ForgotPassword() {
 
   return (
     <div className="w-screen h-screen flex overflow-hidden bg-white">
-      {/* Left hero ~42.5% */}
-      <div className="basis-[42.5%] min-w-[420px] relative bg-black flex items-start">
+      {/* Left hero ~32.5% */}
+      <div className="basis-[32.5%] min-w-[420px] relative bg-black flex items-start">
         <div className="absolute top-[39px] left-[50px] z-10 flex items-center gap-[17px]">
           <img src={logo} alt="ELV logo" />
         </div>
@@ -26,7 +26,7 @@ export default function ForgotPassword() {
       </div>
 
       {/* Right form ~57.5% */}
-      <div className="basis-[57.5%] flex items-center justify-center border-l border-gray-100">
+      <div className="basis-[67.5%] flex items-center justify-center border-l border-gray-100">
         <div className="w-[520px] max-w-[92%] text-center px-6">
           <h1 className="text-3xl md:text-4xl font-extrabold mb-2">
             Send change password request
