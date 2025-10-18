@@ -9,8 +9,9 @@ import Profile from '../pages/sc-technician/Profile'
 export default (
   <Route path="/sc-technician" element={<SCTechnicianLayout />} key="sc-technician-root">
     <Route index element={<Dashboard />} />
-    <Route path="tasks" element={<TodoWorks />} />
     <Route path="claims" element={<ClaimRequests />} />
+    <Route path="claims/create" element={<ClaimRequests />} />
+    <Route path="todos" element={<TodoWorks />} />
     <Route path="profile" element={<Profile />} />
   </Route>
 )

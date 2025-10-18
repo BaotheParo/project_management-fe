@@ -29,7 +29,7 @@ export default function Sidebar() {
             <NavItem end={true} to="/sc-technician" icon={HouseIcon} label="Dashboard" />
           </div>
           <div className="py-2">
-            <NavItem to="/sc-technician/tasks" icon={ListIcon} label="Task List" />
+            <NavItem to="/sc-technician/todos" icon={ListIcon} label="Task List" />
           </div>
           <div className="py-2">
             <NavItem to="/sc-technician/claims" icon={ClipboardTextIcon} label="Claim Requests" />

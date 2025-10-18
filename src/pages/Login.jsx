@@ -1,15 +1,30 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import logo from '../assets/Login/Logo.png'
 import car from '../assets/Login/car.png'
 
 export default function Login() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const navigate = useNavigate();
+
+  // Sample static credentials
+  const sampleUser = {
+    email: "admin@example.com",
+    password: "123456",
+  };
 
   function handleSubmit(e) {
-    e.preventDefault()
-    console.log('login', { email, password })
+    e.preventDefault();
+
+    // Simple validation
+    if (email === sampleUser.email && password === sampleUser.password) {
+      console.log("✅ Login successful!");
+      localStorage.setItem("isLoggedIn", "true"); // optional: persist session
+      navigate("/sc-technician"); // ✅ navigate to technician dashboard
+    } else {
+      alert("❌ Invalid email or password");
+    }
   }
 
   return (
@@ -58,7 +73,7 @@ export default function Login() {
 
             <Link
               className="text-sm text-indigo-600 mb-4 inline-block hover:underline"
-              to="/forgot-password"
+              to="/login/forgot-password"
             >
               Forgot password ?
             </Link>
