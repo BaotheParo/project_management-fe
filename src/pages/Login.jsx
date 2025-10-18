@@ -35,18 +35,25 @@ export default function Login() {
           <img src={logo} alt="ELV logo" />
         </div>
         <div
-          className="absolute inset-0 bg-cover bg-left"
-          style={{ backgroundImage: `url(${car})`, filter: 'brightness(0.95)' }}
+          className="absolute inset-0 bg-cover bg-no-repeat bg-center"
+          style={{ backgroundImage: `url(${car})`, filter: "brightness(1)" }}
         />
       </div>
 
       {/* Right form ~57.5% */}
       <div className="basis-[57.5%] flex items-center justify-center border-l border-gray-100">
         <div className="w-[520px] max-w-[92%] text-center px-6">
-          <h1 className="text-base md:text-lg font-extrabold mb-2 whitespace-nowrap">Welcome back to ELV</h1>
-          <p className="text-lg text-gray-500 mb-8">Warranty management system</p>
+          <h1 className="text-4xl font-extrabold mb-2 whitespace-nowrap">
+            Welcome back to ELV
+          </h1>
+          <p className="text-lg text-gray-500 mb-8">
+            Warranty management system
+          </p>
 
-          <form onSubmit={handleSubmit} className="mx-auto max-w-[520px] text-left">
+          <form
+            onSubmit={handleSubmit}
+            className="mx-auto mt-16 max-w-[520px] text-left"
+          >
             <label className="block mb-4">
               <div className="text-xs text-gray-500 mb-2">Email</div>
               <input
@@ -72,14 +79,14 @@ export default function Login() {
             </label>
 
             <Link
-              className="text-sm text-indigo-600 mb-4 inline-block hover:underline"
+              className="text-md font-semibold text-indigo-600 mb-4 inline-block hover:underline"
               to="/login/forgot-password"
             >
               Forgot password ?
             </Link>
 
             <button
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white font-semibold shadow-sm"
+              className="w-full mt-5 py-3 rounded-xl bg-indigo-600 text-white font-semibold shadow-sm cursor-pointer"
               type="submit"
             >
               Login
@@ -88,5 +95,5 @@ export default function Login() {
         </div>
       </div>
     </div>
-  )
+  );
 }
