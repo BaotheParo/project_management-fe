@@ -1,11 +1,14 @@
 import React from 'react'
+import { Outlet } from 'react-router-dom'
 import Sidebar from '../components/sc-staff/Sidebar'
 
-export default function SCStaffLayout({ children }) {
+export default function SCStaffLayout() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="h-screen">
       <Sidebar />
-      <main className="p-6">{children}</main>
+      <main className="ml-64 min-h-screen bg-white">
+        <Outlet />
+      </main>
     </div>
   )
 }

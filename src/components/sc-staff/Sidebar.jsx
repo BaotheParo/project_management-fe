@@ -2,8 +2,9 @@ import React from "react";
 import { NavLink } from "react-router-dom";
 import {
   HouseIcon,
-  ListIcon,
+  PencilLineIcon,
   ClipboardTextIcon,
+  ReceiptIcon,
   UserIcon,
   MinusCircleIcon,
 } from "@phosphor-icons/react";
@@ -55,21 +56,35 @@ export default function Sidebar() {
           </div>
           <div className="py-0">
             <NavItem
-              to="/sc-technician/todos"
-              icon={ListIcon}
-              label="Task List"
+              to="/sc-staff/assign-worker"
+              icon={PencilLineIcon}
+              label="Assign Worker"
             />
           </div>
           <div className="py-0">
             <NavItem
-              to="/sc-technician/claims"
+              to="/sc-staff/part-requests"
+              icon={PencilLineIcon}
+              label="Part requests"
+            />
+          </div>
+          <div className="py-0">
+            <NavItem
+              to="/sc-staff/warranty-report"
               icon={ClipboardTextIcon}
-              label="Claim Requests"
+              label="Warranty Report"
             />
           </div>
           <div className="py-0">
             <NavItem
-              to="/sc-technician/profile"
+              to="/sc-staff/bill-of-charge"
+              icon={ReceiptIcon}
+              label="Bill Of Charge"
+            />
+          </div>
+          <div className="py-0">
+            <NavItem
+              to="/sc-staff/profile"
               icon={UserIcon}
               label="Profile"
             />
@@ -85,3 +100,4 @@ export default function Sidebar() {
     </aside>
   );
 }
+
