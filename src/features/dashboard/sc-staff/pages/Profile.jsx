@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import avatarImg from '../../assets/Profile/avatar.png'
+import avatarImg from '../../../../assets/Profile/avatar.png'
 
 export default function Profile() {
   const [profile] = useState({

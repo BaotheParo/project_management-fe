@@ -1,46 +1,37 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import logo from '../assets/Login/Logo.png'
-import car from '../assets/Login/car.png'
-import Notification from "../components/system-components/ErrorNotification";
+import logo from '../../../assets/Login/Logo.png'
+import car from '../../../assets/Login/car.png'
+import Notification from "../../../components/ErrorNotification";
+import { useAuth } from '../../../app/AppProvider';
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [notification, setNotification] = useState(null);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
-  // Sample static credentials
-  const sampleUser = {
-    email: "admin@example.com",
-    password: "123456",
-  };
-
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
 
+    const result = await login(email, password);
+
     // Simple validation
-    if (email === sampleUser.email && password === sampleUser.password) {
-      localStorage.setItem("isLoggedIn", "true"); // optional: persist session
+    if (result.success) {
       setNotification({
         message: "Login successfull",
         subText: new Date().toLocaleString(),
         actionText: "Undo",
-        onAction: () => {
-          localStorage.removeItem("isLoggedIn");
-          setNotification(null);
-        },
+        onAction: () => { setNotification(null) },
       });
-      navigate("/sc-technician"); // ✅ navigate to technician dashboard
+      navigate("/sc-technician/dashboard"); // ✅ navigate to technician dashboard
     } else {
       setNotification({
         message: "Login failed",
-        subText: "Email or Password is wrong",
-        actionText: "Undo",
-        onAction: () => {
-          localStorage.removeItem("isLoggedIn");
-          setNotification(null);
-        },
+        subText: result.message || "Email or Password is wrong",
+        actionText: "Retry",
+        onAction: () => { setNotification(null) },
       });
     }
   }

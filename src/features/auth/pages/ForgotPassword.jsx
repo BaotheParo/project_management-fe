@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import logo from '../assets/Login/Logo.png'
-import car from '../assets/Login/car.png'
+import logo from '../../../assets/Login/Logo.png'
+import car from '../../../assets/Login/car.png'
 import { CaretLeftIcon } from '@phosphor-icons/react'
 
 export default function ForgotPassword() {
