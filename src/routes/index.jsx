@@ -25,7 +25,7 @@ const router = createBrowserRouter([
         ),
     },
     {
-        path: "/forgot-password",
+        path: "/login/forgot-password",
         element: (
         <Suspense fallback={<Loader />}>
             <ForgotPasswordPage />
