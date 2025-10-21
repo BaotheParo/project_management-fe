@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import logo from '../../../assets/Login/Logo.png'
 import car from '../../../assets/Login/car.png'
 import Notification from "../../../components/ErrorNotification";
-import { useAuth } from '../../../app/AppProvider';
+import { useAuth } from '../../../app/AuthProvider';
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -19,13 +19,23 @@ export default function Login() {
 
     // Simple validation
     if (result.success) {
+      const userRole = result.user.role;
+
       setNotification({
-        message: "Login successfull",
+        message: "Login successful",
         subText: new Date().toLocaleString(),
         actionText: "Undo",
         onAction: () => { setNotification(null) },
       });
-      navigate("/sc-technician/dashboard"); // ✅ navigate to technician dashboard
+
+      // ✅ Redirect by role
+      if (userRole === "technician") {
+        navigate("/sc-technician/dashboard");
+      } else if (userRole === "scstaff") {
+        navigate("/sc-staff/dashboard");
+      } else if (userRole === "evm") {
+        navigate("/evm/dashboard");
+      }
     } else {
       setNotification({
         message: "Login failed",
@@ -70,7 +80,7 @@ export default function Login() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
+                placeholder="your@example.com"
                 required
               />
             </label>

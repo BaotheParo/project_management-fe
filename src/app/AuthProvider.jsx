@@ -4,7 +4,7 @@ import { createContext, useContext, useState, useEffect } from "react";
 const AuthContext = createContext(null);
 
 // Provider
-export function AppProvider({ children }) {
+export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
 
     // Load user from localStorage when app starts
@@ -20,11 +20,21 @@ export function AppProvider({ children }) {
     // Simulate login (pretend success)
     const login = async (email, password) => {
         // You can add fake validation here
-        if (email === "admin@example.com" && password === "123456") {
+        if (email === "technician@example.com" && password === "123456") {
             const fakeUser = { email, role: "technician" };
             setUser(fakeUser);
             localStorage.setItem("user", JSON.stringify(fakeUser));
-            return { success: true };
+            return { success: true, user: fakeUser };
+        } else if (email === "scstaff@example.com" && password === "123456")  {
+            const fakeUser = { email, role: "scstaff" };
+            setUser(fakeUser);
+            localStorage.setItem("user", JSON.stringify(fakeUser));
+            return { success: true, user: fakeUser };
+        } else if (email === "evm@example.com" && password === "123456") {
+            const fakeUser = { email, role: "evm" };
+            setUser(fakeUser);
+            localStorage.setItem("user", JSON.stringify(fakeUser));
+            return { success: true, user: fakeUser };
         } else {
             return { success: false, message: "Invalid credentials" };
         }
