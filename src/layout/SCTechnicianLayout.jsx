@@ -1,6 +1,6 @@
 import React from 'react'
 import { Outlet } from 'react-router-dom'
-import Sidebar from '../components/sc-technician/Sidebar'
+import Sidebar from '../features/common/components/sc-technician/Sidebar'
 export default function SCTechnicianLayout() {
   return (
     <div className="h-screen">

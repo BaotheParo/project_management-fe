@@ -1,6 +1,6 @@
 import React from 'react'
 import { Outlet } from 'react-router-dom'
-import Sidebar from '../components/sc-staff/Sidebar'
+import Sidebar from '../features/common/components/sc-staff/Sidebar'
 
 export default function SCStaffLayout() {
   return (

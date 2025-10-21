@@ -1,6 +1,11 @@
 import AppRouter from './routes/AppRouter'
 import './App.css'
+import { AuthProvider } from './app/AuthProvider'
 
 export default function App() {
-  return <AppRouter />
+  return (
+      <AuthProvider>
+        <AppRouter />
+      </AuthProvider>
+  )
 }

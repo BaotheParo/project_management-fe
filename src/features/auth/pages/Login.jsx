@@ -1,46 +1,47 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import logo from '../assets/Login/Logo.png'
-import car from '../assets/Login/car.png'
-import Notification from "../components/system-components/ErrorNotification";
+import logo from '../../../assets/Login/Logo.png'
+import car from '../../../assets/Login/car.png'
+import Notification from "../../../components/ErrorNotification";
+import { useAuth } from '../../../app/AuthProvider';
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [notification, setNotification] = useState(null);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
-  // Sample static credentials
-  const sampleUser = {
-    email: "admin@example.com",
-    password: "123456",
-  };
-
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
 
+    const result = await login(email, password);
+
     // Simple validation
-    if (email === sampleUser.email && password === sampleUser.password) {
-      localStorage.setItem("isLoggedIn", "true"); // optional: persist session
+    if (result.success) {
+      const userRole = result.user.role;
+
       setNotification({
-        message: "Login successfull",
+        message: "Login successful",
         subText: new Date().toLocaleString(),
         actionText: "Undo",
-        onAction: () => {
-          localStorage.removeItem("isLoggedIn");
-          setNotification(null);
-        },
+        onAction: () => { setNotification(null) },
       });
-      navigate("/sc-technician"); // ✅ navigate to technician dashboard
+
+      // ✅ Redirect by role
+      if (userRole === "technician") {
+        navigate("/sc-technician/dashboard");
+      } else if (userRole === "scstaff") {
+        navigate("/sc-staff/dashboard");
+      } else if (userRole === "evm") {
+        navigate("/evm/dashboard");
+      }
     } else {
       setNotification({
         message: "Login failed",
-        subText: "Email or Password is wrong",
-        actionText: "Undo",
-        onAction: () => {
-          localStorage.removeItem("isLoggedIn");
-          setNotification(null);
-        },
+        subText: result.message || "Email or Password is wrong",
+        actionText: "Retry",
+        onAction: () => { setNotification(null) },
       });
     }
   }
@@ -79,7 +80,7 @@ export default function Login() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
+                placeholder="your@example.com"
                 required
               />
             </label>
