@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import { CheckCircleIcon, WrenchIcon, CaretLeftIcon, CaretRightIcon, CalendarBlankIcon } from '@phosphor-icons/react'
-import { useNavigate } from 'react-router-dom'
 
 const StatsCard = ({ title, count, subtitle, icon: Icon }) => (
   <div className="border-[3px] border-[#EBEBEB] bg-white rounded-2xl p-8 min-w-[492px]">
@@ -59,7 +58,7 @@ export default function Dashboard() {
       <div>
         <h2 className="text-[25px] font-semibold text-black mb-6">Active Repair Orders</h2>
 
-        <div className="border-3xl border-[#ebebeb] rounded-2xl overflow-hidden">
+        <div className="border-[3px] border-[#EBEBEB] rounded-2xl overflow-hidden">
           <table className="w-full">
             <thead>
               <tr className="border-b-2 border-[#DEE1E6] bg-[#FAFAFA]">
