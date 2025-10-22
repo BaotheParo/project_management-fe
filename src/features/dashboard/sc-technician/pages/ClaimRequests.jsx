@@ -14,6 +14,7 @@ import {
   CheckCircleIcon,
   WrenchIcon,
   DotsThreeIcon,
+  CloudArrowUpIcon,
 } from "@phosphor-icons/react";
 
 const StatsCard = ({ title, count, subtitle, statusColor, icon: Icon }) => (
@@ -64,13 +65,6 @@ export default function ClaimRequests() {
   const [openActionFor, setOpenActionFor] = useState(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const menuRef = useRef(null);
-  const closeTimerRef = useRef(null);
-  const clearCloseTimer = () => {
-    if (closeTimerRef.current) {
-      clearTimeout(closeTimerRef.current);
-      closeTimerRef.current = null;
-    }
-  };
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -88,6 +82,7 @@ export default function ClaimRequests() {
 
   const pages = useMemo(() => [1, 2, 3, 4], []);
 
+  const [showClaimRequest, setClaimRequest] = useState(null);
   const [editingRow, setEditingRow] = useState(null);
   const [deletingRow, setDeletingRow] = useState(null);
 
@@ -126,166 +121,206 @@ export default function ClaimRequests() {
           </p>
         </div>
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mt-20 mb-12">
-        <StatsCard 
-          title="Total Claims" 
-          count="12" 
+        <StatsCard
+          title="Total Claims"
+          count="12"
           subtitle="Currently in your queue"
           statusColor="text-indigo-600"
           icon={WrenchIcon}
         />
-        <StatsCard 
-          title="Pending" 
-          count="04" 
-          subtitle="Currently in your queue" 
+        <StatsCard
+          title="Pending"
+          count="04"
+          subtitle="Currently in your queue"
           statusColor="text-gray-500"
           icon={CheckCircleIcon}
         />
-        <StatsCard 
-          title="In-Progress" 
-          count="04" 
-          subtitle="Currently in your queue" 
+        <StatsCard
+          title="In-Progress"
+          count="04"
+          subtitle="Currently in your queue"
           statusColor="text-yellow-500"
           icon={CheckCircleIcon}
         />
-        <StatsCard 
-          title="Completed" 
-          count="04" 
-          subtitle="Currently in your queue" 
+        <StatsCard
+          title="Completed"
+          count="04"
+          subtitle="Currently in your queue"
           statusColor="text-green-600"
           icon={CheckCircleIcon}
         />
-        <StatsCard 
-          title="Overdue" 
-          count="04" 
-          subtitle="Currently in your queue" 
+        <StatsCard
+          title="Overdue"
+          count="04"
+          subtitle="Currently in your queue"
           statusColor="text-red-500"
           icon={CheckCircleIcon}
         />
       </div>
 
       <div className="bg-white rounded-2xl">
-        <div className="flex items-center justify-between">
-          <h2 className="text-[25px] font-semibold text-black mb-6">Requested warranties</h2>
+        <div className="flex justify-between">
+          <h2 className="text-[25px] font-semibold text-black">
+            {showCreateForm
+              ? editingRow
+                ? "Edit Warranty Claim"
+                : "Create New Warranty Claim"
+              : "Requested Claim"}
+          </h2>
           {!showCreateForm && (
             <button
-              onClick={() => setShowCreateForm(true)}
-              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 transition-all text-white px-4 py-2 mb-6 rounded-full cursor-pointer"
+              onClick={() => {
+                setEditingRow(null);
+                setShowCreateForm(true);
+              }}
+              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 transition-all text-white px-4 py-2 rounded-full cursor-pointer"
             >
               <PlusCircleIcon size={16} />
               <span>Create request</span>
             </button>
           )}
         </div>
+        <p className="text-sm text-gray-500">
+          {showCreateForm
+            ? editingRow
+              ? "Fill out the form below to submit or edit a warranty claim."
+              : "Fill out the form below to submit a new warranty claim request for electric vehicle components."
+            : ""}
+        </p>
 
         {showCreateForm ? (
-          <div className="mb-6 bg-gray-50 p-6 border-[3px] border-[#EBEBEB] rounded-2xl">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-lg font-semibold">
-                  {editingRow
-                    ? "Edit Warranty Claim"
-                    : "Create New Warranty Claim"}
-                </h3>
-                <p className="text-sm text-gray-500">
-                  Fill out the form below to submit a new warranty claim request
-                  for electric vehicle components.
-                </p>
-              </div>
-              <div />
-            </div>
-
-            <div className="space-y-4">
-              <div className="bg-white rounded-md p-4 border">
-                <div className="text-sm text-indigo-600 font-medium mb-2 flex items-center gap-2">
-                  <InfoIcon size={16} />{" "}
+          <div className="mb-6 mt-9">
+            <div className="space-y-10">
+              <div className="bg-white border-[3px] border-[#EBEBEB] rounded-2xl p-10">
+                <div className="text-md text-indigo-600 font-medium mb-6 flex items-center gap-2">
+                  <InfoIcon size={20} weight="bold"/>{" "}
                   {editingRow ? "Edit Warranty Claim" : "Basic Information"}
                 </div>
-                <div className="grid grid-cols-3 gap-3">
-                  <input
-                    className="p-3 border rounded-md"
-                    placeholder="Claim ID"
-                    defaultValue={editingRow?.id || "WC-2003-9192332"}
-                  />
-                  <input
-                    className="p-3 border rounded-md"
-                    placeholder="Claim Date"
-                    defaultValue={editingRow ? "02/12/2025" : ""}
-                  />
-                  <input
-                    className="p-3 border rounded-md"
-                    placeholder="Service Center"
-                    defaultValue={editingRow ? "WC-2003-9192332" : ""}
-                  />
-                  <input
-                    className="p-3 border rounded-md"
-                    placeholder="Created By"
-                    defaultValue={editingRow ? "Jso" : ""}
-                  />
-                  <select className="p-3 border rounded-md">
-                    <option>Select Manufacturer</option>
-                  </select>
+                <div className="grid grid-cols-3 gap-10">
+                  <div className="w-full">
+                    <p className="text-sm mb-2 text-[#6B716F]">Claim Id</p>
+                    <input
+                      className="p-3 bg-[#F9FAFB] border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
+                      placeholder="Claim ID"
+                      aria-disabled
+                      defaultValue={editingRow?.id || "WC-2003-9192332"}
+                    />
+                  </div>
+                  <div className="w-full">
+                    <p className="text-sm mb-2 text-[#6B716F]">Claim Date</p>
+                    <input
+                      className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
+                      placeholder="Claim Date"
+                      defaultValue={editingRow ? "02/12/2025" : ""}
+                    />
+                  </div>
+                  <div className="w-full">
+                    <p className="text-sm mb-2 text-[#6B716F]">Service Center</p>
+                    <input
+                      className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
+                      placeholder="Service Center"
+                      defaultValue={editingRow ? "WC-2003-9192332" : ""}
+                    />
+                  </div>
+                  <div className="w-full">
+                    <p className="text-sm mb-2 text-[#6B716F]">Created By</p>
+                    <input
+                      className="p-3 bg-[#F9FAFB] border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
+                      placeholder="Created By"
+                      defaultValue={editingRow ? "Jso" : ""}
+                    />
+                  </div>
+                  <div className="w-full">
+                    <p className="text-sm mb-2 text-[#6B716F]">Manufacturer</p>
+                    <select className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none">
+                      <option>Select Manufacturer</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
-              <div className="bg-white rounded-md p-4 border">
-                <div className="text-sm text-indigo-600 font-medium mb-2 flex items-center gap-2">
-                  <CarIcon size={16} /> Vehicle Information
+              <div className="bg-white border-[3px] border-[#EBEBEB] rounded-2xl p-10">
+                <div className="text-md text-indigo-600 font-medium mb-6 flex items-center gap-2">
+                  <CarIcon size={20} weight="bold" /> Vehicle Information
                 </div>
-                <div className="grid grid-cols-3 gap-3">
-                  <input
-                    className="p-3 border rounded-md"
-                    placeholder="VIN code"
-                    defaultValue={editingRow?.vin || ""}
-                  />
-                  <input
-                    className="p-3 border rounded-md"
-                    placeholder="Enter vehicle name"
-                    defaultValue={editingRow?.vehicle || ""}
-                  />
-                  <input
-                    className="p-3 border rounded-md"
-                    placeholder="Purchase Date of vehicle"
-                    defaultValue={editingRow ? "12/23/2012" : ""}
-                  />
-                  <input
-                    className="p-3 border rounded-md col-span-1"
-                    placeholder="Current Mileage (km)"
-                    defaultValue={editingRow ? "8,433" : ""}
-                  />
-                </div>
-              </div>
-
-              <div className="bg-white rounded-md p-4 border">
-                <div className="text-sm text-indigo-600 font-medium mb-2 flex items-center gap-2">
-                  <PackageIcon size={16} /> Part Information
-                </div>
-                <div className="grid grid-cols-3 gap-3">
-                  <input
-                    className="p-3 border rounded-md"
-                    placeholder="Part Name"
-                    defaultValue={editingRow ? "Battery" : ""}
-                  />
-                  <input
-                    className="p-3 border rounded-md"
-                    placeholder="Part Code"
-                    defaultValue={editingRow ? "PIN12334SD" : ""}
-                  />
-                  <input
-                    className="p-3 border rounded-md"
-                    placeholder="Replacement Date"
-                    defaultValue={editingRow ? "05/16/2025" : ""}
-                  />
+                <div className="grid grid-cols-3 gap-10">
+                  <div className="w-full">
+                    <p className="text-sm mb-2 text-[#6B716F]">VIN code</p>
+                    <input
+                      className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
+                      placeholder="VIN code"
+                      defaultValue={editingRow?.vin || ""}
+                    />
+                  </div>
+                  <div className="w-full">
+                    <p className="text-sm mb-2 text-[#6B716F]">Vehicle Name</p>
+                    <input
+                      className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
+                      placeholder="Enter vehicle name"
+                      defaultValue={editingRow?.vehicle || ""}
+                    />
+                  </div>
+                  <div className="w-full">
+                    <p className="text-sm mb-2 text-[#6B716F]">Purchase Date of vehicle</p>
+                    <input
+                      className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
+                      placeholder="Purchase Date of vehicle"
+                      defaultValue={editingRow ? "12/23/2012" : ""}
+                    />
+                  </div>
+                  <div className="w-full">
+                    <p className="text-sm mb-2 text-[#6B716F]">Current Mileage (km)</p>
+                    <input
+                      className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
+                      placeholder="Current Mileage (km)"
+                      defaultValue={editingRow ? "8,433" : ""}
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div className="bg-white rounded-md p-4 border">
-                <div className="text-sm text-indigo-600 font-medium mb-2 flex items-center gap-2">
-                  <WarningCircleIcon size={16} /> Issue Details
+              <div className="bg-white border-[3px] border-[#EBEBEB] rounded-2xl p-10">
+                <div className="text-md text-indigo-600 font-medium mb-6 flex items-center gap-2">
+                  <PackageIcon size={20} weight="bold" /> Part Information
                 </div>
-                <textarea
-                  className="w-full p-3 border rounded-md min-h-[120px]"
+                <div className="grid grid-cols-3 gap-10">
+                  <div className="w-full">
+                    <p className="text-sm mb-2 text-[#6B716F]">Part Name</p>
+                    <input
+                      className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
+                      placeholder="Part Name"
+                      defaultValue={editingRow ? "Battery" : ""}
+                    />
+                  </div>
+                  <div className="w-full">
+                    <p className="text-sm mb-2 text-[#6B716F]">Part Code</p>
+                    <input
+                      className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
+                      placeholder="Part Code"
+                      defaultValue={editingRow ? "PIN12334SD" : ""}
+                    />
+                  </div>
+                  <div className="w-full">
+                    <p className="text-sm mb-2 text-[#6B716F]">Replacement Date</p>
+                    <input
+                      className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
+                      placeholder="Replacement Date"
+                      defaultValue={editingRow ? "05/16/2025" : ""}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white border-[3px] border-[#EBEBEB] rounded-2xl p-10">
+                <div className="text-md text-indigo-600 font-medium mb-6 flex items-center gap-2">
+                  <WarningCircleIcon size={20} weight="bold" /> Issue Details
+                </div>
+                <div>
+                  <p className="text-sm mb-2 text-[#6B716F]">Issue Description</p>
+                  <textarea
+                  className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none min-h-[120px]"
                   placeholder="Provide a detailed description of the issue..."
                   defaultValue={
                     editingRow
@@ -293,14 +328,16 @@ export default function ClaimRequests() {
                       : ""
                   }
                 />
+                </div>
               </div>
 
-              <div className="bg-white rounded-md p-4 border">
-                <div className="text-sm text-indigo-600 font-medium mb-2 flex items-center gap-2">
-                  <CameraIcon size={16} /> Evidence Upload
+              <div className="bg-white border-[3px] border-[#EBEBEB] rounded-2xl p-10">
+                <div className="text-md text-indigo-600 font-medium mb-6 flex items-center gap-2">
+                  <CameraIcon size={20} weight="bold" /> Evidence Upload
                 </div>
-                <div className="border-dashed border-2 border-gray-200 rounded-md p-8 text-center">
-                  <div className="mb-3">Upload Images or Videos</div>
+                <div className="flex flex-col items-center justify-between border-dashed border-2 border-gray-200 rounded-md p-8 text-center">
+                  <CloudArrowUpIcon size={50} color="#9CA3AF" weight="fill" />
+                  <p className="mb-3">Upload Images or Videos</p>
                   <div className="flex items-center justify-center gap-3 mb-3">
                     <div className="w-20 h-12 bg-gray-200 rounded-md" />
                     <div className="w-20 h-12 bg-gray-200 rounded-md" />
@@ -312,8 +349,8 @@ export default function ClaimRequests() {
                 </div>
               </div>
 
-              <div className="bg-white rounded-md p-4 border">
-                <div className="text-sm text-indigo-600 font-medium mb-2 flex items-center gap-2">
+              <div className="bg-white border-[3px] border-[#EBEBEB] rounded-2xl p-10">
+                <div className="text-md text-indigo-600 font-medium mb-6 flex items-center gap-2">
                   <BuildingsIcon size={16} /> Service Center Request
                 </div>
                 <div className="space-y-2 text-sm">
@@ -335,14 +372,14 @@ export default function ClaimRequests() {
               <div className="flex items-center justify-end gap-3 mt-6">
                 <button
                   onClick={closeForm}
-                  className="flex items-center gap-2 px-4 py-2 rounded-md border bg-white"
+                  className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#F1F3F4] hover:bg-[#dfe0e2] transition-all cursor-pointer"
                 >
                   <XCircleIcon size={18} />
                   <span>Cancel</span>
                 </button>
                 <button
                   onClick={saveChanges}
-                  className="flex items-center gap-2 px-4 py-2 rounded-md bg-indigo-600 text-white"
+                  className="flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-600 hover:bg-indigo-700 transition-all text-white cursor-pointer"
                 >
                   <CheckCircleIcon size={18} />
                   <span>{editingRow ? "Save Changes" : "Submit Claim"}</span>
@@ -352,21 +389,36 @@ export default function ClaimRequests() {
           </div>
         ) : (
           <>
-            <div className="border-[3px] border-[#EBEBEB] rounded-2xl overflow-visible">
+            <div className="border-[3px] border-[#EBEBEB] rounded-2xl overflow-visible mt-6">
               <table className="w-full">
                 <thead>
                   <tr className="border-b-2 border-[#DEE1E6] bg-[#FAFAFA]">
-                    <th className="text-left rounded-tl-2xl px-8 py-3 text-base font-medium text-[#686262]">Claim ID</th>
-                    <th className="text-left px-8 py-3 text-base font-medium text-[#686262]">Vehicle</th>
-                    <th className="text-left px-8 py-3 text-base font-medium text-[#686262]">Vin ID</th>
-                    <th className="text-left px-8 py-3 text-base font-medium text-[#686262]">Status</th>
-                    <th className="text-left px-8 py-3 text-base font-medium text-[#686262]">Claim Date</th>
-                    <th className="text-left rounded-tr-2xl px-8 py-3 text-base font-medium text-[#686262]">Actions</th>
+                    <th className="text-left rounded-tl-2xl px-8 py-3 text-base font-medium text-[#686262]">
+                      Claim ID
+                    </th>
+                    <th className="text-left px-8 py-3 text-base font-medium text-[#686262]">
+                      Vehicle
+                    </th>
+                    <th className="text-left px-8 py-3 text-base font-medium text-[#686262]">
+                      Vin ID
+                    </th>
+                    <th className="text-left px-8 py-3 text-base font-medium text-[#686262]">
+                      Status
+                    </th>
+                    <th className="text-left px-8 py-3 text-base font-medium text-[#686262]">
+                      Claim Date
+                    </th>
+                    <th className="text-left rounded-tr-2xl px-8 py-3 text-base font-medium text-[#686262]">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {rows.map((r) => (
-                    <tr key={r.id} className="border-b-2 border-[#DEE1E6] bg-white hover:bg-gray-50">
+                    <tr
+                      key={r.id}
+                      className="border-b-2 border-[#DEE1E6] bg-white hover:bg-gray-50"
+                    >
                       <td className="px-8 py-3 text-[13px] font-medium text-black">
                         {r.id}
                       </td>
@@ -386,12 +438,12 @@ export default function ClaimRequests() {
                         {r.dueDate}
                       </td>
                       <td className="px-8 py-3 text-[13px] font-medium text-black relative">
-                        <div
-                          className="relative inline-block"
-                        >
+                        <div className="relative inline-block">
                           <button
                             onClick={() => {
-                              setOpenActionFor(openActionFor === r.id ? null : r.id)
+                              setOpenActionFor(
+                                openActionFor === r.id ? null : r.id
+                              );
                             }}
                             className="rounded-full hover:bg-gray-100 cursor-pointer"
                           >
@@ -431,13 +483,14 @@ export default function ClaimRequests() {
               </table>
             </div>
 
+            {/* Pagination */}
             <div className="flex items-center justify-between mt-6 text-sm text-gray-600">
               <div>Showing 1 to 10 of {total} results</div>
               <div className="flex items-center gap-4">
                 <button
                   onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                   disabled={currentPage === 1}
-                  className="flex items-center gap-2 px-3 py-1 rounded-md hover:text-indigo-600 disabled:opacity-40"
+                  className="flex items-center gap-2 px-3 py-1 cursor-pointer rounded-md hover:text-indigo-600 disabled:opacity-40"
                 >
                   <CaretLeftIcon size={12} /> Previous
                 </button>
@@ -447,7 +500,7 @@ export default function ClaimRequests() {
                     <button
                       key={p}
                       onClick={() => setCurrentPage(p)}
-                      className={`w-8 h-8 rounded-full text-[12px] font-medium flex items-center justify-center ${
+                      className={`w-8 h-8 rounded-full text-[12px] font-medium flex items-center justify-center cursor-pointer ${
                         currentPage === p
                           ? "bg-indigo-600 text-white"
                           : "bg-white text-[#727674] hover:text-black"
@@ -463,7 +516,7 @@ export default function ClaimRequests() {
                     setCurrentPage(Math.min(totalPages, currentPage + 1))
                   }
                   disabled={currentPage === totalPages}
-                  className="flex items-center gap-2 px-3 py-1 rounded-md hover:text-indigo-600 disabled:opacity-40"
+                  className="flex items-center gap-2 px-3 py-1 cursor-pointer rounded-md hover:text-indigo-600 disabled:opacity-40"
                 >
                   Next <CaretRightIcon size={12} />
                 </button>
@@ -486,13 +539,13 @@ export default function ClaimRequests() {
 function DeleteModal({ row, onCancel, onConfirm }) {
   if (!row) return null;
   return (
-    <div className="fixed inset-0 z-60 flex items-center justify-center bg-white/10 backdrop-blur-sm">
-      <div className="bg-white rounded-lg shadow-lg w-[640px] p-6">
+    <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/10 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-2xl w-[640px] p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="text-sm text-gray-500">
             Delete warranty request for {row.id}/{row.vehicle}
           </div>
-          <button onClick={onCancel} className="text-gray-400">
+          <button onClick={onCancel} className="text-gray-400 cursor-pointer">
             ✕
           </button>
         </div>
@@ -505,7 +558,7 @@ function DeleteModal({ row, onCancel, onConfirm }) {
           <div className="text-sm text-gray-500 mb-4">Car Owner: Jso</div>
           <button
             onClick={onConfirm}
-            className="mt-2 bg-indigo-600 text-white px-6 py-2 rounded-md"
+            className="mt-2 bg-indigo-600 text-white px-6 py-2 rounded-full cursor-pointer hover:bg-indigo-700 transition-all"
           >
             I want to delete this request
           </button>
