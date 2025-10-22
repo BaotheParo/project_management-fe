@@ -1,5 +1,23 @@
 import React, { useMemo, useState } from 'react'
-import { Car, PlusCircleIcon, CalendarBlankIcon, WarningCircle, Wrench, Info, User, IdentificationBadge, Clock, IdentificationBadgeIcon, UserIcon, CarIcon } from '@phosphor-icons/react'
+import {
+  WrenchIcon,
+  CheckCircleIcon,
+  Car,
+  PlusCircleIcon,
+  CalendarBlankIcon,
+  WarningCircle,
+  Wrench,
+  Info,
+  User,
+  IdentificationBadge,
+  Clock,
+  IdentificationBadgeIcon,
+  UserIcon,
+  CarIcon,
+  DotsThreeCircleIcon,
+  SpinnerIcon,
+  UserCircleCheckIcon,
+} from "@phosphor-icons/react";
 
 const sampleCards = Array.from({ length: 8 }).map((_, i) => ({
   id: `RO-00${i + 1}`,
@@ -19,7 +37,158 @@ function StatusBadge({ status }) {
   return <span className={`px-2 py-1 text-xs rounded-full font-semibold ${color}`}>{status}</span>
 }
 
+const StatusCard = ({ count, label, description, color, icon:Icon, iconColor }) => (
+  <div className="flex-1 min-w-[245px] border-[3px] border-[#EBEBEB] rounded-2xl p-8">
+    <div className="flex items-center justify-between gap-3 mb-4">
+      <span className={`text-xl font-semibold ${color}`}>{label}</span>
+      {Icon && <Icon size={27} color={iconColor} />}
+    </div>
+    <div className="text-[30px] font-semibold text-black mb-2">{count}</div>
+    <div className="text-base font-medium text-[#686262]">{description}</div>
+  </div>
+)
+
 export default function TodoWorks() {
+    const [activeFilter, setActiveFilter] = useState('All')
+    const [searchTerm, setSearchTerm] = useState('')
+    const [showAssignModal, setShowAssignModal] = useState(false)
+    const [selectedOrder, setSelectedOrder] = useState(null)
+  
+    const availableTechnicians = [
+      { id: 1, name: 'Jso', role: 'Engineer Repair' },
+      { id: 2, name: 'Jso', role: 'Engineer Repair' },
+      { id: 3, name: 'Jso', role: 'Engineer Repair' },
+      { id: 4, name: 'Jso', role: 'Engineer Repair' },
+      { id: 5, name: 'Jso', role: 'Engineer Repair' },
+    ]
+  
+    const [orders, setOrders] = useState([
+      {
+        id: 'RO-002',
+        vehicle: 'VinFast VF-3',
+        status: 'Pending',
+        priority: 'HIGH',
+        vin: 'LSV1E7AL0MC123456',
+        customer: 'Andrew',
+        date: 'July 21, 2025',
+        issue: 'Battery thermal management system showing error codes. Customer reports reduced range and charging speed.',
+      },
+      {
+        id: 'RO-003',
+        vehicle: 'VinFast VF-3',
+        status: 'Completed',
+        priority: 'HIGH',
+        vin: 'LSV1E7AL0MC123456',
+        customer: 'Andrew',
+        date: 'July 21, 2025',
+        issue: 'Battery thermal management system showing error codes. Customer reports reduced range and charging speed.',
+        technician: 'Jso',
+      },
+      {
+        id: 'RO-004',
+        vehicle: 'VinFast VF-3',
+        status: 'Assigned',
+        priority: 'MEDIUM',
+        vin: 'LSV1E7AL0MC123456',
+        customer: 'Andrew',
+        date: 'July 21, 2025',
+        issue: 'Battery thermal management system showing error codes. Customer reports reduced range and charging speed.',
+        technician: 'Jso',
+      },
+      {
+        id: 'RO-005',
+        vehicle: 'VinFast VF-3',
+        status: 'Assigned',
+        priority: 'MEDIUM',
+        vin: 'LSV1E7AL0MC123456',
+        customer: 'Andrew',
+        date: 'July 21, 2025',
+        issue: 'Battery thermal management system showing error codes. Customer reports reduced range and charging speed.',
+        technician: 'Jso',
+      },
+      {
+        id: 'RO-006',
+        vehicle: 'VinFast VF-3',
+        status: 'In Progress',
+        priority: 'LOW',
+        vin: 'LSV1E7AL0MC123456',
+        customer: 'Andrew',
+        date: 'July 21, 2025',
+        issue: 'Battery thermal management system showing error codes. Customer reports reduced range and charging speed.',
+        technician: 'Jso',
+      },
+      {
+        id: 'RO-007',
+        vehicle: 'VinFast VF-3',
+        status: 'In Progress',
+        priority: 'HIGH',
+        vin: 'LSV1E7AL0MC123456',
+        customer: 'Andrew',
+        date: 'July 21, 2025',
+        issue: 'Battery thermal management system showing error codes. Customer reports reduced range and charging speed.',
+        technician: 'Jso',
+      },
+    ])
+  
+    const workOrders = orders
+  
+    // Calculate stats from orders
+    const pendingCount = orders.filter(o => o.status === 'Pending').length
+    const assignedCount = orders.filter(o => o.status === 'Assigned').length
+    const inProgressCount = orders.filter(o => o.status === 'In Progress').length
+    const completedCount = orders.filter(o => o.status === 'Completed').length
+
+    // Status Card 
+    const stats = [
+      {
+        count: pendingCount.toString(),
+        label: "Pending",
+        description: "Awaiting assignment",
+        color: "text-[#979AA3]",
+        icon: DotsThreeCircleIcon,
+        iconColor: "#979AA3",
+      },
+      {
+        count: assignedCount.toString(),
+        label: "Assigned",
+        description: "Ready to start",
+        color: "text-[#0FC3EB]",
+        icon: UserCircleCheckIcon,
+        iconColor: "#0FC3EB",
+      },
+      {
+        count: inProgressCount.toString(),
+        label: "In Progress",
+        description: "Being worked on",
+        color: "text-[#EBB80F]",
+        icon: SpinnerIcon,
+        iconColor: "#EBB80F",
+      },
+      {
+        count: completedCount.toString(),
+        label: "Completed",
+        description: "Finished today",
+        color: "text-green-600",
+        icon: CheckCircleIcon,
+        iconColor: "#00a63e",
+      },
+    ];
+  
+    const filters = ['All', 'Pending', 'Assigned', 'In Progress', 'Completed']
+  
+    // Filter orders based on active filter and search term
+    const filteredOrders = useMemo(() => {
+      return workOrders.filter(order => {
+        const matchesFilter = activeFilter === 'All' || order.status === activeFilter
+        const matchesSearch = searchTerm === '' || 
+          order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          order.vehicle.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          order.customer.toLowerCase().includes(searchTerm.toLowerCase())
+        return matchesFilter && matchesSearch
+      })
+    }, [workOrders, activeFilter, searchTerm])
+
+
   const [cards] = useState(sampleCards)
   const [filter, setFilter] = useState('All')
   const [query, setQuery] = useState('')
@@ -41,26 +210,15 @@ export default function TodoWorks() {
         <div />
       </div>
 
-      <div className="flex items-center gap-4 mb-6">
-        <div className="px-4 py-2 bg-white border rounded-full text-sm text-gray-700">
-          Total Works: <span className="font-semibold">254</span>
-        </div>
-        <div className="px-4 py-2 bg-white border rounded-full text-sm text-gray-700">
-          In-Queue: <span className="font-semibold">200</span>
-        </div>
-        <div className="px-4 py-2 bg-white border rounded-full text-sm text-gray-700">
-          Working: <span className="font-semibold text-yellow-600">50</span>
-        </div>
-        <div className="px-4 py-2 bg-white border rounded-full text-sm text-gray-700">
-          Completed: <span className="font-semibold text-green-600">03</span>
-        </div>
-        <div className="px-4 py-2 bg-white border rounded-full text-sm text-gray-700">
-          Overdue: <span className="font-semibold text-red-500">01</span>
-        </div>
+      {/* Stats Cards */}
+      <div className="flex flex-wrap gap-4 mb-8">
+        {stats.map((stat, index) => (
+          <StatusCard key={index} {...stat} />
+        ))}
       </div>
 
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold">Work Orders (8)</h2>
+        <h2 className="text-[25px] font-semibold mb-6">Work Orders (8)</h2>
         <div className="flex items-center gap-3">
           <input
             value={query}
@@ -130,7 +288,10 @@ export default function TodoWorks() {
                   {c.owner}
                 </div>
                 <div className="text-right flex items-center justify-end gap-2">
-                  <IdentificationBadgeIcon size={16} className="text-gray-500" />
+                  <IdentificationBadgeIcon
+                    size={16}
+                    className="text-gray-500"
+                  />
                   {c.vin}
                 </div>
                 <div className="flex items-center gap-2">

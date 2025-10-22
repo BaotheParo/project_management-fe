@@ -1,7 +1,6 @@
 import React, { useMemo, useState, useRef, useEffect } from "react";
 import {
   PlusCircleIcon,
-  DotsThreeVerticalIcon,
   CaretLeftIcon,
   CaretRightIcon,
   InfoIcon,
@@ -202,6 +201,7 @@ export default function ClaimRequests() {
                   <div className="w-full">
                     <p className="text-sm mb-2 text-[#6B716F]">Claim Id</p>
                     <input
+                      readOnly="true"
                       className="p-3 bg-[#F9FAFB] border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                       placeholder="Claim ID"
                       aria-disabled
@@ -227,6 +227,7 @@ export default function ClaimRequests() {
                   <div className="w-full">
                     <p className="text-sm mb-2 text-[#6B716F]">Created By</p>
                     <input
+                      readOnly="true"
                       className="p-3 bg-[#F9FAFB] border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                       placeholder="Created By"
                       defaultValue={editingRow ? "Jso" : ""}
