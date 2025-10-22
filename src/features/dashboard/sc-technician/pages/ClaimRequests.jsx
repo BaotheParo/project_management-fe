@@ -337,32 +337,42 @@ export default function ClaimRequests() {
                 </div>
                 <div className="flex flex-col items-center justify-between border-dashed border-2 border-gray-200 rounded-md p-8 text-center">
                   <CloudArrowUpIcon size={50} color="#9CA3AF" weight="fill" />
-                  <p className="mb-3">Upload Images or Videos</p>
+                  <div className="leading-1 mt-4 mb-10">
+                    <p className="mb-3 text-xl font-medium">Upload Images or Videos</p>
+                    <p className="mb-3 text-md text-[#6B7280] font-medium">
+                      Drag and drop files here or click to browse
+                    </p>
+                  </div>
                   <div className="flex items-center justify-center gap-3 mb-3">
                     <div className="w-20 h-12 bg-gray-200 rounded-md" />
                     <div className="w-20 h-12 bg-gray-200 rounded-md" />
                     <div className="w-20 h-12 bg-gray-200 rounded-md" />
                   </div>
-                  <button className="px-4 py-2 bg-white border rounded-md">
-                    Choose a file
-                  </button>
+                  <div>
+                    <button className="px-4 py-2 rounded-full bg-indigo-600 hover:bg-indigo-700 transition-all text-white cursor-pointer">
+                      Choose a file
+                    </button>
+                    <p className="mt-3 text-sm text-[#6B7280]">
+                      Max file size: 10MB per file. Supported formats: JPG, PNG,MP4, MOV
+                    </p>
+                  </div>
                 </div>
               </div>
 
               <div className="bg-white border-[3px] border-[#EBEBEB] rounded-2xl p-10">
                 <div className="text-md text-indigo-600 font-medium mb-6 flex items-center gap-2">
-                  <BuildingsIcon size={16} /> Service Center Request
+                  <BuildingsIcon size={20} weight="bold" /> Service Center Request
                 </div>
-                <div className="space-y-2 text-sm">
-                  <label className="flex items-center gap-2">
+                <div className="space-y-2 text-md">
+                  <label className="flex items-center gap-2 cursor-pointer">
                     <input type="radio" name="service" /> Request replacement
                     part approval
                   </label>
-                  <label className="flex items-center gap-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
                     <input type="radio" name="service" /> Request repair
                     approval
                   </label>
-                  <label className="flex items-center gap-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
                     <input type="radio" name="service" /> Request reimbursement
                     (repair completed in advance)
                   </label>
