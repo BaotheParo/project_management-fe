@@ -17,6 +17,10 @@ import {
   DotsThreeCircleIcon,
   SpinnerIcon,
   UserCircleCheckIcon,
+  MagnifyingGlassIcon,
+  InfoIcon,
+  CarProfileIcon,
+  ClockIcon,
 } from "@phosphor-icons/react";
 
 const sampleCards = Array.from({ length: 8 }).map((_, i) => ({
@@ -33,7 +37,7 @@ const sampleCards = Array.from({ length: 8 }).map((_, i) => ({
 
 function StatusBadge({ status }) {
   const color =
-    status === 'Completed' ? 'bg-green-100 text-green-700' : status === 'Overdue' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
+    status === 'Completed' ? 'text-green-700' : status === 'Overdue' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
   return <span className={`px-2 py-1 text-xs rounded-full font-semibold ${color}`}>{status}</span>
 }
 
@@ -219,31 +223,35 @@ export default function TodoWorks() {
 
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-[25px] font-semibold mb-6">Work Orders (8)</h2>
-        <div className="flex items-center gap-3">
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search..."
-            className="px-3 py-2 border rounded-full text-sm w-56"
-          />
-        </div>
       </div>
 
-      <div className="mb-4">
-        <div className="bg-gray-100 rounded-full inline-flex p-1">
+      <div className="flex gap-5 flex-wrap w-full justify-between mb-4">
+        <div className="bg-gray-100 rounded-full inline-flex gap-2 p-2 overflow-auto">
           {["All", "Pending", "In Progress", "Completed", "Overdue"].map(
             (f) => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className={`text-sm px-3 py-2 rounded-full ${
-                  filter === f ? "bg-indigo-600 text-white" : "text-gray-700"
+                className={`text-sm px-3 py-2 rounded-full text-nowrap ${
+                  filter === f
+                    ? "bg-indigo-600 text-white font-semibold transition-all cursor-pointer"
+                    : "text-black font-semibold hover:bg-white transition-all cursor-pointer"
                 }`}
               >
                 {f}
               </button>
             )
           )}
+        </div>
+        <div className="flex items-center gap-2 bg-[#F1F3F4] rounded-full px-4 py-2">
+          <MagnifyingGlassIcon size={20} weight="bold" color='#929594' />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search..."
+            className="bg-transparent outline-none text-sm font-semibold text-black placeholder-[#929594] flex-1"
+          />
         </div>
       </div>
 
@@ -252,7 +260,7 @@ export default function TodoWorks() {
       ) : visible.length === 0 ? (
         <div className="w-full bg-gray-100 rounded-md p-8 flex items-center justify-center">
           <div className="text-center">
-            <Info size={28} className="mx-auto text-gray-500 mb-3" />
+            <InfoIcon size={28} className="mx-auto text-gray-500 mb-3" />
             <div className="font-semibold text-lg mb-1">No Order Found</div>
             <div className="text-sm text-gray-500">
               Try adjusting your search or filters
@@ -264,12 +272,12 @@ export default function TodoWorks() {
           {visible.map((c) => (
             <div
               key={c.id}
-              className="bg-white border rounded-2xl p-6 shadow-sm"
+              className="bg-white border border-[#d8dadf] rounded-2xl shadow-[0_4px_16px_3px_rgba(173,173,173,0.12)] overflow-hidden p-6"
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
-                    <CarIcon size={20} />
+                  <div className="w-10 h-10 rounded-xl bg-[#e1e3ff] flex items-center justify-center text-indigo-600">
+                    <CarProfileIcon size={25} weight="bold" color='#4f39f6' />
                   </div>
                   <div>
                     <div className="font-semibold">{c.vehicle}</div>
@@ -299,7 +307,7 @@ export default function TodoWorks() {
                   {c.date}
                 </div>
                 <div className="text-right flex items-center justify-end gap-2">
-                  <Clock size={16} className="text-gray-500" />
+                  <ClockIcon size={16} className="text-gray-500" />
                   {c.eta}
                 </div>
               </div>
@@ -311,7 +319,7 @@ export default function TodoWorks() {
               <div className="flex items-center justify-end">
                 <button
                   onClick={() => setSelected(c)}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-full"
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 transition-colors text-white rounded-full cursor-pointer"
                 >
                   View Details
                 </button>
@@ -333,7 +341,7 @@ return (
 
     <div className="grid grid-cols-3 gap-6">
       <div className="col-span-2 space-y-4">
-        <div className="bg-white rounded-md p-4 border">
+        <div className="bg-white border-[3px] border-[#EBEBEB] rounded-2xl p-10">
           <div className="text-sm text-indigo-600 font-medium mb-2 flex items-center gap-2"><Car size={16} /> Vehicle Information</div>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
@@ -355,7 +363,7 @@ return (
           </div>
         </div>
 
-        <div className="bg-white rounded-md p-4 border">
+        <div className="bg-white border-[3px] border-[#EBEBEB] rounded-2xl p-10">
           <div className="text-sm text-indigo-600 font-medium mb-2 flex items-center gap-2"><WarningCircle size={16} /> Issue Details</div>
           <div className="text-sm">
             <div className="text-xs text-gray-500 mb-2">Issue Overview</div>
@@ -365,7 +373,7 @@ return (
           </div>
         </div>
 
-        <div className="bg-white rounded-md p-4 border">
+        <div className="bg-white border-[3px] border-[#EBEBEB] rounded-2xl p-10">
           <div className="text-sm text-indigo-600 font-medium mb-2 flex items-center gap-2"><Wrench size={16} /> Work Details</div>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
@@ -385,7 +393,7 @@ return (
       </div>
 
       <div className="space-y-4">
-        <div className="bg-white rounded-md p-4 border">
+        <div className="bg-white border-[3px] border-[#EBEBEB] rounded-2xl p-10">
           <div className="text-sm text-indigo-600 font-medium mb-2 flex items-center gap-2"><User size={16} /> Customer Information</div>
           <div className="text-sm">
             <div className="text-xs text-gray-500">Name</div>
@@ -399,7 +407,7 @@ return (
           </div>
         </div>
 
-        <div className="bg-white rounded-md p-4 border">
+        <div className="bg-white border-[3px] border-[#EBEBEB] rounded-2xl p-10">
           <div className="text-sm text-indigo-600 font-medium mb-2 flex items-center gap-2"><CalendarBlankIcon size={16} /> Schedule</div>
           <div className="text-sm">
             <div className="text-xs text-gray-500">Schedule Date</div>
@@ -409,11 +417,11 @@ return (
           </div>
         </div>
 
-        <div className="bg-white rounded-md p-4 border">
+        <div className="bg-white border-[3px] border-[#EBEBEB] rounded-2xl p-10">
           <div className="text-sm text-indigo-600 font-medium mb-2">Actions</div>
           <div className="flex flex-col">
-            <button className="px-4 py-2 bg-indigo-600 text-white rounded-md mb-2">Complete Work</button>
-            <button onClick={onClose} className="px-4 py-2 border rounded-md">Back</button>
+            <button className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 transition-colors text-white rounded-full cursor-pointer mb-2">Complete Work</button>
+            <button onClick={onClose} className="px-4 py-2 rounded-full bg-[#F1F3F4] hover:bg-[#dfe0e2] transition-all cursor-pointer">Back</button>
           </div>
         </div>
       </div>
