@@ -60,10 +60,10 @@ export default function Sidebar() {
             <NavItem end={true} to="/sc-technician/dashboard" icon={HouseIcon} label="Dashboard" />
           </div>
           <div className="py-0">
-            <NavItem to="/sc-technician/todos" icon={ListIcon} label="Task List" />
+          <NavItem to="/sc-technician/claims" icon={ClipboardTextIcon} label="Claim Requests" />
           </div>
           <div className="py-0">
-            <NavItem to="/sc-technician/claims" icon={ClipboardTextIcon} label="Claim Requests" />
+          <NavItem to="/sc-technician/todos" icon={ListIcon} label="Todo Works" />
           </div>
           <div className="py-0">
             <NavItem to="/sc-technician/profile" icon={UserIcon} label="Profile" />
