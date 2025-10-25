@@ -22,6 +22,7 @@ import {
   CarProfileIcon,
   ClockIcon,
 } from "@phosphor-icons/react";
+import TodoStatusCard from '../../../common/components/sc-technician/StatusCard';
 
 const sampleCards = Array.from({ length: 8 }).map((_, i) => ({
   id: `RO-00${i + 1}`,
@@ -40,17 +41,6 @@ function StatusBadge({ status }) {
     status === 'Completed' ? 'text-green-700' : status === 'Overdue' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
   return <span className={`px-2 py-1 text-xs rounded-full font-semibold ${color}`}>{status}</span>
 }
-
-const StatusCard = ({ count, label, description, color, icon:Icon, iconColor }) => (
-  <div className="flex-1 min-w-[245px] border-[3px] border-[#EBEBEB] rounded-2xl p-8">
-    <div className="flex items-center justify-between gap-3 mb-4">
-      <span className={`text-xl font-semibold ${color}`}>{label}</span>
-      {Icon && <Icon size={27} color={iconColor} />}
-    </div>
-    <div className="text-[30px] font-semibold text-black mb-2">{count}</div>
-    <div className="text-base font-medium text-[#686262]">{description}</div>
-  </div>
-)
 
 export default function TodoWorks() {
     const [activeFilter, setActiveFilter] = useState('All')
@@ -154,7 +144,7 @@ export default function TodoWorks() {
       },
       {
         count: assignedCount.toString(),
-        label: "Assigned",
+        title: "Assigned",
         description: "Ready to start",
         color: "text-[#0FC3EB]",
         icon: UserCircleCheckIcon,
@@ -217,7 +207,7 @@ export default function TodoWorks() {
       {/* Stats Cards */}
       <div className="flex flex-wrap gap-4 mb-8">
         {stats.map((stat, index) => (
-          <StatusCard key={index} {...stat} />
+          <TodoStatusCard key={index} {...stat} />
         ))}
       </div>
 
