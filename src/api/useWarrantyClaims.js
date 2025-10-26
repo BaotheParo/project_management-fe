@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axiosClient from "./axiousInstance";
 
-export const warrantyClaims = () => {
+export const useWarrantyClaims = () => {
     const [rows, setRows] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -9,12 +9,22 @@ export const warrantyClaims = () => {
     const fetchClaims = async () => {
         try {
             setLoading(true);
+            setError(null);
             const response = await axiosClient.get("/claims"); // GET /api/claims
 
-            if (response.data && response.data.success) {
-                const formattedClaims = response.data.data.map((claim) => ({
+            const data = Array.isArray(response.data)
+                ? response.data
+                : response.data?.data || [];
+
+            if (!Array.isArray(data)) {
+                console.warn("Unexpected response structure:", response.data);
+                setRows([]);
+                return;
+            }
+
+            const formattedClaims = response.data.map((claim) => ({
                     id: claim.claimId,
-                    vehicle: claim.vehicleName || "Unkown",
+                    vehicle: claim.vehicleName || "Unknown",
                     vin: claim.vin,
                     status: 
                         claim.claimStatus === 0
@@ -24,13 +34,10 @@ export const warrantyClaims = () => {
                             : claim.claimStatus === 2
                             ? "Done"
                             : "Unknown",
-                    dueDate: new Date(claim.claimDate).toISOString().split("T")[0],
-                    issue: claim.issueDescription || "N/A",
-                    totalCost: claim.totalCost || 0,
-                    mileage: claim.mileage || 0,
-                }));
-                setRows(formattedClaims);
-            }
+                    claimDate: new Date(claim.claimDate).toISOString().split("T")[0],
+            }));
+            
+            setRows(formattedClaims);
         } catch (err) {
             console.error("Fetch claims failed", err)
             setError(err);
@@ -41,10 +48,7 @@ export const warrantyClaims = () => {
                     vehicle: "VinFast VF-3",
                     vin: "LSV1E7AL0MC123456",
                     status: "In Progress",
-                    dueDate: "2025-10-25",
-                    issue: "Battery issue",
-                    totalCost: 500000,
-                    mileage: 45000,
+                    claimDate: "2025-10-25",
                 },
             ]);
         } finally {

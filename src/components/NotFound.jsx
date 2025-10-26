@@ -8,7 +8,7 @@ export default function NotFound() {
             Oops! The page you’re looking for doesn’t exist.
         </p>
         <Link
-            to="/"
+            to="/login"
             className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition"
         >
             Go Home

@@ -22,7 +22,7 @@ import {
   CarProfileIcon,
   ClockIcon,
 } from "@phosphor-icons/react";
-import TodoStatusCard from '../../../common/components/sc-technician/StatusCard';
+import TodoStatusCard from '../components/StatusCard';
 
 const sampleCards = Array.from({ length: 8 }).map((_, i) => ({
   id: `RO-00${i + 1}`,
