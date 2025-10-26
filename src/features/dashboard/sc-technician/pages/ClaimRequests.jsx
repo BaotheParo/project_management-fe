@@ -14,6 +14,10 @@ import {
   WrenchIcon,
   DotsThreeIcon,
   CloudArrowUpIcon,
+  ListDashesIcon,
+  DotsThreeCircleIcon,
+  SpinnerIcon,
+  ClockIcon,
 } from "@phosphor-icons/react";
 import StatusCard from "../components/StatusCard";
 import StatusDot from "../components/StatusDot";
@@ -76,8 +80,8 @@ export default function ClaimRequests() {
 
   const totalClaims = rows.length;
   const pendingClaims = rows.filter(r => r.status === "Pending").length;
-  const inProgressClaims = rows.filter(r => r.status === "In Progress").length;
   const doneClaims = rows.filter(r => r.status === "Done").length;
+  const rejectedClaims = rows.filter(r => r.status === "Rejected").length;
   const overdueClaims = rows.filter(r => r.status === "Overdue").length;
 
   if (loading) return <Loader />;
@@ -101,55 +105,47 @@ export default function ClaimRequests() {
 
       <div className="flex flex-wrap gap-6 mt-20 mb-12">
         <StatusCard
-          title="Total Claims"
-          titleColor="text-indigo-600"
+          title="Total Requests" titleColor="text-indigo-600"
           count={totalClaims}
           description="Currently in your queue"
-          icon={WrenchIcon}
-          iconColor={"#979AA3"}
+          icon={ListDashesIcon} iconColor={"#4f39f8"}
         />
         <StatusCard
-          title="Pending"
-          titleColor="text-gray-500"
+          title="Pending" titleColor="text-gray-500"
           count={pendingClaims}
-          description="Currently in your queue"
-          icon={CheckCircleIcon}
-          iconColor={"#979AA3"}
+          description="Waiting accepted"
+          icon={DotsThreeCircleIcon} iconColor={"#979AA3"}
         />
         <StatusCard
-          title="In-Progress"
-          titleColor="text-yellow-500"
-          count={inProgressClaims}
-          description="Currently in your queue"
-          icon={CheckCircleIcon}
-          iconColor={"#979AA3"}
-        />
-        <StatusCard
-          title="Completed"
-          titleColor="text-green-600"
+          title="Accepted" titleColor="text-green-600"
           count={doneClaims}
           description="Currently in your queue"
-          icon={CheckCircleIcon}
-          iconColor={"#979AA3"}
+          icon={CheckCircleIcon} iconColor={"#00a63e"}
         />
         <StatusCard
-          title="Overdue"
-          titleColor="text-red-500"
+          title="Rejected" titleColor="text-red-500"
+          count={rejectedClaims}
+          description="Currently in your queue"
+          icon={XCircleIcon} iconColor={"#fb2c36"}
+        />
+        <StatusCard
+          title="Overdue" titleColor="text-red-500"
           count={overdueClaims}
           description="Currently in your queue"
-          icon={CheckCircleIcon}
-          iconColor={"#979AA3"}
+          icon={ClockIcon} iconColor={"#fb2c36"}
         />
       </div>
 
       <div className="bg-white rounded-2xl">
         <div className="flex justify-between">
           <h2 className="text-[25px] font-semibold text-black">
-            {showCreateForm
-              ? editingRow
-                ? "Edit Warranty Claim"
-                : "Create New Warranty Claim"
-              : "Requested Claim"}
+            {
+              showCreateForm
+                ? editingRow
+                  ? "Edit Warranty Claim"
+                  : "Create New Warranty Claim"
+                : "Requested Claim"
+            }
           </h2>
           {!showCreateForm && (
             <button

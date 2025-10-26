@@ -1,16 +1,6 @@
 import React, { useState } from 'react'
-import { CheckCircleIcon, WrenchIcon, CaretLeftIcon, CaretRightIcon, CalendarBlankIcon } from '@phosphor-icons/react'
-
-const StatsCard = ({ title, count, subtitle, icon: Icon }) => (
-  <div className="border-[3px] border-[#EBEBEB] bg-white rounded-2xl p-8 min-w-[492px]">
-    <div className="flex items-start justify-between mb-4">
-      <h3 className="text-xl font-semibold text-indigo-600">{title}</h3>
-      {Icon && <Icon size={27} className="text-[#686262]" />}
-    </div>
-    <div className="text-[30px] font-semibold text-black mb-2">{count}</div>
-    <div className="text-base font-medium text-[#686262]">{subtitle}</div>
-  </div>
-)
+import { CheckCircleIcon, WrenchIcon, CaretLeftIcon, CaretRightIcon, CalendarBlankIcon, ListDashesIcon, DotsThreeCircleIcon, ListIcon } from '@phosphor-icons/react'
+import StatusCard from '../components/StatusCard'
 
 const sampleRows = Array.from({ length: 10 }).map((_, i) => ({
   orderId: `RO-00${i + 1}`,
@@ -39,19 +29,25 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-20 mb-12">
-        <StatsCard 
-          title="Total Claims" 
-          count="12" 
-          subtitle="Currently in your queue" 
-          icon={WrenchIcon}
+      
+      <div className="flex flex-wrap gap-6 mt-20 mb-12">
+        <StatusCard
+          title="Total Requests" titleColor="text-indigo-600"
+          count="3"
+          description="Currently in your queue"
+          icon={ListDashesIcon} iconColor={"#4f39f8"}
         />
-        <StatsCard 
-          title="Accepted Requests" 
-          count="04" 
-          subtitle="Currently in your queue" 
-          icon={CheckCircleIcon}
+        <StatusCard
+          title="Accepted Requests" titleColor="text-indigo-600"
+          count="3"
+          description="Currently accepted"
+          icon={CheckCircleIcon} iconColor={"#4f39f8"}
+        />
+        <StatusCard
+          title="Total Works" titleColor="text-indigo-600"
+          count="3"
+          description="Currently in your queue"
+          icon={ListIcon} iconColor={"#4f39f8"}
         />
       </div>
 

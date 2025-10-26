@@ -2,15 +2,7 @@ import React, { useMemo, useState } from 'react'
 import {
   WrenchIcon,
   CheckCircleIcon,
-  Car,
-  PlusCircleIcon,
   CalendarBlankIcon,
-  WarningCircle,
-  Wrench,
-  Info,
-  User,
-  IdentificationBadge,
-  Clock,
   IdentificationBadgeIcon,
   UserIcon,
   CarIcon,
@@ -21,8 +13,9 @@ import {
   InfoIcon,
   CarProfileIcon,
   ClockIcon,
+  ListDashesIcon,
 } from "@phosphor-icons/react";
-import TodoStatusCard from '../components/StatusCard';
+import StatusCard from '../components/StatusCard';
 
 const sampleCards = Array.from({ length: 8 }).map((_, i) => ({
   id: `RO-00${i + 1}`,
@@ -47,14 +40,6 @@ export default function TodoWorks() {
     const [searchTerm, setSearchTerm] = useState('')
     const [showAssignModal, setShowAssignModal] = useState(false)
     const [selectedOrder, setSelectedOrder] = useState(null)
-  
-    const availableTechnicians = [
-      { id: 1, name: 'Jso', role: 'Engineer Repair' },
-      { id: 2, name: 'Jso', role: 'Engineer Repair' },
-      { id: 3, name: 'Jso', role: 'Engineer Repair' },
-      { id: 4, name: 'Jso', role: 'Engineer Repair' },
-      { id: 5, name: 'Jso', role: 'Engineer Repair' },
-    ]
   
     const [orders, setOrders] = useState([
       {
@@ -127,46 +112,11 @@ export default function TodoWorks() {
     const workOrders = orders
   
     // Calculate stats from orders
-    const pendingCount = orders.filter(o => o.status === 'Pending').length
-    const assignedCount = orders.filter(o => o.status === 'Assigned').length
-    const inProgressCount = orders.filter(o => o.status === 'In Progress').length
-    const completedCount = orders.filter(o => o.status === 'Completed').length
-
-    // Status Card 
-    const stats = [
-      {
-        count: pendingCount.toString(),
-        label: "Pending",
-        description: "Awaiting assignment",
-        color: "text-[#979AA3]",
-        icon: DotsThreeCircleIcon,
-        iconColor: "#979AA3",
-      },
-      {
-        count: assignedCount.toString(),
-        title: "Assigned",
-        description: "Ready to start",
-        color: "text-[#0FC3EB]",
-        icon: UserCircleCheckIcon,
-        iconColor: "#0FC3EB",
-      },
-      {
-        count: inProgressCount.toString(),
-        label: "In Progress",
-        description: "Being worked on",
-        color: "text-[#EBB80F]",
-        icon: SpinnerIcon,
-        iconColor: "#EBB80F",
-      },
-      {
-        count: completedCount.toString(),
-        label: "Completed",
-        description: "Finished today",
-        color: "text-green-600",
-        icon: CheckCircleIcon,
-        iconColor: "#00a63e",
-      },
-    ];
+    const totalCount = orders.length;
+    const pendingCount = orders.filter(o => o.status === 'Pending').length;
+    const inProgressCount = orders.filter(o => o.status === 'In Progress').length;
+    const completedCount = orders.filter(o => o.status === 'Completed').length;
+    const overdueCount = orders.filter(o => o.status === 'overdue').length;
   
     const filters = ['All', 'Pending', 'Assigned', 'In Progress', 'Completed']
   
@@ -205,10 +155,37 @@ export default function TodoWorks() {
       </div>
 
       {/* Stats Cards */}
-      <div className="flex flex-wrap gap-4 mb-8">
-        {stats.map((stat, index) => (
-          <TodoStatusCard key={index} {...stat} />
-        ))}
+      <div className="flex flex-wrap gap-6 mt-20 mb-12">
+        <StatusCard
+          title="Total Claims" titleColor="text-indigo-600"
+          count={totalCount}
+          description="Currently in your queue"
+          icon={ListDashesIcon} iconColor={"#4f39f8"}
+        />
+        <StatusCard
+          title="Pending" titleColor="text-gray-500"
+          count={pendingCount}
+          description="Awaiting assignment"
+          icon={DotsThreeCircleIcon} iconColor={"#979AA3"}
+        />
+        <StatusCard
+          title="In-Progress" titleColor="text-yellow-500"
+          count={inProgressCount}
+          description="Being worked on"
+          icon={SpinnerIcon} iconColor={"#EBB80F"}
+        />
+        <StatusCard
+          title="Completed" titleColor="text-green-600"
+          count={completedCount}
+          description="Finished today"
+          icon={CheckCircleIcon} iconColor={"#00a63e"}
+        />
+        <StatusCard
+          title="Overdue" titleColor="text-red-500"
+          count={overdueCount}
+          description="Currently in your queue"
+          icon={ClockIcon} iconColor={"#fb2c36"}
+        />
       </div>
 
       <div className="flex items-center justify-between mb-4">
