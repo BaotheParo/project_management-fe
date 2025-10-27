@@ -1,18 +1,33 @@
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 export default function NotFound() {
+    const navigate = useNavigate();
+
     return (
-        <div className="flex flex-col items-center justify-center h-screen text-center bg-gray-50">
-        <h1 className="text-6xl font-bold text-indigo-600 mb-4">404</h1>
-        <p className="text-lg text-gray-700 mb-6">
-            Oops! The page you’re looking for doesn’t exist.
-        </p>
-        <Link
-            to="/login"
-            className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition"
-        >
-            Go Home
-        </Link>
+        <div className="flex flex-col items-center justify-center h-screen bg-white">
+            <div className="text-center">
+                <h1 className="text-6xl font-bold text-gray-900 mb-4">404</h1>
+                <h2 className="text-2xl font-semibold text-gray-700 mb-2">
+                    Not Found
+                </h2>
+                <p className="text-gray-500 mb-8">
+                    Oops, we cannot find the page you're looking for.
+                </p>
+                <div className="flex gap-4 justify-center">
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="px-6 py-3 rounded-full border border-gray-300 text-gray-700 font-semibold transition-colors hover:bg-gray-50 cursor-pointer"
+                    >
+                        Go Back
+                    </button>
+                    <button
+                        onClick={() => navigate("/login")}
+                        className="px-6 py-3 rounded-full bg-indigo-600 text-white font-semibold transition-colors hover:bg-indigo-700 cursor-pointer"
+                    >
+                        Back to Login
+                    </button>
+                </div>
+            </div>
         </div>
     );
 }

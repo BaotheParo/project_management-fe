@@ -24,7 +24,7 @@ export const useTodoWorks = () => {
                 return;
             }
 
-            const formattedTodoWorks = response.data.map((work) => ({
+            const formattedTodoWorks = data.map((work) => ({
                 id: work.workOrderId,
                 description: work.description,
                 startDate: work.startDate,
@@ -42,10 +42,12 @@ export const useTodoWorks = () => {
             setRows([
                 {
                     id: "RO-001",
-                    vehicle: "VinFast VF-3",
-                    vin: "LSV1E7AL0MC123456",
-                    status: "In Progress",
-                    claimDate: "2025-10-25",
+                    description: "VinFast VF-3",
+                    startDate: "LSV1E7AL0MC123456",
+                    endDate: "In Progress",
+                    estimateHour: "2025-10-25",
+                    status: "Complete",
+                    priority: "HIGH",
                 },
             ]);
         } finally {

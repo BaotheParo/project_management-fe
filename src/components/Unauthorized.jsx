@@ -16,13 +16,13 @@ export default function Unauthorized() {
                 <div className="flex gap-4 justify-center">
                     <button
                         onClick={() => navigate(-1)}
-                        className="px-6 py-3 rounded-xl border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 cursor-pointer"
+                        className="px-6 py-3 rounded-full border border-gray-300 text-gray-700 font-semibold transition-colors hover:bg-gray-50 cursor-pointer"
                     >
                         Go Back
                     </button>
                     <button
                         onClick={() => navigate("/login")}
-                        className="px-6 py-3 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 cursor-pointer"
+                        className="px-6 py-3 rounded-full bg-indigo-600 text-white font-semibold transition-colors hover:bg-indigo-700 cursor-pointer"
                     >
                         Back to Login
                     </button>
