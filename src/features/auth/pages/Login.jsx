@@ -3,46 +3,79 @@ import { Link, useNavigate } from 'react-router-dom'
 import logo from '../../../assets/Login/Logo.png'
 import car from '../../../assets/Login/car.png'
 import Notification from "../../../components/ErrorNotification";
+import { useAuthApi } from '../../../api/useAuthApi';
+import Loader from '../../../components/Loader';
 import { useAuth } from '../../../app/AuthProvider';
 
 export default function Login() {
-  const [email, setEmail] = useState("");
+  const { login, loading } = useAuth();
+
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [notification, setNotification] = useState(null);
   const navigate = useNavigate();
-  const { login } = useAuth();
 
   async function handleSubmit(e) {
     e.preventDefault();
 
-    const result = await login(email, password);
+    const credentials = { username, password };
 
-    // Simple validation
-    if (result.success) {
-      const userRole = result.user.role;
-
-      setNotification({
-        message: "Login successful",
-        subText: new Date().toLocaleString(),
-        actionText: "Undo",
-        onAction: () => { setNotification(null) },
-      });
-
-      // ✅ Redirect by role
-      if (userRole === "technician") {
-        navigate("/sc-technician/dashboard");
-      } else if (userRole === "scstaff") {
-        navigate("/sc-staff/dashboard");
-      } else if (userRole === "evm") {
-        navigate("/evm/dashboard");
+    try {
+      const data = await login(credentials);
+      const role = String(data.role);
+      let validRole = true;
+      
+      switch (role) {
+        case "SCTech":
+        case "1":
+          navigate("/sc-technician/dashboard");
+          break;
+        case "SCStaff":
+        case "0":
+          navigate("/sc-staff/dashboard");
+          break;
+        case "EVM":
+        case "2":
+          navigate("/evm/dashboard");
+          break;
+        case "Admin":
+        case "3":
+          navigate("/admin/dashboard");
+          break;
+        default:
+          validRole = false;
+          console.error("Invalid role !!!");
+          setNotification({
+            message: "Login failed",
+            subText: `Invalid user role: ${role}. Please contact administrator.`,
+            actionText: "Retry",
+            onAction: () => { setNotification(null) },
+          });
       }
-    } else {
+
+      if (validRole) {
+        setNotification({
+          message: "Login successful",
+          subText: new Date().toLocaleString(),
+          actionText: "Close",
+          onAction: () => { setNotification(null) },
+        });
+      }
+    } catch (err) {
       setNotification({
         message: "Login failed",
-        subText: result.message || "Email or Password is wrong",
+        subText: err.message || "Username or Password is incorrect",
         actionText: "Retry",
         onAction: () => { setNotification(null) },
       });
+    }
+
+    if (loading) {
+      return (
+        <div className="flex items-center justify-center h-screen bg-white">
+          <Loader />
+        </div>
+      );
     }
   }
 
@@ -74,13 +107,14 @@ export default function Login() {
             className="mx-auto mt-16 max-w-[520px] text-left"
           >
             <label className="block mb-4">
-              <div className="text-xs text-gray-500 mb-2">Email</div>
+              <div className="text-xs text-gray-500 mb-2">Username</div>
               <input
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="your@example.com"
+                type="text"
+                name="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Username"
                 required
               />
             </label>
@@ -90,6 +124,7 @@ export default function Login() {
               <input
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-200"
                 type="password"
+                name="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="********"
@@ -107,8 +142,9 @@ export default function Login() {
             <button
               className="w-full mt-5 py-3 rounded-xl bg-indigo-600 text-white font-semibold shadow-sm cursor-pointer"
               type="submit"
+              disabled={loading}
             >
-              Login
+              {loading ? "Logging in..." : "Login"}
             </button>
 
             {/* ✅ Error notification */}

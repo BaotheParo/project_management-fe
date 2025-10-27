@@ -6,6 +6,7 @@ import Loader from "../components/Loader";
 import NotFound from "../components/NotFound";
 import RoleRoute from "./RoleRoute";
 import SCStaffLayout from "../layout/SCStaffLayout";
+import Unauthorized from "../components/Unauthorized";
 
 // Lazy load pages
 const LoginPage = lazy(() => import("../features/auth/pages/Login"));
@@ -44,10 +45,14 @@ const router = createBrowserRouter([
         ),
     },
     {
+        path: "/unauthorized",
+        element: <Unauthorized />
+    },
+    {
         path: "/sc-technician",
         element: (
             <ProtectedRoute>
-                <RoleRoute allowedRoles={["technician"]}>
+                <RoleRoute allowedRoles={["SCTech", "1"]}>
                     <SCTechnicianLayout />
                 </RoleRoute>
             </ProtectedRoute>
@@ -63,7 +68,7 @@ const router = createBrowserRouter([
         path: "/sc-staff",
         element: (
             <ProtectedRoute>
-                <RoleRoute allowedRoles={["scstaff"]}>
+                <RoleRoute allowedRoles={["SCStaff"]}>
                     <SCStaffLayout />
                 </RoleRoute>
             </ProtectedRoute>
