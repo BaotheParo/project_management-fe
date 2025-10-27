@@ -4,6 +4,7 @@ import StatusCard from '../components/StatusCard'
 import { useWarrantyClaims } from '../../../../api/useWarrantyClaims'
 import Loader from '../../../../components/Loader'
 import StatusDot from '../components/StatusDot'
+import { useAuth } from '../../../../app/AuthProvider'
 
 export default function Dashboard() {
   const [currentPage, setCurrentPage] = useState(1)
@@ -13,6 +14,11 @@ export default function Dashboard() {
   
   const totalClaims = rows.length;
   const acceptedClaims = rows.filter(r => r.status === "Done").length;
+
+  
+  const { user } = useAuth();
+  const displayName = user?.username || user?.name || user?.fullName || "User";
+  console.log("User object:", user)
 
   if (loading) return <Loader />;
   if (error) 
@@ -26,7 +32,7 @@ export default function Dashboard() {
     <div className="w-full">
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className=" text-black text-3xl font-bold">Hello, Jso!</h1>
+          <h1 className=" text-black text-3xl font-bold">Hello, {displayName}!</h1>
           <p className="text-gray-500">An overview of your works.</p>
         </div>
 

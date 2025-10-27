@@ -44,20 +44,46 @@ export const useAuthApi = () => {
 
     // Logout
     const logout = useCallback(() => {
+        console.log("Logging out...");
         localStorage.removeItem("token");
+        localStorage.removeItem("user");
         delete axiosClient.defaults.headers.common["Authorization"];
         setUser(null);
+        setIsInitialized(false);
     }, []);
 
     // Check Auth on load
     const checkAuth = useCallback(async () => {
         const token = localStorage.getItem("token");
+        const storedUser = localStorage.getItem("user");
+        
         if (!token) {
+            console.log("No token found, skipping auth check");
+            setLoading(false);
+            setIsInitialized(true);
+            return;
+        }
+
+        // Restore from localStorage first
+        if (storedUser) {
+            try {
+                const userData = JSON.parse(storedUser);
+                setUser(userData);
+                console.log("Restored user from localStorage:", userData);
+            } catch (err) {
+                console.error("Failed to parse stored user:", err);
+            }
+        }
+
+        // Skip auth check if already initialized (just logged in)
+        if (isInitialized) {
+            console.log("Already initialized, skipping auth check");
             setLoading(false);
             return;
         }
 
         try {
+            console.log("Checking auth with token...");
             setLoading(true);
             axiosClient.defaults.headers.common["Authorization"] = `Bearer ${token}`;
             const response = await axiosClient.get("/auth/me");
@@ -65,19 +91,36 @@ export const useAuthApi = () => {
 
             console.log("Auth check response:", data);
 
-            // Store user with role - handle both formats
+            // Store complete user data with role
             const userData = data.user 
                 ? { ...data.user, role: data.user.role || data.role }
-                : { role: data.role };
+                : { 
+                    role: data.role,
+                    ...(data.username && { username: data.username }),
+                    ...(data.name && { name: data.name }),
+                    ...(data.email && { email: data.email }),
+                    ...(data.fullName && { fullName: data.fullName }),
+                    ...(data.coverImage && { coverImage: data.coverImage }),
+                };
 
+            localStorage.setItem("user", JSON.stringify(userData));
             setUser(userData);
+            setIsInitialized(true);
         } catch (err) {
-            console.warn("Auth check failed: ", err);
-            logout();
+            console.error("Auth check failed:", err.response?.status, err.response?.data);
+            // Only logout if it's actually an auth error (401/403)
+            if (err.response?.status === 401 || err.response?.status === 403) {
+                console.log("Invalid token, logging out");
+                logout();
+            } else {
+                // If it's a network error or server error, keep the stored user
+                console.log("Auth check failed but keeping stored user");
+                setIsInitialized(true);
+            }
         } finally {
             setLoading(false);
         }
-    }, [logout]);
+    }, [logout, isInitialized]);
 
     useEffect(() => {
         checkAuth();

@@ -78,7 +78,7 @@ export default function ClaimRequestsPage() {
 
   const totalClaims = rows.length;
   const pendingClaims = rows.filter(r => r.status === "Pending").length;
-  const doneClaims = rows.filter(r => r.status === "Done").length;
+  const acceptedClaims = rows.filter(r => r.status === "Accepted").length;
   const rejectedClaims = rows.filter(r => r.status === "Rejected").length;
   const overdueClaims = rows.filter(r => r.status === "Overdue").length;
 
@@ -116,7 +116,7 @@ export default function ClaimRequestsPage() {
         />
         <StatusCard
           title="Accepted" titleColor="text-green-600"
-          count={doneClaims}
+          count={acceptedClaims}
           description="Currently in your queue"
           icon={CheckCircleIcon} iconColor={"#00a63e"}
         />
