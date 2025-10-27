@@ -1,6 +1,20 @@
+import { useWarrantyClaims } from "../../../../api/useWarrantyClaims";
+
 // Delete confirmation modal (rendered at bottom)
 function DeleteModal({ row, onCancel, onConfirm }) {
+  const { deleteClaim } = useWarrantyClaims();
+
   if (!row) return null;
+  
+  const handleConfirm = async () => {
+    try {
+      await deleteClaim(row.id);
+      onCancel();
+    } catch (error) {
+      console.error("Failed to delete claim: ", error);
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/10 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-2xl w-[640px] p-6">
@@ -20,7 +34,7 @@ function DeleteModal({ row, onCancel, onConfirm }) {
           </div>
           <div className="text-sm text-gray-500 mb-4">Car Owner: Jso</div>
           <button
-            onClick={onConfirm}
+            onClick={handleConfirm}
             className="mt-2 bg-indigo-600 text-white px-6 py-2 rounded-full cursor-pointer hover:bg-indigo-700 transition-all"
           >
             I want to delete this request
