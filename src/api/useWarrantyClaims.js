@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axiosClient from "./axiousInstance";
+import axiousInstance from "./axiousInstance";
 import { getClaimStatusLabel } from "../constants/ClaimStatus";
 
 export const useWarrantyClaims = () => {
@@ -11,7 +11,7 @@ export const useWarrantyClaims = () => {
         try {
             setLoading(true);
             setError(null);
-            const response = await axiosClient.get("/claims"); // GET /api/claims
+            const response = await axiousInstance.get("/claims"); // GET /api/claims
 
             const data = Array.isArray(response.data)
                 ? response.data
@@ -51,17 +51,17 @@ export const useWarrantyClaims = () => {
     };
 
     const createClaim = async (payload) => {
-        await axiosClient.post("/claims", payload);
+        await axiousInstance.post("/claims", payload);
         await fetchClaims();
     };
 
     const updateClaim = async (id, payload) => {
-        await axiosClient.put(`/claims/${id}`, payload);
+        await axiousInstance.put(`/claims/${id}`, payload);
         await fetchClaims();
     };
 
     const deleteClaim = async (id) => {
-        await axiosClient.delete(`/claims/${id}`);
+        await axiousInstance.delete(`/claims/${id}`);
         await fetchClaims();
     };
 
