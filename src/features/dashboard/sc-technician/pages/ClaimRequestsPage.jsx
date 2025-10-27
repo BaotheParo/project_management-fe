@@ -23,7 +23,7 @@ import DeleteModal from "../components/DeleteClaimRequest";
 import { useWarrantyClaims } from "../../../../api/useWarrantyClaims";
 import Loader from "../../../../components/Loader";
 
-export default function ClaimRequests() {
+export default function ClaimRequestsPage() {
   const [editingRow, setEditingRow] = useState(null);
   const [openActionFor, setOpenActionFor] = useState(null);
   const [showCreateForm, setShowCreateForm] = useState(false);

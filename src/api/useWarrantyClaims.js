@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axiosClient from "./axiousInstance";
+import { getClaimStatusLabel } from "../constants/ClaimStatus";
 
 export const useWarrantyClaims = () => {
     const [rows, setRows] = useState([]);
@@ -26,14 +27,7 @@ export const useWarrantyClaims = () => {
                     id: claim.claimId,
                     vehicle: claim.vehicleName || "Unknown",
                     vin: claim.vin,
-                    status: 
-                        claim.claimStatus === 0
-                            ? "Pending"
-                            : claim.claimStatus === 1
-                            ? "In Progress"
-                            : claim.claimStatus === 2
-                            ? "Done"
-                            : "Unknown",
+                    status: getClaimStatusLabel(claim.claimStatus),
                     claimDate: new Date(claim.claimDate).toISOString().split("T")[0],
             }));
             

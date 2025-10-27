@@ -13,10 +13,11 @@ const LoginPage = lazy(() => import("../features/auth/pages/Login"));
 const ForgotPasswordPage = lazy(() => import("../features/auth/pages/ForgotPassword"));
 
 // Sc-Technician
-const SCTechnicianDashboardPage = lazy(() => import("../features/dashboard/sc-technician/pages/Dashboard"));
-const SCTechnicianTodoWorksPage = lazy(() => import("../features/dashboard/sc-technician/pages/TodoWorks"));
-const SCTechnicianClaimRequestsPage = lazy(() => import("../features/dashboard/sc-technician/pages/ClaimRequests"));
-const SCTechnicianProfilePage = lazy(() => import("../features/dashboard/sc-technician/pages/Profile"));
+const SCTechnicianDashboardPage = lazy(() => import("../features/dashboard/sc-technician/pages/DashboardPage"));
+const SCTechnicianClaimRequestsPage = lazy(() => import("../features/dashboard/sc-technician/pages/ClaimRequestsPage"));
+const SCTechnicianEditClaimRequestsPage = lazy(() => import("../features/dashboard/sc-technician/pages/EditClaimRequestPage"));
+const SCTechnicianTodoWorksPage = lazy(() => import("../features/dashboard/sc-technician/pages/TodoWorksPage"));
+const SCTechnicianProfilePage = lazy(() => import("../features/dashboard/sc-technician/pages/ProfilePage"));
 
 // Sc-Staff
 const SCStaffDashboardPage = lazy(() => import("../features/dashboard/sc-staff/pages/Dashboard"));
@@ -59,8 +60,9 @@ const router = createBrowserRouter([
         ),
         children: [
             { index: true, path: "dashboard", element: <Suspense fallback={<Loader />}><SCTechnicianDashboardPage /></Suspense>},
-            { path: "todos", element: <Suspense fallback={<Loader />}><SCTechnicianTodoWorksPage /></Suspense> },
             { path: "claims", element: <Suspense fallback={<Loader />}><SCTechnicianClaimRequestsPage /></Suspense> },
+            { path: "claims/{id}", element: <Suspense fallback={<Loader />}><SCTechnicianEditClaimRequestsPage /></Suspense> },
+            { path: "todos", element: <Suspense fallback={<Loader />}><SCTechnicianTodoWorksPage /></Suspense> },
             { path: "profile", element: <Suspense fallback={<Loader />}><SCTechnicianProfilePage /></Suspense> },
         ],
     },
