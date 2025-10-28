@@ -50,11 +50,11 @@ export default function EditClaimRequestsPage() {
                             <div className="w-full">
                                 <p className="text-sm mb-2 text-[#6B716F]">Claim Id</p>
                                 <input
-                                    readOnly="true"
+                                    readOnly={true}
                                     className="p-3 bg-[#F9FAFB] border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="Claim ID"
                                     aria-disabled
-                                    defaultValue={row?.id || "WC-2003-9192332"}
+                                    defaultValue={row?.id || ""}
                                 />
                             </div>
                             <div className="w-full">
@@ -62,32 +62,32 @@ export default function EditClaimRequestsPage() {
                                 <input
                                     className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="Claim Date"
-                                    defaultValue={row ? "02/12/2025" : ""}
+                                    defaultValue={row?.claimDate || "03/12/2004"}
                                 />
                             </div>
-                            <div className="w-full">
+                            {/* <div className="w-full">
                                 <p className="text-sm mb-2 text-[#6B716F]">Service Center</p>
                                 <input
                                     className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="Service Center"
-                                    defaultValue={row ? "WC-2003-9192332" : ""}
+                                    defaultValue={row?.service || "WC-2003-9192332"}
                                 />
-                            </div>
+                            </div> */}
                             <div className="w-full">
                                 <p className="text-sm mb-2 text-[#6B716F]">Created By</p>
                                 <input
-                                    readOnly="true"
+                                    readOnly={true}
                                     className="p-3 bg-[#F9FAFB] border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="Created By"
-                                    defaultValue={row ? "Jso" : ""}
+                                    defaultValue={row?.name || ""}
                                 />
                             </div>
-                            <div className="w-full">
+                            {/* <div className="w-full">
                                 <p className="text-sm mb-2 text-[#6B716F]">Manufacturer</p>
                                 <select className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none">
                                     <option>Select Manufacturer</option>
                                 </select>
-                            </div>
+                            </div> */}
                         </div>
                     </div>
 
@@ -119,7 +119,7 @@ export default function EditClaimRequestsPage() {
                                 <input
                                     className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="Purchase Date of vehicle"
-                                    defaultValue={row ? "12/23/2012" : ""}
+                                    defaultValue={row?.purchaseDate || ""}
                                 />
                             </div>
                             <div className="w-full">
@@ -129,7 +129,7 @@ export default function EditClaimRequestsPage() {
                                 <input
                                     className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="Current Mileage (km)"
-                                    defaultValue={row ? "8,433" : ""}
+                                    defaultValue={row?.mileAge || ""}
                                 />
                             </div>
                         </div>
@@ -177,9 +177,7 @@ export default function EditClaimRequestsPage() {
                                 className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none min-h-[120px]"
                                 placeholder="Provide a detailed description of the issue..."
                                 defaultValue={
-                                    row
-                                        ? "My car cannot start like normal, when start the engine the sound is noisy as hell."
-                                        : ""
+                                    row?.issueDescription || ""
                                 }
                             />
                         </div>

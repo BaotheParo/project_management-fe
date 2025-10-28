@@ -14,7 +14,7 @@ import {
 } from "@phosphor-icons/react";
 import StatusCard from '../components/StatusCard';
 import WorkDetails from './WorkDetails';
-import { useTodoWorks } from '../../../../api/useTodoWorks';
+import { useTodoWorksApi } from '../../../../api/useTodoWorksApi';
 import Loader from '../../../../components/Loader';
 
 const sampleCards = Array.from({ length: 8 }).map((_, i) => ({
@@ -40,6 +40,9 @@ export default function TodoWorks() {
   const [searchTerm, setSearchTerm] = useState('')
   const [showAssignModal, setShowAssignModal] = useState(false)
   const [selectedOrder, setSelectedOrder] = useState(null)
+
+  const { rows, loading, error } = useTodoWorksApi();
+
   const [orders, setOrders] = useState([
     {
       id: 'RO-002',
@@ -110,11 +113,11 @@ export default function TodoWorks() {
 
   const workOrders = orders
 
-  const filters = ['All', 'Pending', 'Assigned', 'In Progress', 'Completed']
+  const filters = ["All", "Pending", "In Progress", "Completed", "Overdue"];
 
   // Filter orders based on active filter and search term
   const filteredOrders = useMemo(() => {
-    return workOrders.filter(order => {
+    return rows.filter(order => {
       const matchesFilter = activeFilter === 'All' || order.status === activeFilter
       const matchesSearch = searchTerm === '' ||
         order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -122,15 +125,15 @@ export default function TodoWorks() {
         order.customer.toLowerCase().includes(searchTerm.toLowerCase())
       return matchesFilter && matchesSearch
     })
-  }, [workOrders, activeFilter, searchTerm])
+  }, [rows, activeFilter, searchTerm])
 
 
   const [cards] = useState(sampleCards)
   const [filter, setFilter] = useState('All')
   const [query, setQuery] = useState('')
   const [selected, setSelected] = useState(null)
-  
-  const { rows, loading, error } = useTodoWorks();
+
+  // const { rows, loading, error } = useTodoWorks();
 
   const visibleCards = useMemo(() => {
     return rows.filter(
@@ -215,7 +218,7 @@ export default function TodoWorks() {
 
       <div className="flex gap-5 flex-wrap w-full justify-between mb-4">
         <div className="bg-gray-100 rounded-full inline-flex gap-2 p-2 overflow-auto">
-          {["All", "Pending", "In Progress", "Completed", "Overdue"].map(
+          {filters.map(
             (f) => (
               <button
                 key={f}

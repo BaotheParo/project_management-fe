@@ -1,48 +1,55 @@
 import React, { useState } from 'react'
-import { CheckCircleIcon, CaretLeftIcon, CaretRightIcon, CalendarBlankIcon, ListDashesIcon, ListIcon } from '@phosphor-icons/react'
+import { CheckCircleIcon, CaretLeftIcon, CaretRightIcon, ListDashesIcon, ListIcon, CaretDownIcon, PlusIcon } from '@phosphor-icons/react'
 import StatusCard from '../components/StatusCard'
 import { useWarrantyClaims } from '../../../../api/useWarrantyClaims'
 import Loader from '../../../../components/Loader'
 import StatusDot from '../components/StatusDot'
 import { useAuth } from '../../../../app/AuthProvider'
+import { useNavigate } from 'react-router-dom'
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1)
   const totalPages = 4
 
   const { rows, loading, error } = useWarrantyClaims();
-  
-  const totalClaims = rows.length;
-  const acceptedClaims = rows.filter(r => r.status === "Done").length;
 
-  
+  const totalClaims = rows.length;
+  const acceptedClaims = rows.filter(r => r.status === "Accepted").length;
+
+
   const { user } = useAuth();
   const displayName = user?.username || user?.name || user?.fullName || "User";
   console.log("User object:", user)
 
   if (loading) return <Loader />;
-  if (error) 
+  if (error)
     return (
-    <p className="text-red-500">
-      Error loading claims: {error.message}
-    </p>
-  );
+      <p className="text-red-500">
+        Error loading claims: {error.message}
+      </p>
+    );
 
   return (
     <div className="w-full">
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className=" text-black text-3xl font-bold">Hello, {displayName}!</h1>
+          <h1 className=" text-black text-3xl font-bold">
+            Hello, {displayName}!
+          </h1>
           <p className="text-gray-500">An overview of your works.</p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <span className="text-[17px] font-semibold text-[#393C3B]">
-            16 May, 2025
-          </span>
-          <div className="w-[45px] h-[45px] rounded-full bg-[#F1F3F4] flex items-center justify-center">
-            <CalendarBlankIcon size={25} className="text-black" />
-          </div>
+        <div className='flex items-center gap-5'>
+          <button
+            onClick={() => {
+              navigate('/create');
+            }}
+            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 transition-all text-white px-9 py-3 rounded-full cursor-pointer"
+          >
+            <span className='font-semibold'>New Request</span>
+            <PlusIcon size={20} weight="bold" color='#ffffff' />
+          </button>
         </div>
       </div>
 
@@ -83,7 +90,7 @@ export default function Dashboard() {
             <thead>
               <tr className="border-b-2 border-[#DEE1E6] bg-[#FAFAFA]">
                 <th className="text-left px-8 py-3 text-base font-medium text-[#686262]">
-                  Order ID
+                  Claim ID
                 </th>
                 <th className="text-left px-8 py-3 text-base font-medium text-[#686262]">
                   Vehicle
@@ -95,18 +102,18 @@ export default function Dashboard() {
                   Status
                 </th>
                 <th className="text-left px-8 py-3 text-base font-medium text-[#686262]">
-                  Claim Date
+                  Request Date
                 </th>
               </tr>
             </thead>
             <tbody>
               {rows.map((r) => (
                 <tr
-                  key={r.orderId}
+                  key={r.id}
                   className="border-b-2 border-[#DEE1E6] bg-white hover:bg-gray-50"
                 >
                   <td className="px-8 py-3 text-[13px] font-medium text-black">
-                    {r.orderId}
+                    {r.id}
                   </td>
                   <td className="px-8 py-3 text-[13px] font-medium text-black">
                     {r.vehicle}
@@ -146,11 +153,10 @@ export default function Dashboard() {
                 <button
                   key={page}
                   onClick={() => setCurrentPage(page)}
-                  className={`w-8 h-8 rounded-full text-[12px] font-medium flex items-center justify-center transition-colors cursor-pointer ${
-                    currentPage === page
-                      ? "bg-indigo-600 text-white"
-                      : "bg-white text-[#727674] hover:text-black"
-                  }`}
+                  className={`w-8 h-8 rounded-full text-[12px] font-medium flex items-center justify-center transition-colors cursor-pointer ${currentPage === page
+                    ? "bg-indigo-600 text-white"
+                    : "bg-white text-[#727674] hover:text-black"
+                    }`}
                 >
                   {page}
                 </button>

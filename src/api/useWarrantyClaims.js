@@ -70,7 +70,11 @@ export const useWarrantyClaims = () => {
                 vehicle: claim.vehicleName || "Unknown",
                 vin: claim.vin,
                 status: getClaimStatusLabel(claim.claimStatus),
+                name: claim.name,
                 claimDate: new Date(claim.claimDate).toISOString().split("T")[0],
+                issueDescription: claim.issueDescription,
+                mileAge: claim.mileAge,
+                purchaseDate: new Date(claim.purchaseDate).toISOString().split("T")[0],
             };
 
             setRow(formattedClaim);

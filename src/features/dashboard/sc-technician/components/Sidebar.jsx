@@ -1,48 +1,19 @@
 import React from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
-import { HouseIcon, ListIcon, ClipboardTextIcon, UserIcon, MinusCircleIcon } from '@phosphor-icons/react'
+import { useNavigate } from 'react-router-dom'
+import { HouseIcon, ListIcon, ClipboardTextIcon, UserIcon, MinusCircleIcon, CaretDownIcon } from '@phosphor-icons/react'
 import logo from '../../../../assets/group4.png'
 import { useAuthApi } from '../../../../api/useAuthApi'
-
-const NavItem = ({ to, icon: Icon, label, end, onClick }) => {
-  const commonClasses = ({ isActive }) =>
-    `flex items-center gap-3 w-52 px-4 py-3 rounded-full justify-start cursor-pointer transition-colors ${
-      isActive ? 'bg-indigo-600 text-white' : 'hover:bg-[#F1F3F4] text-gray-600'
-    }`
-
-  // Render a <button> if there's an onClick handler
-  if (onClick) {
-    return (
-      <button
-        onClick={onClick}
-        className="flex items-center gap-3 w-52 px-4 py-3 rounded-full justify-start cursor-pointer transition-colors hover:bg-[#F1F3F4] text-gray-600"
-      >
-        <div className="flex items-center justify-center w-8 h-8 text-gray-500">
-          <Icon size={18} weight="bold" />
-        </div>
-        <div className="text-sm font-medium">{label}</div>
-      </button>
-    )
-  }
-
-  return (
-    <NavLink end={end} to={to} className={commonClasses}>
-      {({ isActive }) => (
-        <>
-          <div className={`flex items-center justify-center w-8 h-8 ${isActive ? 'text-white' : 'text-gray-500'}`}>
-            <Icon size={18} weight="bold" />
-          </div>
-          <div className="text-sm font-medium">{label}</div>
-        </>
-      )}
-    </NavLink>
-  )
-}
-
+import NavItem from '../../../../components/Sidebar/NavItem'
+import { useAuth } from '../../../../app/AuthProvider'
 
 export default function Sidebar() {
   const navigate = useNavigate()
-  const { logout, loading } = useAuthApi();
+  const { logout } = useAuthApi();
+
+  const { user } = useAuth();
+  const displayName = user?.username || user?.name || user?.fullName || "User";
+  const displayUsername = user?.name;
+  const displayCoverImage = user?.coverImage;
 
   const handleLogout = () => {
     logout();
@@ -61,20 +32,34 @@ export default function Sidebar() {
             <NavItem end={true} to="/sc-technician/dashboard" icon={HouseIcon} label="Dashboard" />
           </div>
           <div className="py-0">
-          <NavItem to="/sc-technician/claims" icon={ClipboardTextIcon} label="Claim Requests" />
+            <NavItem to="/sc-technician/claims" icon={ClipboardTextIcon} label="Claim Requests" />
           </div>
           <div className="py-0">
-          <NavItem to="/sc-technician/todos" icon={ListIcon} label="Todo Works" />
-          </div>
-          <div className="py-0">
-            <NavItem to="/sc-technician/profile" icon={UserIcon} label="Profile" />
+            <NavItem to="/sc-technician/todos" icon={ListIcon} label="Todo Works" />
           </div>
         </nav>
       </div>
 
       <div className="px-6 py-6">
         <div className="py-0">
-            <NavItem to="#" icon={MinusCircleIcon} label="Logout" onClick={handleLogout} />
+          <button
+            onClick={() => {
+              navigate('/sc-technician/profile');
+            }}
+            className='flex items-center gap-4 w-52 px-4 py-3 rounded-full justify-start cursor-pointer transition-colors hover:bg-[#F1F3F4] text-gray-600'
+          >
+            <img
+              src={displayCoverImage}
+              alt="Claim cover"
+              className="w-[25px] h-[25px] object-cover rounded-full"
+            />
+            <span className="text-sm font-medium text-[#393C3B]">
+              {displayUsername}
+            </span>
+          </button>
+        </div>
+        <div className="py-0">
+          <NavItem to="#" icon={MinusCircleIcon} label="Logout" onClick={handleLogout} />
         </div>
       </div>
     </aside>

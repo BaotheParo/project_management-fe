@@ -1,6 +1,5 @@
 import React, { useMemo, useState, useRef, useEffect } from "react";
 import {
-  PlusCircleIcon,
   CaretLeftIcon,
   CaretRightIcon,
   XCircleIcon,
@@ -9,6 +8,8 @@ import {
   ListDashesIcon,
   DotsThreeCircleIcon,
   ClockIcon,
+  PlusIcon,
+  CaretDownIcon,
 } from "@phosphor-icons/react";
 import StatusCard from "../components/StatusCard";
 import StatusDot from "../components/StatusDot";
@@ -16,11 +17,10 @@ import DeleteModal from "../components/DeleteClaimRequest";
 import { useWarrantyClaims } from "../../../../api/useWarrantyClaims";
 import Loader from "../../../../components/Loader";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../../../app/AuthProvider";
 
 export default function ClaimRequestsPage() {
-  const [editingRow, setEditingRow] = useState(null);
   const [openActionFor, setOpenActionFor] = useState(null);
-  const [showCreateForm, setShowCreateForm] = useState(false);
   const menuRef = useRef(null);
   const [currentPage, setCurrentPage] = useState(1);
   const navigate = useNavigate();
@@ -46,22 +46,20 @@ export default function ClaimRequestsPage() {
   function confirmDelete() {
     setDeletingRow(null);
   }
-  
+
   const { rows, loading, error } = useWarrantyClaims();
 
   const totalClaims = rows.length;
-  const pendingClaims = rows.filter(r => r.status === "Pending").length;
-  const acceptedClaims = rows.filter(r => r.status === "Accepted").length;
-  const rejectedClaims = rows.filter(r => r.status === "Rejected").length;
-  const overdueClaims = rows.filter(r => r.status === "Overdue").length;
+  const pendingClaims = rows.filter((r) => r.status === "Pending").length;
+  const acceptedClaims = rows.filter((r) => r.status === "Accepted").length;
+  const rejectedClaims = rows.filter((r) => r.status === "Rejected").length;
+  const overdueClaims = rows.filter((r) => r.status === "Overdue").length;
 
   if (loading) return <Loader />;
-  if (error) 
+  if (error)
     return (
-    <p className="text-red-500">
-      Error loading claims: {error.message}
-    </p>
-  );
+      <p className="text-red-500">Error loading claims: {error.message}</p>
+    );
 
   return (
     <div className="w-full">
@@ -71,6 +69,18 @@ export default function ClaimRequestsPage() {
           <p className="text-gray-500">
             Manage and track warranty claim requests
           </p>
+        </div>
+
+        <div className="flex items-center gap-5">
+          <button
+            onClick={() => {
+              navigate("/create");
+            }}
+            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 transition-all text-white px-9 py-3 rounded-full cursor-pointer"
+          >
+            <span className="font-semibold">New Request</span>
+            <PlusIcon size={20} weight="bold" color="#ffffff" />
+          </button>
         </div>
       </div>
 
@@ -120,32 +130,9 @@ export default function ClaimRequestsPage() {
       <div className="bg-white rounded-2xl">
         <div className="flex justify-between">
           <h2 className="text-[25px] font-semibold text-black">
-            {showCreateForm
-              ? editingRow
-                ? "Edit Warranty Claim"
-                : "Create New Warranty Claim"
-              : "Requested Claim"}
+            Requested Claim
           </h2>
-          {!showCreateForm && (
-            <button
-              onClick={() => {
-                setEditingRow(null);
-                setShowCreateForm(true);
-              }}
-              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 transition-all text-white px-4 py-2 rounded-full cursor-pointer"
-            >
-              <PlusCircleIcon size={16} />
-              <span>Create request</span>
-            </button>
-          )}
         </div>
-        <p className="text-sm text-gray-500">
-          {showCreateForm
-            ? editingRow
-              ? "Fill out the form below to submit or edit a warranty claim."
-              : "Fill out the form below to submit a new warranty claim request for electric vehicle components."
-            : ""}
-        </p>
 
         <div className="border-[3px] border-[#EBEBEB] rounded-2xl overflow-visible mt-6">
           <table className="w-full">
@@ -164,7 +151,7 @@ export default function ClaimRequestsPage() {
                   Status
                 </th>
                 <th className="text-left px-8 py-3 text-base font-medium text-[#686262]">
-                  Claim Date
+                  Request Date
                 </th>
                 <th className="text-left rounded-tr-2xl px-8 py-3 text-base font-medium text-[#686262]">
                   Actions

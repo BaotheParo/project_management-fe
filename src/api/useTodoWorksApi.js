@@ -3,7 +3,7 @@ import axiousInstance from "./axiousInstance";
 import { getWorkStatusLabel } from "../constants/TodoWorkStatus";
 import { getPriorityStatusLabel } from "../constants/TodoWorkPriority";
 
-export const useTodoWorks = () => {
+export const useTodoWorksApi = () => {
     const [rows, setRows] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
