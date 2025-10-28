@@ -16,7 +16,7 @@ export const useTodoWorks = () => {
 
             const data = Array.isArray(response.data)
                 ? response.data
-                : response.data?.data || []
+                : response.data?.data || [];
 
             if (!Array.isArray(data)) {
                 console.warn("Unexpected response structure: ", response.data);
@@ -25,13 +25,26 @@ export const useTodoWorks = () => {
             }
 
             const formattedTodoWorks = data.map((work) => ({
-                id: work.workOrderId,
-                description: work.description,
-                startDate: work.startDate,
-                endDate: work.endDate,
-                estimateHour: work.estimateHour,
+                // id: work.workOrderId,
+                // description: work.description,
+                // startDate: work.startDate,
+                // endDate: work.endDate,
+                // estimateHour: work.estimateHour,
+                // status: getWorkStatusLabel(work.workStatus),
+                // priority: getPriorityStatusLabel(work.workPriority),
+                // claimId: work.claimId,
+                // technicianName: work.technicianName,
+                // customerName: work.customerName,
+                id: work.workOrderId || `RO-${work.claimId}`,
+                vehicle: work.vehicleName || "Unknown Vehicle",
+                vin: work.vin || "N/A",
+                customer: work.customerName || "N/A",
+                date: work.startDate ? new Date(work.startDate).toLocaleDateString() : "N/A",
+                eta: work.estimateHour ? `${work.estimateHour}h` : "N/A",
                 status: getWorkStatusLabel(work.workStatus),
                 priority: getPriorityStatusLabel(work.workPriority),
+                issue: work.description || "No description available",
+                technician: work.technicianName || "Unassigned",
             }));
 
             setRows(formattedTodoWorks);
@@ -48,6 +61,9 @@ export const useTodoWorks = () => {
                     estimateHour: "2025-10-25",
                     status: "Complete",
                     priority: "HIGH",
+                    claimId: "OR-232",
+                    technicianName: "Jso",
+                    customerName: "Nhat",
                 },
             ]);
         } finally {

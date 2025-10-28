@@ -4,9 +4,11 @@ import { getClaimStatusLabel } from "../constants/ClaimStatus";
 
 export const useWarrantyClaims = () => {
     const [rows, setRows] = useState([]);
+    const[row, setRow] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    // Fetch all claims
     const fetchClaims = async () => {
         try {
             setLoading(true);
@@ -24,13 +26,13 @@ export const useWarrantyClaims = () => {
             }
 
             const formattedClaims = response.data.map((claim) => ({
-                    id: claim.claimId,
-                    vehicle: claim.vehicleName || "Unknown",
-                    vin: claim.vin,
-                    status: getClaimStatusLabel(claim.claimStatus),
-                    claimDate: new Date(claim.claimDate).toISOString().split("T")[0],
+                id: claim.claimId,
+                vehicle: claim.vehicleName || "Unknown",
+                vin: claim.vin,
+                status: getClaimStatusLabel(claim.claimStatus),
+                claimDate: new Date(claim.claimDate).toISOString().split("T")[0],
             }));
-            
+
             setRows(formattedClaims);
         } catch (err) {
             console.error("Fetch claims failed", err)
@@ -45,6 +47,36 @@ export const useWarrantyClaims = () => {
                     claimDate: "2025-10-25",
                 },
             ]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Fetch claim by Id
+    const fetchClaimById = async (id) => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            const response = await axiousInstance.get(`/claims/${id}`);
+            const claim = response.data?.data || response.data;
+
+            if (!claim) {
+                throw new Error("Claim not found");
+            }
+
+            const formattedClaim = {
+                id: claim.claimId,
+                vehicle: claim.vehicleName || "Unknown",
+                vin: claim.vin,
+                status: getClaimStatusLabel(claim.claimStatus),
+                claimDate: new Date(claim.claimDate).toISOString().split("T")[0],
+            };
+
+            setRow(formattedClaim);
+        } catch (err) {
+            console.error("Fetch claim by ID failed: ", err);
+            setError(err);
         } finally {
             setLoading(false);
         }
@@ -69,5 +101,15 @@ export const useWarrantyClaims = () => {
         fetchClaims();
     }, []);
 
-    return { rows, loading, error, createClaim, updateClaim, deleteClaim };
+    return {
+        rows,
+        row,
+        loading,
+        error,
+        fetchClaims,
+        fetchClaimById,
+        createClaim,
+        updateClaim,
+        deleteClaim,
+    };
 };

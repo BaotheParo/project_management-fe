@@ -129,13 +129,18 @@ export default function TodoWorks() {
   const [filter, setFilter] = useState('All')
   const [query, setQuery] = useState('')
   const [selected, setSelected] = useState(null)
-
-  const visible = useMemo(() => {
-    return cards.filter((c) => (filter === 'All' ? true : c.status === filter) && (c.vehicle.toLowerCase().includes(query.toLowerCase()) || c.id.toLowerCase().includes(query.toLowerCase())))
-  }, [cards, filter, query])
-
-  const { rows, loading, error } = useTodoWorks();
   
+  const { rows, loading, error } = useTodoWorks();
+
+  const visibleCards = useMemo(() => {
+    return rows.filter(
+      (r) => 
+        (filter === 'All' ? true : r.status === filter) && 
+        (r.vehicle.toLowerCase().includes(query.toLowerCase()) || 
+        r.id.toLowerCase().includes(query.toLowerCase()))
+    );
+  }, [rows, filter, query])
+
   const totalWorks = rows.length;
   const pendingWorks = rows.filter(r => r.status === "Pending").length;
   const inProgressWorks = rows.filter(r => r.status === "InProgress").length;
@@ -163,34 +168,44 @@ export default function TodoWorks() {
       {/* Stats Cards */}
       <div className="flex flex-wrap gap-6 mt-20 mb-12">
         <StatusCard
-          title="Total Claims" titleColor="text-indigo-600"
+          title="Total Claims"
+          titleColor="text-indigo-600"
           count={totalWorks}
           description="Currently in your queue"
-          icon={ListDashesIcon} iconColor={"#4f39f8"}
+          icon={ListDashesIcon}
+          iconColor={"#4f39f8"}
         />
         <StatusCard
-          title="Pending" titleColor="text-gray-500"
+          title="Pending"
+          titleColor="text-gray-500"
           count={pendingWorks}
           description="Awaiting assignment"
-          icon={DotsThreeCircleIcon} iconColor={"#979AA3"}
+          icon={DotsThreeCircleIcon}
+          iconColor={"#979AA3"}
         />
         <StatusCard
-          title="In-Progress" titleColor="text-yellow-500"
+          title="In-Progress"
+          titleColor="text-yellow-500"
           count={inProgressWorks}
           description="Being worked on"
-          icon={SpinnerIcon} iconColor={"#EBB80F"}
+          icon={SpinnerIcon}
+          iconColor={"#EBB80F"}
         />
         <StatusCard
-          title="Completed" titleColor="text-green-600"
+          title="Completed"
+          titleColor="text-green-600"
           count={completedWorks}
           description="Finished today"
-          icon={CheckCircleIcon} iconColor={"#00a63e"}
+          icon={CheckCircleIcon}
+          iconColor={"#00a63e"}
         />
         <StatusCard
-          title="Overdue" titleColor="text-red-500"
+          title="Overdue"
+          titleColor="text-red-500"
           count={overduedWorks}
           description="Currently in your queue"
-          icon={ClockIcon} iconColor={"#fb2c36"}
+          icon={ClockIcon}
+          iconColor={"#fb2c36"}
         />
       </div>
 
@@ -205,10 +220,11 @@ export default function TodoWorks() {
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className={`text-sm px-3 py-2 rounded-full text-nowrap ${filter === f
+                className={`text-sm px-3 py-2 rounded-full text-nowrap ${
+                  filter === f
                     ? "bg-indigo-600 text-white font-semibold transition-all cursor-pointer"
                     : "text-black font-semibold hover:bg-white transition-all cursor-pointer"
-                  }`}
+                }`}
               >
                 {f}
               </button>
@@ -216,7 +232,7 @@ export default function TodoWorks() {
           )}
         </div>
         <div className="flex items-center gap-2 bg-[#F1F3F4] rounded-full px-4 py-2">
-          <MagnifyingGlassIcon size={20} weight="bold" color='#929594' />
+          <MagnifyingGlassIcon size={20} weight="bold" color="#929594" />
           <input
             type="text"
             value={query}
@@ -229,7 +245,7 @@ export default function TodoWorks() {
 
       {selected ? (
         <WorkDetails row={selected} onClose={() => setSelected(null)} />
-      ) : visible.length === 0 ? (
+      ) : visibleCards.length === 0 ? (
         <div className="w-full bg-gray-100 rounded-md p-8 flex items-center justify-center">
           <div className="text-center">
             <InfoIcon size={28} className="mx-auto text-gray-500 mb-3" />
@@ -241,56 +257,56 @@ export default function TodoWorks() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {visible.map((c) => (
+          {visibleCards.map((r) => (
             <div
-              key={c.id}
+              key={r.id}
               className="bg-white border border-[#d8dadf] rounded-2xl shadow-[0_4px_16px_3px_rgba(173,173,173,0.12)] overflow-hidden p-6"
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-[#e1e3ff] flex items-center justify-center text-indigo-600">
-                    <CarProfileIcon size={25} weight="bold" color='#4f39f6' />
+                    <CarProfileIcon size={25} weight="bold" color="#4f39f6" />
                   </div>
                   <div>
-                    <div className="font-semibold">{c.vehicle}</div>
-                    <div className="text-xs text-gray-500">ID: {c.id}</div>
+                    <div className="font-semibold">{r.vehicle}</div>
+                    <div className="text-xs text-gray-500">ID: {r.id}</div>
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-2">
-                  <StatusBadge status={c.status} />
-                  <div className="text-xs text-gray-400">{c.priority}</div>
+                  <StatusBadge status={r.status} />
+                  <div className="text-xs text-gray-400">{r.priority}</div>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3 text-sm text-gray-600 mb-4">
                 <div className="flex items-center gap-2">
                   <UserIcon size={16} className="text-gray-500" />
-                  {c.owner}
+                  {r.customerName || r.customer}
                 </div>
                 <div className="text-right flex items-center justify-end gap-2">
                   <IdentificationBadgeIcon
                     size={16}
                     className="text-gray-500"
                   />
-                  {c.vin}
+                  {r.vin}
                 </div>
                 <div className="flex items-center gap-2">
                   <CalendarBlankIcon size={16} className="text-gray-500" />
-                  {c.date}
+                  {r.date}
                 </div>
                 <div className="text-right flex items-center justify-end gap-2">
                   <ClockIcon size={16} className="text-gray-500" />
-                  {c.eta}
+                  {r.estimateHour ? `${r.estimateHour}h` : r.eta}
                 </div>
               </div>
 
               <div className="text-sm text-gray-700 mb-4 bg-gray-50 p-3 rounded-md">
-                {c.excerpt}
+                {r.description || r.issue}
               </div>
 
               <div className="flex items-center justify-end">
                 <button
-                  onClick={() => setSelected(c)}
+                  onClick={() => setSelected(r)}
                   className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 transition-colors text-white rounded-full cursor-pointer"
                 >
                   View Details
