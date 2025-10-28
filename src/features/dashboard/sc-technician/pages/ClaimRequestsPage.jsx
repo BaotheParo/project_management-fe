@@ -9,7 +9,6 @@ import {
   DotsThreeCircleIcon,
   ClockIcon,
   PlusIcon,
-  CaretDownIcon,
 } from "@phosphor-icons/react";
 import StatusCard from "../components/StatusCard";
 import StatusDot from "../components/StatusDot";
@@ -17,7 +16,6 @@ import DeleteModal from "../components/DeleteClaimRequest";
 import { useWarrantyClaims } from "../../../../api/useWarrantyClaims";
 import Loader from "../../../../components/Loader";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../../../app/AuthProvider";
 
 export default function ClaimRequestsPage() {
   const [openActionFor, setOpenActionFor] = useState(null);
@@ -74,7 +72,7 @@ export default function ClaimRequestsPage() {
         <div className="flex items-center gap-5">
           <button
             onClick={() => {
-              navigate("/create");
+              navigate("create");
             }}
             className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 transition-all text-white px-9 py-3 rounded-full cursor-pointer"
           >
@@ -203,7 +201,7 @@ export default function ClaimRequestsPage() {
                           <button
                             onClick={() => {
                               setOpenActionFor(null);
-                              navigate(`${r.id}`);
+                              navigate(`edit/claim/${r.id}`);
                             }}
                             className="w-full text-left rounded-tl-lg rounded-tr-lg transition-all px-3 py-2 hover:bg-gray-50 cursor-pointer"
                           >

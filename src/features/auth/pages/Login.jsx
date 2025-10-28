@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom'
 import logo from '../../../assets/Login/Logo.png'
 import car from '../../../assets/Login/car.png'
 import Notification from "../../../components/ErrorNotification";
-import { useAuthApi } from '../../../api/useAuthApi';
 import Loader from '../../../components/Loader';
 import { useAuth } from '../../../app/AuthProvider';
 

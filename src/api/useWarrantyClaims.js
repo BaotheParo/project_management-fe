@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axiousInstance from "./axiousInstance";
 import { getClaimStatusLabel } from "../constants/ClaimStatus";
+import { replace } from "react-router-dom";
 
 export const useWarrantyClaims = () => {
     const [rows, setRows] = useState([]);
@@ -75,6 +76,9 @@ export const useWarrantyClaims = () => {
                 issueDescription: claim.issueDescription,
                 mileAge: claim.mileAge,
                 purchaseDate: new Date(claim.purchaseDate).toISOString().split("T")[0],
+                partName: claim.partName,
+                partId: claim.partId,
+                // replacementDate: new Date(claim.)
             };
 
             setRow(formattedClaim);

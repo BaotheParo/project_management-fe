@@ -10,24 +10,22 @@ import {
     XCircleIcon,
 } from "@phosphor-icons/react";
 import { useWarrantyClaims } from "../../../../api/useWarrantyClaims";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Loader from "../../../../components/Loader";
+import { v4 as uuidv4 } from "uuid";
+import { useAuth } from "../../../../app/AuthProvider";
 
-export default function EditClaimRequestsPage() {
+export default function CreateClaimRequestsPage() {
+    const [claimId] = useState(uuidv4()); // Generate once
     const navigate = useNavigate();
-    const { id } = useParams();
-    const { row, fetchClaimById, loading, error } = useWarrantyClaims();
 
-    useEffect(() => {
-        fetchClaimById(id);
-    }, [id]);
+    const { user } = useAuth();
+    const displayName = user?.username || user?.name || user?.fullName || "User";
 
-    if (loading) return <Loader />;
-    if (error)
-        return (
-            <p className="text-red-500">Error loading claims: {error.message}</p>
-        );
+    async function handleSubmit(e) {
+        
+    }
 
     return (
         <div className="w-full">
@@ -41,7 +39,7 @@ export default function EditClaimRequestsPage() {
             </div>
 
             <div className="mb-6 mt-20">
-                <form className="space-y-10">
+                <form className="space-y-10" onSubmit={handleSubmit}>
                     <div className="bg-white border-[3px] border-[#EBEBEB] rounded-2xl p-10">
                         <div className="text-md text-indigo-600 font-medium mb-6 flex items-center gap-2">
                             <InfoIcon size={20} weight="bold" /> Basic Informations
@@ -54,7 +52,7 @@ export default function EditClaimRequestsPage() {
                                     className="p-3 bg-[#F9FAFB] border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="Claim ID"
                                     aria-disabled
-                                    defaultValue={row?.id || ""}
+                                    defaultValue={claimId}
                                 />
                             </div>
                             <div className="w-full">
@@ -62,7 +60,6 @@ export default function EditClaimRequestsPage() {
                                 <input
                                     className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="Claim Date"
-                                    defaultValue={row?.claimDate || "03/12/2004"}
                                 />
                             </div>
                             {/* <div className="w-full">
@@ -79,7 +76,7 @@ export default function EditClaimRequestsPage() {
                                     readOnly={true}
                                     className="p-3 bg-[#F9FAFB] border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="Created By"
-                                    defaultValue={row?.name || ""}
+                                    defaultValue={displayName}
                                 />
                             </div>
                             {/* <div className="w-full">
@@ -101,7 +98,6 @@ export default function EditClaimRequestsPage() {
                                 <input
                                     className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="VIN code"
-                                    defaultValue={row?.vin || ""}
                                 />
                             </div>
                             <div className="w-full">
@@ -109,7 +105,6 @@ export default function EditClaimRequestsPage() {
                                 <input
                                     className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="Enter vehicle name"
-                                    defaultValue={row?.vehicle || ""}
                                 />
                             </div>
                             <div className="w-full">
@@ -119,7 +114,6 @@ export default function EditClaimRequestsPage() {
                                 <input
                                     className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="Purchase Date of vehicle"
-                                    defaultValue={row?.purchaseDate || ""}
                                 />
                             </div>
                             <div className="w-full">
@@ -129,7 +123,6 @@ export default function EditClaimRequestsPage() {
                                 <input
                                     className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="Current Mileage (km)"
-                                    defaultValue={row?.mileAge || ""}
                                 />
                             </div>
                         </div>
@@ -145,7 +138,6 @@ export default function EditClaimRequestsPage() {
                                 <input
                                     className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="Part Name"
-                                    defaultValue={row?.partName || ""}
                                 />
                             </div>
                             <div className="w-full">
@@ -153,7 +145,6 @@ export default function EditClaimRequestsPage() {
                                 <input
                                     className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="Part Code"
-                                    defaultValue={row ? "PIN12334SD" : ""}
                                 />
                             </div>
                             <div className="w-full">
@@ -161,7 +152,6 @@ export default function EditClaimRequestsPage() {
                                 <input
                                     className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="Replacement Date"
-                                    defaultValue={row ? "05/16/2025" : ""}
                                 />
                             </div>
                         </div>
@@ -176,9 +166,6 @@ export default function EditClaimRequestsPage() {
                             <textarea
                                 className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none min-h-[120px]"
                                 placeholder="Provide a detailed description of the issue..."
-                                defaultValue={
-                                    row?.issueDescription || ""
-                                }
                             />
                         </div>
                     </div>
@@ -242,11 +229,11 @@ export default function EditClaimRequestsPage() {
                             <span>Cancel</span>
                         </button>
                         <button
-                            // onClick={saveChanges}
+                            type="submit"
                             className="flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-600 hover:bg-indigo-700 transition-all text-white cursor-pointer"
                         >
                             <CheckCircleIcon size={18} />
-                            <span>{row ? "Save Changes" : "Submit Claim"}</span>
+                            <span>Submit Claim</span>
                         </button>
                     </div>
                 </form>

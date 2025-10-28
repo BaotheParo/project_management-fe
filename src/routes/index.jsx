@@ -16,6 +16,7 @@ const ForgotPasswordPage = lazy(() => import("../features/auth/pages/ForgotPassw
 const SCTechnicianDashboardPage = lazy(() => import("../features/dashboard/sc-technician/pages/DashboardPage"));
 const SCTechnicianClaimRequestsPage = lazy(() => import("../features/dashboard/sc-technician/pages/ClaimRequestsPage"));
 const SCTechnicianEditClaimRequestsPage = lazy(() => import("../features/dashboard/sc-technician/pages/EditClaimRequestPage"));
+const SCTechnicianCreateClaimRequestsPage = lazy(() => import("../features/dashboard/sc-technician/pages/CreateClaimRequestPage"));
 const SCTechnicianTodoWorksPage = lazy(() => import("../features/dashboard/sc-technician/pages/TodoWorksPage"));
 const SCTechnicianProfilePage = lazy(() => import("../features/dashboard/sc-technician/pages/ProfilePage"));
 
@@ -61,7 +62,8 @@ const router = createBrowserRouter([
         children: [
             { index: true, path: "dashboard", element: <Suspense fallback={<Loader />}><SCTechnicianDashboardPage /></Suspense>},
             { path: "claims", element: <Suspense fallback={<Loader />}><SCTechnicianClaimRequestsPage /></Suspense> },
-            { path: "claims/:id", element: <Suspense fallback={<Loader />}><SCTechnicianEditClaimRequestsPage /></Suspense> },
+            { path: "claims/create", element: <Suspense fallback={<Loader />}><SCTechnicianCreateClaimRequestsPage /></Suspense> },
+            { path: "claims/edit/claim/:id", element: <Suspense fallback={<Loader />}><SCTechnicianEditClaimRequestsPage /></Suspense> },
             { path: "todos", element: <Suspense fallback={<Loader />}><SCTechnicianTodoWorksPage /></Suspense> },
             { path: "profile", element: <Suspense fallback={<Loader />}><SCTechnicianProfilePage /></Suspense> },
         ],
