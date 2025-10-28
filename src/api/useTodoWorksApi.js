@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import axiousInstance from "./axiousInstance";
-import { getWorkStatusLabel } from "../constants/TodoWorkStatus";
+import { getWorkStatusLabel } from "../constants/WorkStatus";
 import { getPriorityStatusLabel } from "../constants/TodoWorkPriority";
 
 export const useTodoWorksApi = () => {
@@ -14,31 +14,21 @@ export const useTodoWorksApi = () => {
             setError(null);
             const response = await axiousInstance.get("/work-orders");
 
-            const data = Array.isArray(response.data)
-                ? response.data
-                : response.data?.data || [];
+            const data = Array.isArray(response.data.items)
+                ? response.data.items
+                : response.data?.items || [];
 
             if (!Array.isArray(data)) {
-                console.warn("Unexpected response structure: ", response.data);
+                console.warn("Unexpected response structure: ", response.data.items);
                 setRows([]);
                 return;
             }
 
             const formattedTodoWorks = data.map((work) => ({
-                // id: work.workOrderId,
-                // description: work.description,
-                // startDate: work.startDate,
-                // endDate: work.endDate,
-                // estimateHour: work.estimateHour,
-                // status: getWorkStatusLabel(work.workStatus),
-                // priority: getPriorityStatusLabel(work.workPriority),
-                // claimId: work.claimId,
-                // technicianName: work.technicianName,
-                // customerName: work.customerName,
                 id: work.workOrderId || `RO-${work.claimId}`,
                 vehicle: work.vehicleName || "Unknown Vehicle",
                 vin: work.vin || "N/A",
-                customer: work.customerName || "N/A",
+                customerName: work.customerName || "N/A",
                 date: work.startDate ? new Date(work.startDate).toLocaleDateString() : "N/A",
                 eta: work.estimateHour ? `${work.estimateHour}h` : "N/A",
                 status: getWorkStatusLabel(work.workStatus),

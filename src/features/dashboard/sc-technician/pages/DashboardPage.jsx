@@ -3,7 +3,7 @@ import { CheckCircleIcon, CaretLeftIcon, CaretRightIcon, ListDashesIcon, ListIco
 import StatusCard from '../components/StatusCard'
 import { useWarrantyClaims } from '../../../../api/useWarrantyClaims'
 import Loader from '../../../../components/Loader'
-import StatusDot from '../components/StatusDot'
+import StatusDot from '../components/ClaimStatusDot'
 import { useAuth } from '../../../../app/AuthProvider'
 import { useNavigate } from 'react-router-dom'
 
@@ -16,7 +16,6 @@ export default function Dashboard() {
 
   const totalClaims = rows.length;
   const acceptedClaims = rows.filter(r => r.status === "Accepted").length;
-
 
   const { user } = useAuth();
   const displayName = user?.username || user?.name || user?.fullName || "User";

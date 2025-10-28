@@ -96,7 +96,7 @@ export const useAuthApi = () => {
                 ? { ...data.user, role: data.user.role || data.role }
                 : { 
                     role: data.role,
-                    ...(data.username && { username: data.username }),
+                    ...(data.userName && { username: data.userName }),
                     ...(data.name && { name: data.name }),
                     ...(data.email && { email: data.email }),
                     ...(data.fullName && { fullName: data.fullName }),

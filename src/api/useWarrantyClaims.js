@@ -74,10 +74,8 @@ export const useWarrantyClaims = () => {
                 name: claim.name,
                 claimDate: new Date(claim.claimDate).toISOString().split("T")[0],
                 issueDescription: claim.issueDescription,
-                mileAge: claim.mileAge,
+                mileAge: claim.mileage,
                 purchaseDate: new Date(claim.purchaseDate).toISOString().split("T")[0],
-                partName: claim.partName,
-                partId: claim.partId,
                 // replacementDate: new Date(claim.)
             };
 

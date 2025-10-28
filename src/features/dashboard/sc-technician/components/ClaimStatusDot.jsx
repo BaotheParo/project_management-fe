@@ -1,7 +1,7 @@
 import { getClaimStatusColor } from "../../../../constants/ClaimStatus";
 
 
-function StatusDot({ status }) {
+function ClaimStatusDot({ status }) {
   const color = getClaimStatusColor(status);
   return (
     <span 
@@ -11,4 +11,4 @@ function StatusDot({ status }) {
   ) 
 }
 
-export default StatusDot;
+export default ClaimStatusDot;

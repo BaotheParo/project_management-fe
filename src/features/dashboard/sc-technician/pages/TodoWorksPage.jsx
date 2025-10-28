@@ -16,6 +16,8 @@ import StatusCard from '../components/StatusCard';
 import WorkDetails from './WorkDetails';
 import { useTodoWorksApi } from '../../../../api/useTodoWorksApi';
 import Loader from '../../../../components/Loader';
+import StatusDot from '../components/ClaimStatusDot';
+import WorkStatusDot from '../components/WorkStatusDot';
 
 const sampleCards = Array.from({ length: 8 }).map((_, i) => ({
   id: `RO-00${i + 1}`,
@@ -137,10 +139,10 @@ export default function TodoWorks() {
 
   const visibleCards = useMemo(() => {
     return rows.filter(
-      (r) => 
-        (filter === 'All' ? true : r.status === filter) && 
-        (r.vehicle.toLowerCase().includes(query.toLowerCase()) || 
-        r.id.toLowerCase().includes(query.toLowerCase()))
+      (r) =>
+        (filter === 'All' ? true : r.status === filter) &&
+        (r.vehicle.toLowerCase().includes(query.toLowerCase()) ||
+          r.id.toLowerCase().includes(query.toLowerCase()))
     );
   }, [rows, filter, query])
 
@@ -223,11 +225,10 @@ export default function TodoWorks() {
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className={`text-sm px-3 py-2 rounded-full text-nowrap ${
-                  filter === f
+                className={`text-sm px-3 py-2 rounded-full text-nowrap ${filter === f
                     ? "bg-indigo-600 text-white font-semibold transition-all cursor-pointer"
                     : "text-black font-semibold hover:bg-white transition-all cursor-pointer"
-                }`}
+                  }`}
               >
                 {f}
               </button>
@@ -276,7 +277,10 @@ export default function TodoWorks() {
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-2">
-                  <StatusBadge status={r.status} />
+                  <div className="flex items-center">
+                    <WorkStatusDot status={r.status} />
+                    <span className='font-medium text-[13px]'>{r.status}</span>
+                  </div>
                   <div className="text-xs text-gray-400">{r.priority}</div>
                 </div>
               </div>
