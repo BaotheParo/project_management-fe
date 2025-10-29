@@ -10,7 +10,7 @@ import { useTodoWorksApi } from "../../../../api/useTodoWorksApi";
 import Loader from "../../../../components/Loader";
 import WorkPriority from "../components/WorkPriority";
 import WorkStatusDot from "../components/WorkStatusDot";
-import ErrorNotification from "../../../../components/ErrorNotification";
+import ErrorNotification from "../../../../components/Notification";
 import SuccessNotification from "../../../../components/SuccessNotification";
 
 export default function WorkDetails() {

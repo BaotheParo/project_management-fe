@@ -16,12 +16,32 @@ import DeleteModal from "../components/DeleteClaimRequest";
 import { useWarrantyClaims } from "../../../../api/useWarrantyClaims";
 import Loader from "../../../../components/Loader";
 import { useNavigate } from "react-router-dom";
+import { ErrorNotification, SuccessNotification } from "../../../../components/Notification";
 
 export default function ClaimRequestsPage() {
   const [openActionFor, setOpenActionFor] = useState(null);
   const menuRef = useRef(null);
   const [currentPage, setCurrentPage] = useState(1);
   const navigate = useNavigate();
+
+  const [notification, setNotification] = useState(null);
+
+  const handleDeleteSuccess = () => {
+    setNotification({
+      type: "success",
+      message: "Claim request removed successfully!",
+      subText: new Date().toLocaleString(),
+    });
+    setDeletingRow(null);
+  };
+
+  const handleDeleteError = (errorMsg) => {
+    setNotification({
+      type: "error",
+      message: "Failed to remove claim request.",
+      subText: errorMsg || "Please try again later.",
+    });
+  };
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -271,8 +291,27 @@ export default function ClaimRequestsPage() {
       <DeleteModal
         row={deletingRow}
         onCancel={() => setDeletingRow(null)}
-        onConfirm={confirmDelete}
+        onSuccess={handleDeleteSuccess}
+        onError={handleDeleteError}
       />
+      {/* ✅ Notification logic */}
+      {notification?.type === "success" && (
+        <SuccessNotification
+          message={notification.message}
+          subText={notification.subText}
+          actionText="Close"
+          onAction={() => setNotification(null)}
+        />
+      )}
+
+      {notification?.type === "error" && (
+        <ErrorNotification
+          message={notification.message}
+          subText={notification.subText}
+          actionText="Close"
+          onAction={() => setNotification(null)}
+        />
+      )}
     </div>
   );
 }

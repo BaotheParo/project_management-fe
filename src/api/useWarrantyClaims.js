@@ -98,8 +98,14 @@ export const useWarrantyClaims = () => {
     };
 
     const deleteClaim = async (id) => {
-        await axiousInstance.delete(`/claims/${id}`);
-        await fetchClaims();
+        try {
+            await axiousInstance.delete(`/claims/${id}`);
+            await fetchClaims();
+            return { success: true };
+        } catch (err) {
+            console.error("Remove claim request failed: ", err);
+            return { success: false, error: err };
+        }
     };
 
     useEffect(() => {
