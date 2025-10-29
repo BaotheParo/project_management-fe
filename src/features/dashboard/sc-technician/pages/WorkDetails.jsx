@@ -3,7 +3,6 @@ import {
     CarIcon,
     UserIcon,
     WarningCircleIcon,
-    WrenchIcon,
 } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -11,15 +10,18 @@ import { useTodoWorksApi } from "../../../../api/useTodoWorksApi";
 import Loader from "../../../../components/Loader";
 import WorkPriority from "../components/WorkPriority";
 import WorkStatusDot from "../components/WorkStatusDot";
+import ErrorNotification from "../../../../components/ErrorNotification";
+import SuccessNotification from "../../../../components/SuccessNotification";
 
 export default function WorkDetails() {
     const navigate = useNavigate();
     const { id } = useParams();
-    const { row, fetchWorkById, updateWorkStatus, loading, error } =
-        useTodoWorksApi();
+    const { row, fetchWorkById, updateWorkStatus, loading, error } = useTodoWorksApi();
     const [isUpdating, setIsUpdating] = useState(false);
     const [showStatusModal, setShowStatusModal] = useState(false);
     const [selectedStatus, setSelectedStatus] = useState(null);
+    const [successNotification, setSuccessNotification] = useState(null);
+    const [errorNotification, setErrorNotification] = useState(null);
 
     useEffect(() => {
         if (id) {
@@ -42,14 +44,28 @@ export default function WorkDetails() {
             const result = await updateWorkStatus(id, newStatus);
 
             if (result.success) {
-                alert("Work order status updated successfully!");
+                setSuccessNotification({
+                    message: "Work order status updated successfully!",
+                    subText: new Date().toLocaleString(),
+                    actionText: "Close",
+                    onAction: () => { setSuccessNotification(null) },
+                });
                 setShowStatusModal(false);
             } else {
-                alert("Failed to update status. Please try again.");
+                setErrorNotification({
+                    message: "Failed to update status. Please try again.",
+                    subText: new Date().toLocaleString(),
+                    actionText: "Close",
+                    onAction: () => { setErrorNotification(null) },
+                });
             }
         } catch (err) {
-            console.error("Error updating status:", err);
-            alert("An error occurred while updating the status.");
+            setErrorNotification({
+                message: "An error occurred while updating the status.",
+                subText: "Error updating status:", err,
+                actionText: "Close",
+                onAction: () => { setErrorNotification(null) },
+            });
         } finally {
             setIsUpdating(false);
         }
@@ -265,8 +281,8 @@ export default function WorkDetails() {
                                 onClick={handleCompleteWork}
                                 disabled={isUpdating || row.status === "Completed"}
                                 className={`px-4 py-2 transition-colors text-white rounded-full ${isUpdating || row.status === "Completed"
-                                        ? "bg-gray-400 cursor-not-allowed"
-                                        : "bg-green-600 hover:bg-green-700 cursor-pointer"
+                                    ? "bg-gray-400 cursor-not-allowed"
+                                    : "bg-green-600 hover:bg-green-700 cursor-pointer"
                                     }`}
                             >
                                 {isUpdating
@@ -308,8 +324,8 @@ export default function WorkDetails() {
                                     key={status.value}
                                     onClick={() => setSelectedStatus(status.value)}
                                     className={`w-full p-3 rounded-lg border-2 transition-all cursor-pointer ${selectedStatus === status.value
-                                            ? "border-indigo-600 bg-indigo-50"
-                                            : "border-gray-200 hover:border-gray-300"
+                                        ? "border-indigo-600 bg-indigo-50"
+                                        : "border-gray-200 hover:border-gray-300"
                                         }`}
                                 >
                                     <div className="flex items-center gap-3">
@@ -343,6 +359,28 @@ export default function WorkDetails() {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* ✅ Error notification */}
+            {errorNotification && (
+                <ErrorNotification
+                    message={errorNotification.message}
+                    subText={errorNotification.subText}
+                    actionText={errorNotification.actionText}
+                    onAction={errorNotification.onAction}
+                    onClose={() => setErrorNotification(null)}
+                />
+            )}
+
+            {/* ✅ Success notification */}
+            {successNotification && (
+                <SuccessNotification
+                    message={successNotification.message}
+                    subText={successNotification.subText}
+                    actionText={successNotification.actionText}
+                    onAction={successNotification.onAction}
+                    onClose={() => setSuccessNotification(null)}
+                />
             )}
         </div>
     );

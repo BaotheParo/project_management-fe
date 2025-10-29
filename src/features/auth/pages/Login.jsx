@@ -2,9 +2,9 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import logo from '../../../assets/Login/Logo.png'
 import car from '../../../assets/Login/car.png'
-import Notification from "../../../components/ErrorNotification";
 import Loader from '../../../components/Loader';
 import { useAuth } from '../../../app/AuthProvider';
+import ErrorNotification from '../../../components/ErrorNotification';
 
 export default function Login() {
   const { login, loading } = useAuth();
@@ -148,7 +148,7 @@ export default function Login() {
 
             {/* ✅ Error notification */}
             {notification && (
-              <Notification
+              <ErrorNotification
                 message={notification.message}
                 subText={notification.subText}
                 actionText={notification.actionText}
