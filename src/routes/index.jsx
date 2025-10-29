@@ -89,6 +89,16 @@ const router = createBrowserRouter([
         ],
     },
 
+    // Default route
+    {
+        path: "/",
+        element: (
+        <Suspense fallback={<Loader />}>
+            <LoginPage />
+        </Suspense>
+        ),
+    },
+
     // Fallback route
     {
         path: "*",
