@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import axiousInstance from "./axiousInstance";
 import { getClaimStatusLabel } from "../constants/ClaimStatus";
-import { replace } from "react-router-dom";
 
 export const useWarrantyClaims = () => {
     const [rows, setRows] = useState([]);

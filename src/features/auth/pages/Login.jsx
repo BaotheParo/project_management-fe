@@ -60,10 +60,10 @@ export default function Login() {
           onAction: () => { setNotification(null) },
         });
       }
-    } catch (err) {
+    } catch {
       setNotification({
         message: "Login failed",
-        subText: err.message || "Username or Password is incorrect",
+        subText: "Username or Password is incorrect",
         actionText: "Retry",
         onAction: () => { setNotification(null) },
       });
