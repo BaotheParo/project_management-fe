@@ -1,10 +1,12 @@
+import { WORK_ORDER_STATUS, PRIORITY } from './statusConstants';
+
 // Mock data for work orders
 export const MOCK_WORK_ORDERS = [
   {
     id: 'RO-002',
     vehicle: 'VinFast VF-3',
-    status: 'Pending',
-    priority: 'HIGH',
+    status: WORK_ORDER_STATUS.PENDING,
+    priority: PRIORITY.HIGH,
     vin: 'LSV1E7AL0MC123456',
     customer: 'Andrew',
     date: 'July 21, 2025',
@@ -13,8 +15,8 @@ export const MOCK_WORK_ORDERS = [
   {
     id: 'RO-003',
     vehicle: 'VinFast VF-3',
-    status: 'Completed',
-    priority: 'HIGH',
+    status: WORK_ORDER_STATUS.COMPLETED,
+    priority: PRIORITY.HIGH,
     vin: 'LSV1E7AL0MC123456',
     customer: 'Andrew',
     date: 'July 21, 2025',
@@ -24,8 +26,8 @@ export const MOCK_WORK_ORDERS = [
   {
     id: 'RO-004',
     vehicle: 'VinFast VF-3',
-    status: 'Assigned',
-    priority: 'MEDIUM',
+    status: WORK_ORDER_STATUS.ASSIGNED,
+    priority: PRIORITY.MEDIUM,
     vin: 'LSV1E7AL0MC123456',
     customer: 'Andrew',
     date: 'July 21, 2025',
@@ -35,8 +37,8 @@ export const MOCK_WORK_ORDERS = [
   {
     id: 'RO-005',
     vehicle: 'VinFast VF-3',
-    status: 'Assigned',
-    priority: 'MEDIUM',
+    status: WORK_ORDER_STATUS.ASSIGNED,
+    priority: PRIORITY.MEDIUM,
     vin: 'LSV1E7AL0MC123456',
     customer: 'Andrew',
     date: 'July 21, 2025',
@@ -46,8 +48,8 @@ export const MOCK_WORK_ORDERS = [
   {
     id: 'RO-006',
     vehicle: 'VinFast VF-3',
-    status: 'In Progress',
-    priority: 'LOW',
+    status: WORK_ORDER_STATUS.IN_PROGRESS,
+    priority: PRIORITY.LOW,
     vin: 'LSV1E7AL0MC123456',
     customer: 'Andrew',
     date: 'July 21, 2025',
@@ -57,8 +59,8 @@ export const MOCK_WORK_ORDERS = [
   {
     id: 'RO-007',
     vehicle: 'VinFast VF-3',
-    status: 'In Progress',
-    priority: 'HIGH',
+    status: WORK_ORDER_STATUS.IN_PROGRESS,
+    priority: PRIORITY.HIGH,
     vin: 'LSV1E7AL0MC123456',
     customer: 'Andrew',
     date: 'July 21, 2025',
@@ -75,9 +77,3 @@ export const MOCK_TECHNICIANS = [
   { id: 4, name: 'Jso', role: 'Engineer Repair' },
   { id: 5, name: 'Jso', role: 'Engineer Repair' },
 ]
-
-// Filter options
-export const WORK_ORDER_FILTERS = ['All', 'Pending', 'Assigned', 'In Progress', 'Completed']
-
-// Priority options
-export const PRIORITY_OPTIONS = ['All Priority', 'HIGH', 'MEDIUM', 'LOW']

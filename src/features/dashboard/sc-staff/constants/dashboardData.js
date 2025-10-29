@@ -18,11 +18,11 @@ export const DASHBOARD_STATS = [
   {
     title: "Total Claims",
     count: "12",
-    description: "Currently in your queue"
+    description: "Currently in your queue",
   },
   {
     title: "Accepted Requests", 
     count: "04",
-    description: "Currently in your queue"
+    description: "Currently in your queue",
   }
 ]

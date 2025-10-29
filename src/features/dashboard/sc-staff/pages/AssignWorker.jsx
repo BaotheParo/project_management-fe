@@ -1,4 +1,4 @@
-import StatusCard from "../components/StatusCard";
+import StatusCard from "../../../../components/StatusCard";
 import WorkOrderCard from "../components/WorkOrderCard";
 import FilterTabs from "../components/FilterTabs";
 import SearchBar from "../components/SearchBar";
@@ -6,7 +6,8 @@ import AssignTechnicianModal from "../components/AssignTechnicianModal";
 import EmptyState from "../components/EmptyState";
 import PageHeader from "../components/PageHeader";
 import PriorityFilter from "../components/PriorityFilter";
-import { MOCK_TECHNICIANS, WORK_ORDER_FILTERS } from "../constants/mockData";
+import { MOCK_TECHNICIANS } from "../constants/mockData";
+import { WORK_ORDER_FILTERS, PRIORITY_OPTIONS } from "../constants/statusConstants";
 import { useWorkOrders } from "../hooks/useWorkOrders";
 import { useModal } from "../hooks/useModal";
 
@@ -22,6 +23,8 @@ export default function AssignWorker() {
     stats,
     getFilterCount,
     assignTechnician,
+    selectedPriority,
+    setSelectedPriority,
   } = useWorkOrders();
 
   const {
@@ -74,7 +77,11 @@ export default function AssignWorker() {
           />
 
           {/* Priority Filter */}
-          <PriorityFilter />
+          <PriorityFilter
+            selectedPriority={selectedPriority}
+            onPriorityChange={setSelectedPriority}
+            priorities={PRIORITY_OPTIONS}
+          />
 
           {/* Search */}
           <SearchBar

@@ -12,7 +12,7 @@ import {
   ClockIcon,
   ListDashesIcon,
 } from "@phosphor-icons/react";
-import StatusCard from '../components/StatusCard';
+import StatusCard from '../../../../components/StatusCard';
 import WorkDetails from './WorkDetails';
 import { useTodoWorksApi } from '../../../../api/useTodoWorksApi';
 import Loader from '../../../../components/Loader';

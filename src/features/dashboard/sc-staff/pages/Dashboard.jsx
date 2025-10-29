@@ -1,6 +1,9 @@
 import { useNavigate } from 'react-router-dom'
-import { CheckCircle } from 'phosphor-react'
-import StatusCard from '../components/StatusCard';
+import {
+  ListDashesIcon,
+  CheckCircleIcon,
+} from "@phosphor-icons/react";
+import StatusCard from '../../../../components/StatusCard';
 import DashboardHeader from '../components/DashboardHeader'
 import ClaimsTable from '../components/ClaimsTable'
 import { DASHBOARD_CLAIMS_DATA, DASHBOARD_STATS } from '../constants/dashboardData'
@@ -21,8 +24,8 @@ export default function Dashboard() {
 
   // Enhanced stats with icons
   const statsWithIcons = [
-    { ...DASHBOARD_STATS[0] },
-    { ...DASHBOARD_STATS[1], icon: CheckCircle }
+    { ...DASHBOARD_STATS[0], icon: ListDashesIcon, iconColor: "#4f39f8" },
+    { ...DASHBOARD_STATS[1], icon: CheckCircleIcon, iconColor: "#4f39f8" }
   ]
 
   return (

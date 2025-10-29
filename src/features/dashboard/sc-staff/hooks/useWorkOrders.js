@@ -1,9 +1,18 @@
 import { useState, useMemo } from "react";
 import { MOCK_WORK_ORDERS } from "../constants/mockData";
+import { WORK_ORDER_STATUS, PRIORITY } from "../constants/statusConstants";
+
+import {
+  CheckCircleIcon,
+  SpinnerIcon,
+  ListDashesIcon,
+  UserCirclePlusIcon,
+} from "@phosphor-icons/react";
 
 export function useWorkOrders() {
   const [orders, setOrders] = useState(MOCK_WORK_ORDERS);
-  const [activeFilter, setActiveFilter] = useState("All");
+  const [activeFilter, setActiveFilter] = useState(WORK_ORDER_STATUS.ALL);
+  const [selectedPriority, setSelectedPriority] = useState(PRIORITY.ALL);
   const [searchTerm, setSearchTerm] = useState("");
 
   // Calculate stats from orders
@@ -23,26 +32,29 @@ export function useWorkOrders() {
         {
           count: pendingCount.toString(),
           label: "Pending",
+          icon: ListDashesIcon,
           description: "Awaiting assignment",
-          color: "text-[#979AA3]",
         },
         {
           count: assignedCount.toString(),
           label: "Assigned",
+          icon: UserCirclePlusIcon,
+          iconColor: "#0FC3EB",
           description: "Ready to start",
-          color: "text-[#0FC3EB]",
         },
         {
           count: inProgressCount.toString(),
           label: "In Progress",
+          icon: SpinnerIcon,
+          iconColor: "#EBB80F",
           description: "Being worked on",
-          color: "text-[#EBB80F]",
         },
         {
           count: completedCount.toString(),
           label: "Completed",
+          icon: CheckCircleIcon,
+          iconColor: "#00a63e",
           description: "Finished today",
-          color: "text-[#54C020]",
         },
       ],
     };
@@ -53,22 +65,24 @@ export function useWorkOrders() {
     return orders.filter((order) => {
       const matchesFilter =
         activeFilter === "All" || order.status === activeFilter;
+      const matchesPriority =
+        selectedPriority === "All Priority" || order.priority === selectedPriority;
       const matchesSearch =
         searchTerm === "" ||
         order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
         order.vehicle.toLowerCase().includes(searchTerm.toLowerCase()) ||
         order.customer.toLowerCase().includes(searchTerm.toLowerCase());
-      return matchesFilter && matchesSearch;
+      return matchesFilter && matchesPriority && matchesSearch;
     });
-  }, [orders, activeFilter, searchTerm]);
+  }, [orders, activeFilter, searchTerm, selectedPriority]);
 
   // Helper function to get filter count
   const getFilterCount = (filter) => {
-    if (filter === "All") return orders.length;
-    if (filter === "Pending") return stats.counts.pendingCount;
-    if (filter === "Assigned") return stats.counts.assignedCount;
-    if (filter === "In Progress") return stats.counts.inProgressCount;
-    if (filter === "Completed") return stats.counts.completedCount;
+    if (filter === WORK_ORDER_STATUS.ALL) return orders.length;
+    if (filter === WORK_ORDER_STATUS.PENDING) return stats.counts.pendingCount;
+    if (filter === WORK_ORDER_STATUS.ASSIGNED) return stats.counts.assignedCount;
+    if (filter === WORK_ORDER_STATUS.IN_PROGRESS) return stats.counts.inProgressCount;
+    if (filter === WORK_ORDER_STATUS.COMPLETED) return stats.counts.completedCount;
     return 0;
   };
 
@@ -91,6 +105,8 @@ export function useWorkOrders() {
     searchTerm,
     setSearchTerm,
     filteredOrders,
+    selectedPriority,
+    setSelectedPriority,
     stats: stats.cards,
     getFilterCount,
     assignTechnician,
