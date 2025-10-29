@@ -54,7 +54,7 @@ export default function TodoWorks() {
   const pendingWorks = rows.filter(r => r.status === "Pending").length;
   const inProgressWorks = rows.filter(r => r.status === "InProgress").length;
   const completedWorks = rows.filter(r => r.status === "Completed").length;
-  const overduedWorks = rows.filter(r => r.status === "Overdued").length;
+  const overduedWorks = rows.filter(r => r.status === "Overdue").length;
 
   if (loading) return <Loader />;
   if (error)
