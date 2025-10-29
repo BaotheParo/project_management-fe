@@ -10,13 +10,12 @@ import { useTodoWorksApi } from "../../../../api/useTodoWorksApi";
 import Loader from "../../../../components/Loader";
 import WorkPriority from "../components/WorkPriority";
 import WorkStatusDot from "../components/WorkStatusDot";
-import ErrorNotification from "../../../../components/Notification";
-import SuccessNotification from "../../../../components/SuccessNotification";
+import { SuccessNotification, ErrorNotification } from "../../../../components/Notification";
 
 export default function WorkDetails() {
     const navigate = useNavigate();
     const { id } = useParams();
-    const { row, fetchWorkById, updateWorkStatus, loading, error } = useTodoWorksApi();
+    const { workRow, fetchWorkById, updateWorkStatus, workLoading, workError } = useTodoWorksApi();
     const [isUpdating, setIsUpdating] = useState(false);
     const [showStatusModal, setShowStatusModal] = useState(false);
     const [selectedStatus, setSelectedStatus] = useState(null);
@@ -75,15 +74,15 @@ export default function WorkDetails() {
         await handleUpdateStatus(2); // Status 2 = Completed
     };
 
-    if (loading) return <Loader />;
+    if (workLoading) return <Loader />;
 
-    if (error) {
+    if (workError) {
         return (
             <div className="w-full p-6">
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                     <p className="text-red-600 font-semibold">Error loading work order</p>
                     <p className="text-red-500 text-sm mt-1">
-                        {error.message || "An unexpected error occurred"}
+                        {workError.message || "An unexpected error occurred"}
                     </p>
                     <button
                         onClick={() => navigate(-1)}
@@ -96,7 +95,7 @@ export default function WorkDetails() {
         );
     }
 
-    if (!row) {
+    if (!workRow) {
         return (
             <div className="w-full p-6">
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
@@ -125,9 +124,9 @@ export default function WorkDetails() {
             </div>
 
             <div className="mt-20 mb-6">
-                <h2 className="text-xl font-semibold mb-1">Work Orders #{row.id}</h2>
+                <h2 className="text-xl font-semibold mb-1">Work Orders #{workRow.id}</h2>
                 <div className="text-sm text-gray-500">
-                    {row.customerName} - {row.customerPhone}
+                    {workRow.customerName} - {workRow.customerPhone}
                 </div>
             </div>
 
@@ -140,30 +139,30 @@ export default function WorkDetails() {
                         <div className="grid grid-cols-2 gap-4 text-sm">
                             <div>
                                 <div className="text-xs text-gray-500">Order ID</div>
-                                <div className="font-semibold">{row.id}</div>
+                                <div className="font-semibold">{workRow.id}</div>
                             </div>
                             <div>
                                 <div className="text-xs text-gray-500">Status</div>
                                 <div className="font-semibold">
-                                    <WorkStatusDot status={row.status} />
-                                    {row.status}
+                                    <WorkStatusDot status={workRow.status} />
+                                    {workRow.status}
                                 </div>
                             </div>
                             <div>
                                 <div className="text-xs text-gray-500">Priority</div>
                                 <div className="font-semibold">
-                                    <WorkPriority status={row.priority} label={row.priority} />
+                                    <WorkPriority status={workRow.priority} label={workRow.priority} />
                                 </div>
                             </div>
                             <div>
                                 <div className="text-xs text-gray-500">Estimated Hours</div>
-                                <div className="font-semibold">{row.estimateHour}</div>
+                                <div className="font-semibold">{workRow.estimateHour}</div>
                             </div>
                             <div className="col-span-1">
                                 <div className="text-xs text-gray-500 mb-2">Parts Required</div>
-                                {row.parts && row.parts.length > 0 ? (
+                                {workRow.parts && workRow.parts.length > 0 ? (
                                     <div className="space-y-2">
-                                        {row.parts.map((part) => (
+                                        {workRow.parts.map((part) => (
                                             <div key={part.partId} className="font-semibold">
                                                 {part.partName} (Qty: {part.totalQuantity})
                                             </div>
@@ -174,11 +173,11 @@ export default function WorkDetails() {
                                 )}
                             </div>
                             <div>
-                                {row.partItems && row.partItems.length > 0 && (
+                                {workRow.partItems && workRow.partItems.length > 0 && (
                                     <div className="col-span-2">
                                         <div className="text-xs text-gray-500 mb-2">Part Items</div>
                                         <div className="space-y-1">
-                                            {row.partItems.map((item) => (
+                                            {workRow.partItems.map((item) => (
                                                 <div key={item.partItemId} className="text-sm">
                                                     • {item.partNumber} - Qty: {item.quantity}
                                                 </div>
@@ -197,20 +196,20 @@ export default function WorkDetails() {
                         <div className="grid grid-cols-2 gap-4 text-sm">
                             <div>
                                 <div className="text-xs text-gray-500">Model</div>
-                                <div className="font-semibold">{row.customerName}</div>
+                                <div className="font-semibold">{workRow.customerName}</div>
                             </div>
                             <div>
                                 <div className="text-xs text-gray-500">Owner</div>
-                                <div className="font-semibold">{row.customerName}</div>
+                                <div className="font-semibold">{workRow.customerName}</div>
                             </div>
                             <div>
                                 <div className="text-xs text-gray-500">Warranty Date</div>
-                                <div className="font-semibold">{row.startDate}</div>
+                                <div className="font-semibold">{workRow.startDate}</div>
                             </div>
                             <div>
                                 <div className="text-xs text-gray-500">Priority</div>
                                 <div className="font-semibold">
-                                    <WorkPriority status={row.priority} label={row.priority} />
+                                    <WorkPriority status={workRow.priority} label={workRow.priority} />
                                 </div>
                             </div>
                         </div>
@@ -224,7 +223,7 @@ export default function WorkDetails() {
                             <div className="text-xs text-gray-500 mb-2">
                                 Issue Description
                             </div>
-                            <div>{row.description}</div>
+                            <div>{workRow.description}</div>
                         </div>
                     </div>
                 </div>
@@ -236,11 +235,11 @@ export default function WorkDetails() {
                         </div>
                         <div className="text-sm">
                             <div className="text-xs text-gray-500">Name</div>
-                            <div className="font-semibold">{row.customerName}</div>
+                            <div className="font-semibold">{workRow.customerName}</div>
                             <div className="text-xs text-gray-500 mt-3">Phone</div>
-                            <div>{row.customerPhone}</div>
+                            <div>{workRow.customerPhone}</div>
                             <div className="text-xs text-gray-500 mt-3">Customer ID</div>
-                            <div className="text-xs truncate">{row.customerId || "N/A"}</div>
+                            <div className="text-xs truncate">{workRow.customerId || "N/A"}</div>
                         </div>
                     </div>
 
@@ -250,11 +249,11 @@ export default function WorkDetails() {
                         </div>
                         <div className="text-sm">
                             <div className="text-xs text-gray-500">Warranty Start Date</div>
-                            <div className="font-semibold">{row.startDate}</div>
+                            <div className="font-semibold">{workRow.startDate}</div>
                             <div className="text-xs text-gray-500 mt-3">
                                 Warranty End Date
                             </div>
-                            <div>{row.endDate}</div>
+                            <div>{workRow.endDate}</div>
                         </div>
                     </div>
 
@@ -263,10 +262,10 @@ export default function WorkDetails() {
                             Technician
                         </div>
                         <div className="text-sm">
-                            <div className="font-semibold">{row.technician}</div>
-                            {row.technicianId && (
+                            <div className="font-semibold">{workRow.technician}</div>
+                            {workRow.technicianId && (
                                 <div className="text-xs text-gray-500 mt-1 truncate">
-                                    ID: {row.technicianId}
+                                    ID: {workRow.technicianId}
                                 </div>
                             )}
                         </div>
@@ -279,15 +278,15 @@ export default function WorkDetails() {
                         <div className="flex flex-col gap-5">
                             <button
                                 onClick={handleCompleteWork}
-                                disabled={isUpdating || row.status === "Completed"}
-                                className={`px-4 py-2 transition-colors text-white rounded-full ${isUpdating || row.status === "Completed"
+                                disabled={isUpdating || workRow.status === "Completed"}
+                                className={`px-4 py-2 transition-colors text-white rounded-full ${isUpdating || workRow.status === "Completed"
                                     ? "bg-gray-400 cursor-not-allowed"
                                     : "bg-green-600 hover:bg-green-700 cursor-pointer"
                                     }`}
                             >
                                 {isUpdating
                                     ? "Updating..."
-                                    : row.status === "Completed"
+                                    : workRow.status === "Completed"
                                         ? "Already Completed"
                                         : "Complete Work"}
                             </button>

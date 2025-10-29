@@ -4,10 +4,10 @@ import { getWorkStatusLabel } from "../constants/WorkStatus";
 import { getPriorityStatusLabel } from "../constants/WorkPriority";
 
 export const useTodoWorksApi = () => {
-    const [rows, setRows] = useState([]);
-    const [row, setRow] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const [workRows, setRows] = useState([]);
+    const [workRow, setRow] = useState(null);
+    const [workLoading, setLoading] = useState(true);
+    const [workError, setError] = useState(null);
 
     // Fetch all Works
     const fetchTodoWorks = async () => {
@@ -181,10 +181,10 @@ export const useTodoWorksApi = () => {
     }, []);
 
     return { 
-        rows, 
-        row, 
-        loading, 
-        error, 
+        workRows, 
+        workRow, 
+        workLoading, 
+        workError, 
         fetchTodoWorks, 
         fetchWorkById, 
         createWork, 

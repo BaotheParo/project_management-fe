@@ -22,13 +22,13 @@ import { useNavigate } from 'react-router-dom';
 export default function TodoWorks() {
   const navigate = useNavigate();
 
-  const { rows, loading, error } = useTodoWorksApi();
+  const { workRows, workLoading, workError } = useTodoWorksApi();
 
   const filters = ["All", "Pending", "InProgress", "Completed", "Overdue"];
 
   // Filter orders based on active filter and search term
   // const filteredOrders = useMemo(() => {
-  //   return rows.filter(order => {
+  //   return workRows.filter(order => {
   //     const matchesFilter = activeFilter === 'All' || order.status === activeFilter
   //     const matchesSearch = searchTerm === '' ||
   //       order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -36,30 +36,30 @@ export default function TodoWorks() {
   //       order.customer.toLowerCase().includes(searchTerm.toLowerCase())
   //     return matchesFilter && matchesSearch
   //   })
-  // }, [rows, activeFilter, searchTerm])
+  // }, [workRows, activeFilter, searchTerm])
 
   const [filter, setFilter] = useState('All');
   const [query, setQuery] = useState('');
 
   const visibleCards = useMemo(() => {
-    return rows.filter(
+    return workRows.filter(
       (r) =>
         (filter === 'All' ? true : r.status === filter) &&
         (r.vehicleName.toLowerCase().includes(query.toLowerCase()) ||
           r.id.toLowerCase().includes(query.toLowerCase()))
     );
-  }, [rows, filter, query])
+  }, [workRows, filter, query])
 
-  const totalWorks = rows.length;
-  const pendingWorks = rows.filter(r => r.status === "Pending").length;
-  const inProgressWorks = rows.filter(r => r.status === "InProgress").length;
-  const completedWorks = rows.filter(r => r.status === "Completed").length;
-  const overduedWorks = rows.filter(r => r.status === "Overdue").length;
+  const totalWorks = workRows.length;
+  const pendingWorks = workRows.filter(r => r.status === "Pending").length;
+  const inProgressWorks = workRows.filter(r => r.status === "InProgress").length;
+  const completedWorks = workRows.filter(r => r.status === "Completed").length;
+  const overduedWorks = workRows.filter(r => r.status === "Overdue").length;
 
-  if (loading) return <Loader />;
-  if (error)
+  if (workLoading) return <Loader />;
+  if (workError)
     return (
-      <p className="text-red-500">Error loading works: {error.message}</p>
+      <p className="text-red-500">Error loading works: {workError.message}</p>
     );
 
   return (

@@ -7,31 +7,7 @@ function DeleteModal({ row, onCancel, onSuccess, onError }) {
   const [loading, setLoading] = useState(false);
 
   if (!row) return null;
-
-  // const handleConfirm = async () => {
-  //   try {
-  //     const result = await deleteClaim(row.id);
-
-  //     if (result.success) {
-  //       onConfirm();
-  //       onCancel();
-  //     } else {
-  //       setErrorNotification({
-  //         message: "Failed to remove claim request. Please try again.",
-  //         subText: new Date().toLocaleString(),
-  //         actionText: "Close",
-  //         onAction: () => { setErrorNotification(null) },
-  //       });
-  //     }
-  //   } catch (err) {
-  //     setErrorNotification({
-  //       message: "An error occurred while removing the claim status.",
-  //       subText: "Error removing status:", err,
-  //       actionText: "Close",
-  //       onAction: () => { setErrorNotification(null) },
-  //     });
-  //   }
-  // }
+  
   const handleConfirm = async () => {
     setLoading(true);
     try {

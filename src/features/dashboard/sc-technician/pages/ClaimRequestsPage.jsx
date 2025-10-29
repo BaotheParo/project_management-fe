@@ -61,10 +61,6 @@ export default function ClaimRequestsPage() {
 
   const [deletingRow, setDeletingRow] = useState(null);
 
-  function confirmDelete() {
-    setDeletingRow(null);
-  }
-
   const { rows, loading, error } = useWarrantyClaims();
 
   const totalClaims = rows.length;

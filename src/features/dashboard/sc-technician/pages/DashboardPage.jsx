@@ -6,22 +6,25 @@ import Loader from '../../../../components/Loader'
 import StatusDot from '../components/ClaimStatusDot'
 import { useAuth } from '../../../../app/AuthProvider'
 import { useNavigate } from 'react-router-dom'
+import { useTodoWorksApi } from '../../../../api/useTodoWorksApi'
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1)
   const totalPages = 4
 
-  const { rows, loading, error } = useWarrantyClaims();
+  const { rows = [], loading, error } = useWarrantyClaims();
+  const { workRows = [], workLoading, workError } = useTodoWorksApi();
 
   const totalClaims = rows.length;
   const acceptedClaims = rows.filter(r => r.status === "Accepted").length;
+  const totalWorks = workRows.length;
 
   const { user } = useAuth();
   const displayName = user?.username || user?.name || user?.fullName || "User";
   console.log("User object:", user)
 
-  if (loading) return <Loader />;
+  if (loading && workLoading) return <Loader />;
   if (error)
     return (
       <p className="text-red-500">
@@ -72,7 +75,7 @@ export default function Dashboard() {
         <StatusCard
           title="Total Works"
           titleColor="text-indigo-600"
-          count="3"
+          count={totalWorks}
           description="Currently in your queue"
           icon={ListIcon}
           iconColor={"#4f39f8"}
