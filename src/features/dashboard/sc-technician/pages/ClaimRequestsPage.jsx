@@ -17,6 +17,7 @@ import { useWarrantyClaims } from "../../../../api/useWarrantyClaims";
 import Loader from "../../../../components/Loader";
 import { useNavigate } from "react-router-dom";
 import { ErrorNotification, SuccessNotification } from "../../../../components/Notification";
+import { useAuth } from "../../../../app/AuthProvider";
 
 export default function ClaimRequestsPage() {
   const [openActionFor, setOpenActionFor] = useState(null);
@@ -61,13 +62,14 @@ export default function ClaimRequestsPage() {
 
   const [deletingRow, setDeletingRow] = useState(null);
 
-  const { rows, loading, error } = useWarrantyClaims();
+  const { user } = useAuth();
+  const { rows, loading, error } = useWarrantyClaims(user?.userId);
 
   const totalClaims = rows.length;
-  const pendingClaims = rows.filter((r) => r.status === "Pending").length;
-  const acceptedClaims = rows.filter((r) => r.status === "Accepted").length;
-  const rejectedClaims = rows.filter((r) => r.status === "Rejected").length;
-  const overdueClaims = rows.filter((r) => r.status === "Overdue").length;
+  const pendingClaims = rows.filter((r) => r.claimStatus === "Pending").length;
+  const acceptedClaims = rows.filter((r) => r.claimStatus === "Accepted").length;
+  const rejectedClaims = rows.filter((r) => r.claimStatus === "Rejected").length;
+  const overdueClaims = rows.filter((r) => r.claimStatus === "Overdue").length;
 
   if (loading) return <Loader />;
   if (error)
@@ -173,24 +175,26 @@ export default function ClaimRequestsPage() {
               </tr>
             </thead>
             <tbody>
-              {rows.map((r) => (
+              {rows
+                // .filter((r) => r.isActive)
+                .map((r) => (
                 <tr
-                  key={r.id}
+                  key={r.claimId}
                   className="border-b-2 border-[#DEE1E6] bg-white hover:bg-gray-50"
                 >
                   <td className="px-8 py-3 text-[13px] font-medium text-black">
-                    {r.id}
+                    {r.claimId}
                   </td>
                   <td className="px-8 py-3 text-[13px] font-medium text-black">
-                    {r.vehicle}
+                    {r.vehicleName}
                   </td>
                   <td className="px-8 py-3 text-[13px] font-medium text-black">
                     {r.vin}
                   </td>
                   <td className="px-8 py-3 text-[13px] font-medium text-black">
                     <div className="flex items-center">
-                      <StatusDot status={r.status} />
-                      <span>{r.status}</span>
+                      <StatusDot status={r.claimStatus} />
+                      <span>{r.claimStatus}</span>
                     </div>
                   </td>
                   <td className="px-8 py-3 text-[13px] font-medium text-black">
@@ -201,7 +205,7 @@ export default function ClaimRequestsPage() {
                       <button
                         onClick={() => {
                           setOpenActionFor(
-                            openActionFor === r.id ? null : r.id
+                            openActionFor === r.claimId ? null : r.claimId
                           );
                         }}
                         className="rounded-full hover:bg-gray-100 cursor-pointer"
@@ -209,7 +213,7 @@ export default function ClaimRequestsPage() {
                         <DotsThreeIcon size={20} weight="bold" />
                       </button>
 
-                      {openActionFor === r.id && (
+                      {openActionFor === r.claimId && (
                         <div
                           ref={menuRef}
                           className="absolute -right-10 top-7 w-32 bg-white border border-[#DEE1E6] rounded-lg shadow-lg z-50 pointer-events-auto"
@@ -217,7 +221,7 @@ export default function ClaimRequestsPage() {
                           <button
                             onClick={() => {
                               setOpenActionFor(null);
-                              navigate(`edit/claim/${r.id}`);
+                              navigate(`edit/claim/${r.claimId}`);
                             }}
                             className="w-full text-left rounded-tl-lg rounded-tr-lg transition-all px-3 py-2 hover:bg-gray-50 cursor-pointer"
                           >

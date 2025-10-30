@@ -97,6 +97,7 @@ export const useAuthApi = () => {
                 : { 
                     role: data.role,
                     ...(data.userName && { username: data.userName }),
+                    ...(data.userId && { userId: data.userId }),
                     ...(data.name && { name: data.name }),
                     ...(data.email && { email: data.email }),
                     ...(data.fullName && { fullName: data.fullName }),

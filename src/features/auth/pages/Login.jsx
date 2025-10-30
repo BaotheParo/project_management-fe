@@ -4,7 +4,7 @@ import logo from '../../../assets/Login/Logo.png'
 import car from '../../../assets/Login/car.png'
 import Loader from '../../../components/Loader';
 import { useAuth } from '../../../app/AuthProvider';
-import ErrorNotification from '../../../components/Notification';
+import { ErrorNotification } from '../../../components/Notification';
 
 export default function Login() {
   const { login, loading } = useAuth();

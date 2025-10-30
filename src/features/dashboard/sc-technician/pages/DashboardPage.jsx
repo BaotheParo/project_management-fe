@@ -13,16 +13,16 @@ export default function Dashboard() {
   const [currentPage, setCurrentPage] = useState(1)
   const totalPages = 4
 
-  const { rows = [], loading, error } = useWarrantyClaims();
+  const { user } = useAuth();
+  const displayName = user?.username || user?.name || user?.fullName || "User";
+  console.log("User object:", user)
+
+  const { rows = [], loading, error } = useWarrantyClaims(user?.userId);
   const { workRows = [], workLoading, workError } = useTodoWorksApi();
 
   const totalClaims = rows.length;
   const acceptedClaims = rows.filter(r => r.status === "Accepted").length;
   const totalWorks = workRows.length;
-
-  const { user } = useAuth();
-  const displayName = user?.username || user?.name || user?.fullName || "User";
-  console.log("User object:", user)
 
   if (loading && workLoading) return <Loader />;
   if (error)

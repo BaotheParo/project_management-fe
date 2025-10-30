@@ -11,7 +11,7 @@ function DeleteModal({ row, onCancel, onSuccess, onError }) {
   const handleConfirm = async () => {
     setLoading(true);
     try {
-      const result = await deleteClaim(row.id);
+      const result = await deleteClaim(row.claimId);
       if (result.success) {
         onSuccess();
       } else {
@@ -29,7 +29,7 @@ function DeleteModal({ row, onCancel, onSuccess, onError }) {
       <div className="bg-white rounded-2xl shadow-2xl w-[640px] p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="text-sm text-gray-500">
-            Remove warranty request for {row.id}/{row.vehicle}
+            Remove warranty request for {row.claimId}/{row.vehicleName}
           </div>
           <button onClick={onCancel} className="text-gray-400 cursor-pointer">
             ✕
@@ -39,7 +39,7 @@ function DeleteModal({ row, onCancel, onSuccess, onError }) {
         <div className="text-center py-6">
           <div className="text-3xl mb-2">🚗</div>
           <div className="font-semibold text-lg mb-1">
-            {row.id}/{row.vehicle}
+            {row.claimId}/{row.vehicleName}
           </div>
           <div className="text-sm text-gray-500 mb-4">Car Owner: {row.customerName}</div>
           <button

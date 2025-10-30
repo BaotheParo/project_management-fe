@@ -1,7 +1,7 @@
 import { CheckCircleIcon, WarningCircleIcon } from "@phosphor-icons/react";
 import { useEffect } from "react";
 
-export default function ErrorNotification({
+export function ErrorNotification({
     message,
     subText,
     onClose,

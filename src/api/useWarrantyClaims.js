@@ -2,18 +2,19 @@ import { useEffect, useState } from "react";
 import axiousInstance from "./axiousInstance";
 import { getClaimStatusLabel } from "../constants/ClaimStatus";
 
-export const useWarrantyClaims = () => {
+export const useWarrantyClaims = (userId) => {
     const [rows, setRows] = useState([]);
-    const[row, setRow] = useState(null);
+    const [row, setRow] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Fetch all claims
-    const fetchClaims = async () => {
+    // Fetch all claims for specific technician
+    const fetchClaims = async (userId) => {
+        if (!userId) return;
         try {
             setLoading(true);
             setError(null);
-            const response = await axiousInstance.get("/claims"); // GET /api/claims
+            const response = await axiousInstance.get(`/claims/user/${userId}`); // GET /api/claims
 
             const data = Array.isArray(response.data)
                 ? response.data
@@ -26,11 +27,21 @@ export const useWarrantyClaims = () => {
             }
 
             const formattedClaims = response.data.map((claim) => ({
-                id: claim.claimId,
-                vehicle: claim.vehicleName || "Unknown",
-                vin: claim.vin,
-                status: getClaimStatusLabel(claim.claimStatus),
+                claimId: claim.claimId,
                 claimDate: new Date(claim.claimDate).toISOString().split("T")[0],
+                vin: claim.vin,
+                claimStatus: getClaimStatusLabel(claim.claimStatus),
+                issueDescription: claim.issueDescription,
+                vehicleName: claim.vehicleName || "Unknown",
+                purchaseDate: new Date(claim.purchaseDate).toISOString().split("T")[0],
+                mileAge: claim.mileage,
+                parts: claim.parts || [],
+                totalCost: claim.totalCost,
+                policyName: claim.policyName,
+                serviceCenterName: claim.serviceCenterName,
+                userId: claim.userId,
+                technicianName: claim.technicianName,
+                isActive: claim.isActive,
             }));
 
             setRows(formattedClaims);
@@ -66,16 +77,19 @@ export const useWarrantyClaims = () => {
             }
 
             const formattedClaim = {
-                id: claim.claimId,
-                vehicle: claim.vehicleName || "Unknown",
-                vin: claim.vin,
-                status: getClaimStatusLabel(claim.claimStatus),
-                name: claim.name,
+                claimId: claim.claimId,
                 claimDate: new Date(claim.claimDate).toISOString().split("T")[0],
+                vin: claim.vin,
+                claimStatus: getClaimStatusLabel(claim.claimStatus),
                 issueDescription: claim.issueDescription,
-                mileAge: claim.mileage,
+                vehicleName: claim.vehicleName || "Unknown",
                 purchaseDate: new Date(claim.purchaseDate).toISOString().split("T")[0],
-                // replacementDate: new Date(claim.)
+                mileAge: claim.mileage,
+                parts: claim.parts || [],
+                totalCost: claim.totalCost,
+                policyName: claim.policyName,
+                serviceCenterName: claim.serviceCenterName,
+                technicianName: claim.technicianName,
             };
 
             setRow(formattedClaim);
@@ -109,8 +123,8 @@ export const useWarrantyClaims = () => {
     };
 
     useEffect(() => {
-        fetchClaims();
-    }, []);
+        fetchClaims(userId);
+    }, [userId]); // ✅ will refetch whenever userId changes
 
     return {
         rows,
