@@ -3,18 +3,21 @@ import axiousInstance from "./axiousInstance";
 import { getWorkStatusLabel } from "../constants/WorkStatus";
 import { getPriorityStatusLabel } from "../constants/WorkPriority";
 
-export const useTodoWorksApi = () => {
+export const useTodoWorksApi = (userId) => {
     const [workRows, setRows] = useState([]);
     const [workRow, setRow] = useState(null);
     const [workLoading, setLoading] = useState(true);
     const [workError, setError] = useState(null);
 
-    // Fetch all Works
-    const fetchTodoWorks = async () => {
+    // Fetch all Works for specific technician
+    const fetchTodoWorks = async (userId) => {
+        if (!userId) {
+            return;
+        };
         try {
             setLoading(true);
             setError(null);
-            const response = await axiousInstance.get("/work-orders");
+            const response = await axiousInstance.get(`/work-orders/user/${userId}`);
 
             const data = Array.isArray(response.data.items)
                 ? response.data.items
@@ -61,6 +64,7 @@ export const useTodoWorksApi = () => {
                 },
             ]);
         } finally {
+            console.log("fetchTodoWorks completed");
             setLoading(false);
         }
     };
@@ -72,9 +76,9 @@ export const useTodoWorksApi = () => {
             setError(null);
 
             console.log("Fetching work order with ID:", id);
-            
+
             const response = await axiousInstance.get(`/work-orders/${id}`);
-            
+
             // Log the full response for debugging
             console.log("Full API Response:", response);
             console.log("Response data:", response.data);
@@ -141,11 +145,11 @@ export const useTodoWorksApi = () => {
             // First, get the current work order data
             const response = await axiousInstance.get(`/work-orders/${id}`);
             const work = response.data;
-            
+
             if (!work) {
                 throw new Error("Work order not found");
             }
-            
+
             // Prepare the update payload with all required fields
             const payload = {
                 description: work.description,
@@ -157,10 +161,10 @@ export const useTodoWorksApi = () => {
                 technicianId: work.technicianId,
                 partIds: work.parts ? work.parts.map(part => part.partId) : []
             };
-            
+
             // Update the work order
             await axiousInstance.put(`/work-orders/${id}`, payload);
-            
+
             // Refresh the work order details after update
             await fetchWorkById(id);
             return { success: true };
@@ -177,19 +181,21 @@ export const useTodoWorksApi = () => {
     };
 
     useEffect(() => {
-        fetchTodoWorks();
-    }, []);
+        if (userId) {  // Only fetch if userId exists
+            fetchTodoWorks(userId);
+        }
+    }, [userId]);
 
-    return { 
-        workRows, 
-        workRow, 
-        workLoading, 
-        workError, 
-        fetchTodoWorks, 
-        fetchWorkById, 
-        createWork, 
-        updateWork, 
+    return {
+        workRows,
+        workRow,
+        workLoading,
+        workError,
+        fetchTodoWorks,
+        fetchWorkById,
+        createWork,
+        updateWork,
         updateWorkStatus,
-        deleteWork 
+        deleteWork
     };
 }

@@ -176,7 +176,7 @@ export default function ClaimRequestsPage() {
             </thead>
             <tbody>
               {rows
-                // .filter((r) => r.isActive)
+                .filter((r) => r.isActive)
                 .map((r) => (
                 <tr
                   key={r.claimId}

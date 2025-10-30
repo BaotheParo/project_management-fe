@@ -14,7 +14,7 @@ export default function Dashboard() {
   const totalPages = 4
 
   const { user } = useAuth();
-  const displayName = user?.username || user?.name || user?.fullName || "User";
+  const displayName = user?.userName || user?.name || user?.fullName || "User";
   console.log("User object:", user)
 
   const { rows = [], loading, error } = useWarrantyClaims(user?.userId);

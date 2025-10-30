@@ -11,11 +11,13 @@ import Loader from "../../../../components/Loader";
 import WorkPriority from "../components/WorkPriority";
 import WorkStatusDot from "../components/WorkStatusDot";
 import { SuccessNotification, ErrorNotification } from "../../../../components/Notification";
+import { useAuth } from "../../../../app/AuthProvider";
 
 export default function WorkDetails() {
     const navigate = useNavigate();
     const { id } = useParams();
-    const { workRow, fetchWorkById, updateWorkStatus, workLoading, workError } = useTodoWorksApi();
+    const { user } = useAuth();
+    const { workRow, fetchWorkById, updateWorkStatus, workLoading, workError } = useTodoWorksApi(user?.userId);
     const [isUpdating, setIsUpdating] = useState(false);
     const [showStatusModal, setShowStatusModal] = useState(false);
     const [selectedStatus, setSelectedStatus] = useState(null);

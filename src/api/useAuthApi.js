@@ -26,8 +26,16 @@ export const useAuthApi = () => {
 
             // Store user with role - handle both formats
             const userData = data.user 
-                ? { ...data.user, role: data.user.role || data.role }  // If user object exists
-                : { role: data.role, username: data.username };  // If only role exists at top level
+                ? { 
+                    ...data.user, role: data.user.role || data.role,
+                    // ...data.user, userId: data.user.userId || data.userId
+                }  // If user object exists
+                : { 
+                    role: data.role, 
+                    userName: data.userName, 
+                    userId: data.userId,
+                    coverImage: data.coverImage
+                };  // If only role exists at top level
 
             console.log("Storing user data:", userData);
             setUser(userData);
