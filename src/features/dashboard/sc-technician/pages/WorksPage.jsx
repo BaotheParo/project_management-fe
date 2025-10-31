@@ -42,34 +42,18 @@ export default function TodoWorks() {
   const [filter, setFilter] = useState('All');
   const [query, setQuery] = useState('');
 
-  // const visibleCards = useMemo(() => {
-  //   return workRows.filter(
-  //     (r) =>
-  //       (filter === 'All' ? true : r.statusDisplay === filter) &&
-  //       (r.vehicleName.toLowerCase().includes(query.toLowerCase()) ||
-  //         r.workOrderId.toLowerCase().includes(query.toLowerCase()))
-  //   );
-  // }, [workRows, filter, query])
-
   const visibleCards = useMemo(() => {
-    console.log("🔍 Filtering workRows:", workRows);
-    console.log("🔍 Filter:", filter);
-    console.log("🔍 Query:", query);
-    
     const filtered = workRows.filter(
       (r) => {
         const matchesFilter = filter === 'All' ? true : r.statusDisplay === filter;
         const matchesSearch = query === '' || 
           r.vehicleName.toLowerCase().includes(query.toLowerCase()) ||
-          r.workOrderId.toLowerCase().includes(query.toLowerCase());
-        
-        console.log(`Row ${r.workOrderId}: matchesFilter=${matchesFilter}, matchesSearch=${matchesSearch}`);
+          r.workOrderId.toLowerCase().includes(query.toLowerCase()) ||
+          r.customerName.toLowerCase().includes(query.toLowerCase())
         
         return matchesFilter && matchesSearch;
       }
     );
-    
-    console.log("✅ Filtered results:", filtered);
     return filtered;
   }, [workRows, filter, query]);
 

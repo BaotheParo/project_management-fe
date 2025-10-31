@@ -213,7 +213,7 @@ export default function ClaimRequestsPage() {
                         <DotsThreeIcon size={20} weight="bold" />
                       </button>
 
-                      {openActionFor === r.claimId && r.claimStatus === "Pending"(
+                      {openActionFor === r.claimId && r.claimStatus === "Pending" && (
                         <div
                           ref={menuRef}
                           className="absolute -right-10 top-7 w-32 bg-white border border-[#DEE1E6] rounded-lg shadow-lg z-50 pointer-events-auto"

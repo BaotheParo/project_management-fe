@@ -27,16 +27,18 @@ export default function CreateClaimRequestsPage() {
     const displayName = user?.username || user?.name || user?.fullName || "User";
 
     const [formData, setFormData] = useState({
+        claimId: "",
+        claimDate: "",
+        serviceCenterName: "",
+        technicianName: "",
         vin: "",
         issueDescription: "",
         policyId: "",
         partItems: [
             {
                 partId: "",
-                partName: "",
-                quantity: 1,
                 partNumber: "",
-                price: 0.0,
+                partName: "",
             },
         ],
     });
@@ -142,6 +144,7 @@ export default function CreateClaimRequestsPage() {
                             <div className="w-full">
                                 <p className="text-sm mb-2 text-[#6B716F]">Claim Date</p>
                                 <input
+                                    type="date"
                                     className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="Claim Date"
                                 />
@@ -149,8 +152,10 @@ export default function CreateClaimRequestsPage() {
                             <div className="w-full">
                                 <p className="text-sm mb-2 text-[#6B716F]">Service Center</p>
                                 <input
-                                    className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
+                                    className="p-3 bg-[#F9FAFB] border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="Service Center"
+                                    defaultValue={user?.serviceCenterName}
+                                    disabled
                                 />
                             </div>
                             <div className="w-full">
@@ -159,6 +164,7 @@ export default function CreateClaimRequestsPage() {
                                     readOnly={true}
                                     className="p-3 bg-[#F9FAFB] border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="Created By"
+                                    defaultValue={displayName}
                                 />
                             </div>
                             <div className="w-full">
@@ -177,25 +183,20 @@ export default function CreateClaimRequestsPage() {
                         <div className="grid grid-cols-3 gap-10">
                             <div className="w-full">
                                 <p className="text-sm mb-2 text-[#6B716F]">VIN code</p>
-                                <input
+                                {/* <input
                                     name="vin"
                                     className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="VIN code"
                                     value={formData.vin}
                                     onChange={handleChange}
                                     required
-                                />
-                            </div>
-                            <div className="w-full">
-                                <p className="text-sm mb-2 text-[#6B716F]">Policy ID</p>
-                                <input
-                                    name="policyId"
+                                /> */}
+                                <select 
                                     className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
-                                    placeholder="Policy ID"
-                                    value={formData.policyId}
-                                    onChange={handleChange}
                                     required
-                                />
+                                >
+                                    <option></option>
+                                </select>
                             </div>
                             <div className="w-full">
                                 <p className="text-sm mb-2 text-[#6B716F]">Vehicle Name</p>
@@ -209,6 +210,7 @@ export default function CreateClaimRequestsPage() {
                                     Purchase Date of vehicle
                                 </p>
                                 <input
+                                    type="date"
                                     className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="Purchase Date of vehicle"
                                 />
@@ -287,28 +289,6 @@ export default function CreateClaimRequestsPage() {
                                         className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full"
                                         placeholder="Part Number"
                                         value={part.partNumber}
-                                        onChange={(e) => handlePartChange(index, e)}
-                                    />
-                                </div>
-
-                                <div className="w-full">
-                                    <p className="text-sm mb-2 text-[#6B716F]">Quantity</p>
-                                    <input
-                                        name="quantity"
-                                        className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full"
-                                        placeholder="Quantity"
-                                        value={part.quantity}
-                                        onChange={(e) => handlePartChange(index, e)}
-                                    />
-                                </div>
-
-                                <div className="w-full">
-                                    <p className="text-sm mb-2 text-[#6B716F]">Price</p>
-                                    <input
-                                        name="price"
-                                        className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full"
-                                        placeholder="Price"
-                                        value={part.price}
                                         onChange={(e) => handlePartChange(index, e)}
                                     />
                                 </div>
