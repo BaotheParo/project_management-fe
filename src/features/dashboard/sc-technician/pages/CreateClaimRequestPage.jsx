@@ -6,6 +6,8 @@ import {
     CloudArrowUpIcon,
     InfoIcon,
     PackageIcon,
+    PlusCircleIcon,
+    TrashIcon,
     WarningCircleIcon,
     XCircleIcon,
 } from "@phosphor-icons/react";
@@ -19,13 +21,89 @@ import { useAuth } from "../../../../app/AuthProvider";
 export default function CreateClaimRequestsPage() {
     const [claimId] = useState(uuidv4()); // Generate once
     const navigate = useNavigate();
-
     const { user } = useAuth();
+    const { createClaim } = useWarrantyClaims(user?.userId);
+
     const displayName = user?.username || user?.name || user?.fullName || "User";
 
+    const [formData, setFormData] = useState({
+        vin: "",
+        issueDescription: "",
+        policyId: "",
+        partItems: [
+            {
+                partId: "",
+                partName: "",
+                quantity: 1,
+                partNumber: "",
+                price: 0.0,
+            },
+        ],
+    });
+
+    // Handle input changes
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData((prev) => ({ ...prev, [name]: value }));
+    };
+
+    // Handle part changes
+    const handlePartChange = (index, e) => {
+        const { name, value } = e.target;
+        const updatedParts = [...formData.partItems];
+        updatedParts[index][name] = value;
+        setFormData((prev) => ({ ...prev, partItems: updatedParts }));
+    };
+
+    // ➕ Add new part
+    const handleAddPart = () => {
+        setFormData((prev) => ({
+            ...prev,
+            partItems: [
+                ...prev.partItems,
+                { partId: "", partName: "", partNumber: "", quantity: 1, price: 0 },
+            ],
+        }));
+    };
+
+    // 🗑 Remove part
+    const handleRemovePart = (index) => {
+        setFormData((prev) => ({
+            ...prev,
+            partItems: prev.partItems.filter((_, i) => i !== index),
+        }));
+    };
+
     async function handleSubmit(e) {
-        
-    }
+        e.preventDefault();
+
+        const payload = {
+            claimDate: new Date().toISOString(),
+            vin: formData.vin,
+            issueDescription: formData.issueDescription,
+            policyId: formData.policyId,
+            partItems: formData.partItems.map((item) => ({
+                partId: item.partId,
+                partName: item.partName,
+                quantity: Number(item.quantity),
+                partNumber: item.partNumber,
+                price: Number(item.price),
+            })),
+        };
+
+        try {
+            const result = await createClaim(payload);
+            if (result.success) {
+                alert("✅ Claim created successfully!");
+                navigate("/claims");
+            } else {
+                alert("❌ Failed to create claim.");
+            }
+        } catch (err) {
+            console.error("Error creating claim:", err);
+            alert("❌ Something went wrong.");
+        }
+    };
 
     return (
         <div className="w-full">
@@ -62,29 +140,27 @@ export default function CreateClaimRequestsPage() {
                                     placeholder="Claim Date"
                                 />
                             </div>
-                            {/* <div className="w-full">
+                            <div className="w-full">
                                 <p className="text-sm mb-2 text-[#6B716F]">Service Center</p>
                                 <input
                                     className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="Service Center"
-                                    defaultValue={row?.service || "WC-2003-9192332"}
                                 />
-                            </div> */}
+                            </div>
                             <div className="w-full">
                                 <p className="text-sm mb-2 text-[#6B716F]">Created By</p>
                                 <input
                                     readOnly={true}
                                     className="p-3 bg-[#F9FAFB] border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="Created By"
-                                    defaultValue={displayName}
                                 />
                             </div>
-                            {/* <div className="w-full">
+                            <div className="w-full">
                                 <p className="text-sm mb-2 text-[#6B716F]">Manufacturer</p>
                                 <select className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none">
                                     <option>Select Manufacturer</option>
                                 </select>
-                            </div> */}
+                            </div>
                         </div>
                     </div>
 
@@ -96,8 +172,23 @@ export default function CreateClaimRequestsPage() {
                             <div className="w-full">
                                 <p className="text-sm mb-2 text-[#6B716F]">VIN code</p>
                                 <input
+                                    name="vin"
                                     className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="VIN code"
+                                    value={formData.vin}
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </div>
+                            <div className="w-full">
+                                <p className="text-sm mb-2 text-[#6B716F]">Policy ID</p>
+                                <input
+                                    name="policyId"
+                                    className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
+                                    placeholder="Policy ID"
+                                    value={formData.policyId}
+                                    onChange={handleChange}
+                                    required
                                 />
                             </div>
                             <div className="w-full">
@@ -130,31 +221,104 @@ export default function CreateClaimRequestsPage() {
 
                     <div className="bg-white border-[3px] border-[#EBEBEB] rounded-2xl p-10">
                         <div className="text-md text-indigo-600 font-medium mb-6 flex items-center gap-2">
-                            <PackageIcon size={20} weight="bold" /> Part Information
-                        </div>
-                        <div className="grid grid-cols-3 gap-10">
-                            <div className="w-full">
-                                <p className="text-sm mb-2 text-[#6B716F]">Part Name</p>
-                                <input
-                                    className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
-                                    placeholder="Part Name"
-                                />
-                            </div>
-                            <div className="w-full">
-                                <p className="text-sm mb-2 text-[#6B716F]">Part Code</p>
-                                <input
-                                    className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
-                                    placeholder="Part Code"
-                                />
-                            </div>
-                            <div className="w-full">
-                                <p className="text-sm mb-2 text-[#6B716F]">Replacement Date</p>
-                                <input
-                                    className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
-                                    placeholder="Replacement Date"
-                                />
+                            <div className="flex items-center justify-between w-full mb-6">
+                                <div className="flex items-center gap-2">
+                                    <PackageIcon size={20} weight="bold" /> Part Information
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={handleAddPart}
+                                    className="flex items-center gap-2 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full transition-all cursor-pointer"
+                                >
+                                    <PlusCircleIcon size={20} weight="bold" />
+                                    Add Part
+                                </button>
                             </div>
                         </div>
+                        {formData.partItems.map((part, index) => (
+                            <div
+                                key={index}
+                                className="grid grid-cols-3 gap-10 mb-6 relative border p-6 rounded-2xl"
+                            >
+                                <div className="absolute right-3 top-3">
+                                    {formData.partItems.length > 1 && (
+                                        <button
+                                            type="button"
+                                            onClick={() => handleRemovePart(index)}
+                                            className="text-red-500 hover:text-red-700 cursor-pointer"
+                                        >
+                                            <TrashIcon size={20} weight="bold" />
+                                        </button>
+                                    )}
+                                </div>
+
+                                <div className="w-full">
+                                    <p className="text-sm mb-2 text-[#6B716F]">Part Id</p>
+                                    <input
+                                        name="partId"
+                                        className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full"
+                                        placeholder="Part Id"
+                                        value={part.partId}
+                                        onChange={(e) => handlePartChange(index, e)}
+                                    />
+                                </div>
+
+                                <div className="w-full">
+                                    <p className="text-sm mb-2 text-[#6B716F]">Part Name</p>
+                                    <input
+                                        name="partName"
+                                        className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full"
+                                        placeholder="Part Name"
+                                        value={part.partName}
+                                        onChange={(e) => handlePartChange(index, e)}
+                                    />
+                                </div>
+
+                                <div className="w-full">
+                                    <p className="text-sm mb-2 text-[#6B716F]">Part Number</p>
+                                    <input
+                                        name="partNumber"
+                                        className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full"
+                                        placeholder="Part Number"
+                                        value={part.partNumber}
+                                        onChange={(e) => handlePartChange(index, e)}
+                                    />
+                                </div>
+
+                                <div className="w-full">
+                                    <p className="text-sm mb-2 text-[#6B716F]">Quantity</p>
+                                    <input
+                                        name="quantity"
+                                        className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full"
+                                        placeholder="Quantity"
+                                        value={part.quantity}
+                                        onChange={(e) => handlePartChange(index, e)}
+                                    />
+                                </div>
+
+                                <div className="w-full">
+                                    <p className="text-sm mb-2 text-[#6B716F]">Price</p>
+                                    <input
+                                        name="price"
+                                        className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full"
+                                        placeholder="Price"
+                                        value={part.price}
+                                        onChange={(e) => handlePartChange(index, e)}
+                                    />
+                                </div>
+
+                                {/* <div className="w-full">
+                                    <p className="text-sm mb-2 text-[#6B716F]">
+                                        Replacement Date
+                                    </p>
+                                    <input
+                                        type="date"
+                                        className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full"
+                                        value={part.replacementDate}
+                                    />
+                                </div> */}
+                            </div>
+                        ))}
                     </div>
 
                     <div className="bg-white border-[3px] border-[#EBEBEB] rounded-2xl p-10">

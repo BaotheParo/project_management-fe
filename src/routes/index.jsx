@@ -17,7 +17,8 @@ const SCTechnicianDashboardPage = lazy(() => import("../features/dashboard/sc-te
 const SCTechnicianClaimRequestsPage = lazy(() => import("../features/dashboard/sc-technician/pages/ClaimRequestsPage"));
 const SCTechnicianEditClaimRequestsPage = lazy(() => import("../features/dashboard/sc-technician/pages/EditClaimRequestPage"));
 const SCTechnicianCreateClaimRequestsPage = lazy(() => import("../features/dashboard/sc-technician/pages/CreateClaimRequestPage"));
-const SCTechnicianTodoWorksPage = lazy(() => import("../features/dashboard/sc-technician/pages/TodoWorksPage"));
+const SCTechnicianTodoWorksPage = lazy(() => import("../features/dashboard/sc-technician/pages/WorksPage"));
+const SCTechnicianTodoWorksDetailPage = lazy(() => import("../features/dashboard/sc-technician/pages/WorkDetails"));
 const SCTechnicianProfilePage = lazy(() => import("../features/dashboard/sc-technician/pages/ProfilePage"));
 
 // Sc-Staff
@@ -65,6 +66,7 @@ const router = createBrowserRouter([
             { path: "claims/create", element: <Suspense fallback={<Loader />}><SCTechnicianCreateClaimRequestsPage /></Suspense> },
             { path: "claims/edit/claim/:id", element: <Suspense fallback={<Loader />}><SCTechnicianEditClaimRequestsPage /></Suspense> },
             { path: "todos", element: <Suspense fallback={<Loader />}><SCTechnicianTodoWorksPage /></Suspense> },
+            { path: "todos/view-detail/:id", element: <Suspense fallback={<Loader />}><SCTechnicianTodoWorksDetailPage /></Suspense> },
             { path: "profile", element: <Suspense fallback={<Loader />}><SCTechnicianProfilePage /></Suspense> },
         ],
     },
@@ -85,6 +87,16 @@ const router = createBrowserRouter([
             { path: "bill", element: <Suspense fallback={<Loader />}><SCStaffBillPage /></Suspense> },
             { path: "profile", element: <Suspense fallback={<Loader />}><SCStaffProfilePage /></Suspense> },
         ],
+    },
+
+    // Default route
+    {
+        path: "/",
+        element: (
+        <Suspense fallback={<Loader />}>
+            <LoginPage />
+        </Suspense>
+        ),
     },
 
     // Fallback route
