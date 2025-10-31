@@ -24,17 +24,20 @@ export const useAuthApi = () => {
             localStorage.setItem("token", data.token);
             axiosClient.defaults.headers.common["Authorization"] = `Bearer ${data.token}`;
 
-            // Store user with role - handle both formats
-            const userData = data.user 
-                ? { 
-                    ...data.user, role: data.user.role || data.role,
-                }  // If user object exists
-                : { 
-                    role: data.role, 
-                    userName: data.userName, 
+            // Store user with role and serviceCenterId - handle both formats
+            const userData = data.user
+                ? {
+                    ...data.user,
+                    role: data.user.role || data.role,
+                    serviceCenterId: data.user.serviceCenterId || data.serviceCenterId
+                }
+                : {
+                    role: data.role,
+                    username: data.username,
                     userId: data.userId,
-                    coverImage: data.coverImage
-                };  // If only role exists at top level
+                    coverImage: data.coverImage,
+                    serviceCenterId: data.serviceCenterId
+                };
 
             // console.log("Storing user data:", userData);
             setUser(userData);
@@ -63,7 +66,7 @@ export const useAuthApi = () => {
     const checkAuth = useCallback(async () => {
         const token = localStorage.getItem("token");
         const storedUser = localStorage.getItem("user");
-        
+
         if (!token) {
             // console.log("No token found, skipping auth check");
             setLoading(false);
@@ -98,11 +101,16 @@ export const useAuthApi = () => {
 
             // console.log("Auth check response:", data);
 
-            // Store complete user data with role
-            const userData = data.user 
-                ? { ...data.user, role: data.user.role || data.role }
-                : { 
+            // Store complete user data with role and serviceCenterId
+            const userData = data.user
+                ? {
+                    ...data.user,
+                    role: data.user.role || data.role,
+                    serviceCenterId: data.user.serviceCenterId || data.serviceCenterId
+                }
+                : {
                     role: data.role,
+                    serviceCenterId: data.serviceCenterId,
                     ...(data.userName && { username: data.userName }),
                     ...(data.userId && { userId: data.userId }),
                     ...(data.name && { name: data.name }),
@@ -111,6 +119,7 @@ export const useAuthApi = () => {
                     ...(data.coverImage && { coverImage: data.coverImage }),
                 };
 
+            console.log("Auth me - Storing user data:", userData);
             localStorage.setItem("user", JSON.stringify(userData));
             setUser(userData);
             setIsInitialized(true);

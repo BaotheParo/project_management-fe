@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { CheckCircleIcon, CaretLeftIcon, CaretRightIcon, ListDashesIcon, ListIcon, CaretDownIcon, PlusIcon } from '@phosphor-icons/react'
-import StatusCard from '../components/StatusCard'
+import StatusCard from '../../../../components/StatusCard'
 import { useWarrantyClaims } from '../../../../api/useWarrantyClaims'
 import Loader from '../../../../components/Loader'
 import StatusDot from '../components/ClaimStatusDot'

@@ -12,13 +12,13 @@ import {
   ClockIcon,
   ListDashesIcon,
 } from "@phosphor-icons/react";
-import StatusCard from '../components/StatusCard';
 import { useTodoWorksApi } from '../../../../api/useTodoWorksApi';
 import Loader from '../../../../components/Loader';
 import WorkStatusDot from '../components/WorkStatusDot';
 import WorkPriority from '../components/WorkPriority';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../../app/AuthProvider';
+import StatusCard from '../../../../components/StatusCard';
 
 export default function TodoWorks() {
   const navigate = useNavigate();

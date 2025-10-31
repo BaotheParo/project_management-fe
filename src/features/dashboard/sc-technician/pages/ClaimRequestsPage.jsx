@@ -10,7 +10,7 @@ import {
   ClockIcon,
   PlusIcon,
 } from "@phosphor-icons/react";
-import StatusCard from "../components/StatusCard";
+import StatusCard from "../../../../components/StatusCard";
 import StatusDot from "../components/ClaimStatusDot";
 import DeleteModal from "../components/DeleteClaimRequest";
 import { useWarrantyClaims } from "../../../../api/useWarrantyClaims";
