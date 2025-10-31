@@ -2,7 +2,7 @@ import React from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { HouseIcon, ListIcon, ClipboardTextIcon, UserIcon, MinusCircleIcon, WrenchIcon, PenIcon } from '@phosphor-icons/react'
 import logo from '../../../../assets/group4.png'
-import { logout } from '../../../../utils/auth'
+import { useAuthApi } from '../../../../api/useAuthApi'
 
 const NavItem = ({ to, icon: Icon, label, end, onClick }) => {
   const commonClasses = ({ isActive }) =>
@@ -42,6 +42,7 @@ const NavItem = ({ to, icon: Icon, label, end, onClick }) => {
 
 export default function Sidebar() {
   const navigate = useNavigate()
+  const { logout, loading } = useAuthApi();
 
   const handleLogout = () => {
     logout() // clear token, role, etc.
