@@ -6,11 +6,13 @@ import {
     CloudArrowUpIcon,
     InfoIcon,
     PackageIcon,
+    PlusCircleIcon,
+    TrashIcon,
     WarningCircleIcon,
     XCircleIcon,
 } from "@phosphor-icons/react";
 import { useWarrantyClaims } from "../../../../api/useWarrantyClaims";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Loader from "../../../../components/Loader";
 
@@ -18,10 +20,61 @@ export default function EditClaimRequestsPage() {
     const navigate = useNavigate();
     const { id } = useParams();
     const { row, fetchClaimById, loading, error } = useWarrantyClaims();
+    
+    // 🧩 Add dynamic parts state
+    const [parts, setParts] = useState([]);
 
     useEffect(() => {
         fetchClaimById(id);
     }, [id]);
+
+    // When data loads, set initial parts
+    useEffect(() => {
+        if (row?.parts && Array.isArray(row.parts)) {
+            setParts(row.parts);
+        } else {
+            setParts([
+                {
+                    partName: row?.partName || "",
+                    partCode: "PIN12334SD",
+                    replacementDate: "05/16/2025",
+                },
+            ]);
+        }
+    }, [row]);
+
+    // ➕ Add new part
+    const handleAddPart = () => {
+        setParts([
+            ...parts,
+            { partName: "", partCode: "", replacementDate: "" },
+        ]);
+    };
+
+    // 🗑 Remove part
+    const handleRemovePart = (index) => {
+        setParts(parts.filter((_, i) => i !== index));
+    };
+
+    // ✏️ Update part field
+    const handlePartChange = (index, field, value) => {
+        const updated = [...parts];
+        updated[index][field] = value;
+        setParts(updated);
+    };
+
+    // 💾 Save
+    const handleSave = async (e) => {
+        e.preventDefault();
+
+        const payload = {
+            ...row,
+            parts, // send the array of parts
+        };
+
+        await updateClaim(id, payload);
+        navigate(-1);
+    };
 
     if (loading) return <Loader />;
     if (error)
@@ -54,7 +107,7 @@ export default function EditClaimRequestsPage() {
                                     className="p-3 bg-[#F9FAFB] border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="Claim ID"
                                     aria-disabled
-                                    defaultValue={row?.id || ""}
+                                    defaultValue={row?.claimId || ""}
                                 />
                             </div>
                             <div className="w-full">
@@ -65,21 +118,21 @@ export default function EditClaimRequestsPage() {
                                     defaultValue={row?.claimDate || "03/12/2004"}
                                 />
                             </div>
-                            {/* <div className="w-full">
+                            <div className="w-full">
                                 <p className="text-sm mb-2 text-[#6B716F]">Service Center</p>
                                 <input
                                     className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="Service Center"
-                                    defaultValue={row?.service || "WC-2003-9192332"}
+                                    defaultValue={row?.serviceCenterName || "WC-2003-9192332"}
                                 />
-                            </div> */}
+                            </div>
                             <div className="w-full">
                                 <p className="text-sm mb-2 text-[#6B716F]">Created By</p>
                                 <input
                                     readOnly={true}
                                     className="p-3 bg-[#F9FAFB] border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="Created By"
-                                    defaultValue={row?.name || ""}
+                                    defaultValue={row?.technicianName || ""}
                                 />
                             </div>
                             {/* <div className="w-full">
@@ -109,7 +162,7 @@ export default function EditClaimRequestsPage() {
                                 <input
                                     className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="Enter vehicle name"
-                                    defaultValue={row?.vehicle || ""}
+                                    defaultValue={row?.vehicleName || ""}
                                 />
                             </div>
                             <div className="w-full">
@@ -137,9 +190,79 @@ export default function EditClaimRequestsPage() {
 
                     <div className="bg-white border-[3px] border-[#EBEBEB] rounded-2xl p-10">
                         <div className="text-md text-indigo-600 font-medium mb-6 flex items-center gap-2">
-                            <PackageIcon size={20} weight="bold" /> Part Information
+                            <div className="flex items-center justify-between w-full mb-6">
+                                <div className="flex items-center gap-2">
+                                    <PackageIcon size={20} weight="bold" /> Part Information
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={handleAddPart}
+                                    className="flex items-center gap-2 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full transition-all cursor-pointer"
+                                >
+                                    <PlusCircleIcon size={20} weight="bold" />
+                                    Add Part
+                                </button>
+                            </div>
                         </div>
-                        <div className="grid grid-cols-3 gap-10">
+
+                        {parts.map((part, index) => (
+                            <div
+                                key={index}
+                                className="grid grid-cols-3 gap-10 mb-6 relative border p-6 rounded-2xl"
+                            >
+                                <div className="absolute right-3 top-3">
+                                    {parts.length > 1 && (
+                                        <button
+                                            type="button"
+                                            onClick={() => handleRemovePart(index)}
+                                            className="text-red-500 hover:text-red-700 cursor-pointer"
+                                        >
+                                            <TrashIcon size={20} weight="bold" />
+                                        </button>
+                                    )}
+                                </div>
+
+                                <div className="w-full">
+                                    <p className="text-sm mb-2 text-[#6B716F]">Part Name</p>
+                                    <input
+                                        className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full"
+                                        placeholder="Part Name"
+                                        value={part.partName}
+                                        onChange={(e) =>
+                                            handlePartChange(index, "partName", e.target.value)
+                                        }
+                                    />
+                                </div>
+
+                                <div className="w-full">
+                                    <p className="text-sm mb-2 text-[#6B716F]">Part Code</p>
+                                    <input
+                                        className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full"
+                                        placeholder="Part Code"
+                                        value={part.partCode}
+                                        onChange={(e) =>
+                                            handlePartChange(index, "partCode", e.target.value)
+                                        }
+                                    />
+                                </div>
+
+                                <div className="w-full">
+                                    <p className="text-sm mb-2 text-[#6B716F]">
+                                        Replacement Date
+                                    </p>
+                                    <input
+                                        type="date"
+                                        className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full"
+                                        value={part.replacementDate}
+                                        onChange={(e) =>
+                                            handlePartChange(index, "replacementDate", e.target.value)
+                                        }
+                                    />
+                                </div>
+                            </div>
+                        ))}
+
+                        {/* <div className="grid grid-cols-3 gap-10">
                             <div className="w-full">
                                 <p className="text-sm mb-2 text-[#6B716F]">Part Name</p>
                                 <input
@@ -164,7 +287,7 @@ export default function EditClaimRequestsPage() {
                                     defaultValue={row ? "05/16/2025" : ""}
                                 />
                             </div>
-                        </div>
+                        </div> */}
                     </div>
 
                     <div className="bg-white border-[3px] border-[#EBEBEB] rounded-2xl p-10">
@@ -242,7 +365,7 @@ export default function EditClaimRequestsPage() {
                             <span>Cancel</span>
                         </button>
                         <button
-                            // onClick={saveChanges}
+                            onClick={handleSave}
                             className="flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-600 hover:bg-indigo-700 transition-all text-white cursor-pointer"
                         >
                             <CheckCircleIcon size={18} />

@@ -65,11 +65,11 @@ export default function ClaimRequestsPage() {
   const { user } = useAuth();
   const { rows, loading, error } = useWarrantyClaims(user?.userId);
 
-  const totalClaims = rows.length;
-  const pendingClaims = rows.filter((r) => r.claimStatus === "Pending").length;
-  const acceptedClaims = rows.filter((r) => r.claimStatus === "Accepted").length;
-  const rejectedClaims = rows.filter((r) => r.claimStatus === "Rejected").length;
-  const overdueClaims = rows.filter((r) => r.claimStatus === "Overdue").length;
+  const totalClaims = rows.filter(r => r.isActive === true).length;
+  const pendingClaims = rows.filter((r) => r.claimStatus === "Pending" && r.isActive === true).length;
+  const acceptedClaims = rows.filter((r) => r.claimStatus === "Accepted" && r.isActive === true).length;
+  const rejectedClaims = rows.filter((r) => r.claimStatus === "Rejected" && r.isActive === true).length;
+  const overdueClaims = rows.filter((r) => r.claimStatus === "Overdue" && r.isActive === true).length;
 
   if (loading) return <Loader />;
   if (error)

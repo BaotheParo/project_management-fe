@@ -102,8 +102,15 @@ export const useWarrantyClaims = (userId) => {
     };
 
     const createClaim = async (payload) => {
-        await axiousInstance.post("/claims", payload);
-        await fetchClaims();
+        try {
+            const response = await axiousInstance.post("/claims", payload);
+            // Optionally refetch updated claim list
+            // await fetchClaims(payload.userId);
+            return { success: true, data: response.data };
+        } catch (error) {
+            console.error("Failed to create claim:", error);
+            return { success: false, error };
+        }
     };
 
     const updateClaim = async (id, payload) => {
@@ -123,8 +130,10 @@ export const useWarrantyClaims = (userId) => {
     };
 
     useEffect(() => {
-        fetchClaims(userId);
-    }, [userId]); // ✅ will refetch whenever userId changes
+        if (userId) {
+            fetchClaims(userId);
+        }
+    }, [userId]);
 
     return {
         rows,

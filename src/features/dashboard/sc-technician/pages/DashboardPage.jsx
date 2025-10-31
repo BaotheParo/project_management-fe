@@ -20,8 +20,8 @@ export default function Dashboard() {
   const { rows = [], loading, error } = useWarrantyClaims(user?.userId);
   const { workRows = [], workLoading, workError } = useTodoWorksApi();
 
-  const totalClaims = rows.length;
-  const acceptedClaims = rows.filter(r => r.status === "Accepted").length;
+  const totalClaims = rows.filter(r => r.isActive === true).length;
+  const acceptedClaims = rows.filter(r => r.claimStatus === "Accepted").length;
   const totalWorks = workRows.length;
 
   if (loading && workLoading) return <Loader />;
@@ -111,22 +111,22 @@ export default function Dashboard() {
             <tbody>
               {rows.map((r) => (
                 <tr
-                  key={r.id}
+                  key={r.claimId}
                   className="border-b-2 border-[#DEE1E6] bg-white hover:bg-gray-50"
                 >
                   <td className="px-8 py-3 text-[13px] font-medium text-black">
-                    {r.id}
+                    {r.claimId}
                   </td>
                   <td className="px-8 py-3 text-[13px] font-medium text-black">
-                    {r.vehicle}
+                    {r.vehicleName}
                   </td>
                   <td className="px-8 py-3 text-[13px] font-medium text-black">
                     {r.vin}
                   </td>
                   <td className="px-8 py-3 text-[13px] font-medium text-black">
                     <div className="flex items-center">
-                      <StatusDot status={r.status} />
-                      <span>{r.status}</span>
+                      <StatusDot status={r.claimStatus} />
+                      <span>{r.claimStatus}</span>
                     </div>
                   </td>
                   <td className="px-8 py-3 text-[13px] font-medium text-black">
