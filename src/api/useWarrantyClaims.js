@@ -1,20 +1,20 @@
 import { useEffect, useState } from "react";
 import axiousInstance from "./axiousInstance";
 import { getClaimStatusLabel } from "../constants/ClaimStatus";
-import { replace } from "react-router-dom";
 
-export const useWarrantyClaims = () => {
+export const useWarrantyClaims = (userId) => {
     const [rows, setRows] = useState([]);
-    const[row, setRow] = useState(null);
+    const [row, setRow] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Fetch all claims
-    const fetchClaims = async () => {
+    // Fetch all claims for specific technician
+    const fetchClaims = async (userId) => {
+        if (!userId) return;
         try {
             setLoading(true);
             setError(null);
-            const response = await axiousInstance.get("/claims"); // GET /api/claims
+            const response = await axiousInstance.get(`/claims/user/${userId}`); // GET /api/claims
 
             const data = Array.isArray(response.data)
                 ? response.data
@@ -27,11 +27,21 @@ export const useWarrantyClaims = () => {
             }
 
             const formattedClaims = response.data.map((claim) => ({
-                id: claim.claimId,
-                vehicle: claim.vehicleName || "Unknown",
-                vin: claim.vin,
-                status: getClaimStatusLabel(claim.claimStatus),
+                claimId: claim.claimId,
                 claimDate: new Date(claim.claimDate).toISOString().split("T")[0],
+                vin: claim.vin,
+                claimStatus: getClaimStatusLabel(claim.claimStatus),
+                issueDescription: claim.issueDescription,
+                vehicleName: claim.vehicleName || "Unknown",
+                purchaseDate: new Date(claim.purchaseDate).toISOString().split("T")[0],
+                mileAge: claim.mileage,
+                parts: claim.parts || [],
+                totalCost: claim.totalCost,
+                policyName: claim.policyName,
+                serviceCenterName: claim.serviceCenterName,
+                userId: claim.userId,
+                technicianName: claim.technicianName,
+                isActive: claim.isActive,
             }));
 
             setRows(formattedClaims);
@@ -67,16 +77,19 @@ export const useWarrantyClaims = () => {
             }
 
             const formattedClaim = {
-                id: claim.claimId,
-                vehicle: claim.vehicleName || "Unknown",
-                vin: claim.vin,
-                status: getClaimStatusLabel(claim.claimStatus),
-                name: claim.name,
+                claimId: claim.claimId,
                 claimDate: new Date(claim.claimDate).toISOString().split("T")[0],
+                vin: claim.vin,
+                claimStatus: getClaimStatusLabel(claim.claimStatus),
                 issueDescription: claim.issueDescription,
-                mileAge: claim.mileage,
+                vehicleName: claim.vehicleName || "Unknown",
                 purchaseDate: new Date(claim.purchaseDate).toISOString().split("T")[0],
-                // replacementDate: new Date(claim.)
+                mileAge: claim.mileage,
+                parts: claim.parts || [],
+                totalCost: claim.totalCost,
+                policyName: claim.policyName,
+                serviceCenterName: claim.serviceCenterName,
+                technicianName: claim.technicianName,
             };
 
             setRow(formattedClaim);
@@ -89,8 +102,15 @@ export const useWarrantyClaims = () => {
     };
 
     const createClaim = async (payload) => {
-        await axiousInstance.post("/claims", payload);
-        await fetchClaims();
+        try {
+            const response = await axiousInstance.post("/claims", payload);
+            // Optionally refetch updated claim list
+            // await fetchClaims(payload.userId);
+            return { success: true, data: response.data };
+        } catch (error) {
+            console.error("Failed to create claim:", error);
+            return { success: false, error };
+        }
     };
 
     const updateClaim = async (id, payload) => {
@@ -99,13 +119,21 @@ export const useWarrantyClaims = () => {
     };
 
     const deleteClaim = async (id) => {
-        await axiousInstance.delete(`/claims/${id}`);
-        await fetchClaims();
+        try {
+            await axiousInstance.delete(`/claims/${id}`);
+            await fetchClaims();
+            return { success: true };
+        } catch (err) {
+            console.error("Remove claim request failed: ", err);
+            return { success: false, error: err };
+        }
     };
 
     useEffect(() => {
-        fetchClaims();
-    }, []);
+        if (userId) {
+            fetchClaims(userId);
+        }
+    }, [userId]);
 
     return {
         rows,

@@ -11,8 +11,7 @@ export default function Sidebar() {
   const { logout } = useAuthApi();
 
   const { user } = useAuth();
-  const displayName = user?.username || user?.name || user?.fullName || "User";
-  const displayUsername = user?.name;
+  const displayUsername = user?.userName;
   const displayCoverImage = user?.coverImage;
 
   const handleLogout = () => {

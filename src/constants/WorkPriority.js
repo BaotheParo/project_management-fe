@@ -8,15 +8,15 @@ export const PRIORITY_STATUS_CODE = {
 // Status labels for display
 export const PRIORITY_STATUS_LABEL = {
     [PRIORITY_STATUS_CODE.HIGH]: "HIGH",
-    [PRIORITY_STATUS_CODE.ACCEPTED]: "MEDIUM",
-    [PRIORITY_STATUS_CODE.REJECTED]: "LOW",
+    [PRIORITY_STATUS_CODE.MEDIUM]: "MEDIUM",
+    [PRIORITY_STATUS_CODE.LOW]: "LOW",
 };
 
 // Colors for each status
 export const PRIORITY_STATUS_COLORS = {
-    "HIGH": "bg-red-400",
-    "MEDIUM": "bg-yellow-400",
-    "LOW": "bg-gray-300",
+    "HIGH": "bg-[#FFE4E4] text-[#FF3232]",
+    "MEDIUM": "bg-[#FFF1C9] text-[#E29A00]",
+    "LOW": "bg-[#EFEFEF] text-[#717171]",
 };
 
 // Helper function to get status label from code
