@@ -117,6 +117,12 @@ export default function CreateClaimRequestsPage() {
             </div>
 
             <div className="mb-6 mt-20">
+                <div className="mt-20 mb-6">
+                    <h2 className="text-xl font-semibold mb-1">
+                        Create new Claim Request
+                    </h2>
+                </div>
+                
                 <form className="space-y-10" onSubmit={handleSubmit}>
                     <div className="bg-white border-[3px] border-[#EBEBEB] rounded-2xl p-10">
                         <div className="text-md text-indigo-600 font-medium mb-6 flex items-center gap-2">
