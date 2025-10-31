@@ -18,11 +18,12 @@ import Loader from '../../../../components/Loader';
 import WorkStatusDot from '../components/WorkStatusDot';
 import WorkPriority from '../components/WorkPriority';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../../app/AuthProvider';
 
 export default function TodoWorks() {
   const navigate = useNavigate();
-
-  const { workRows, workLoading, workError } = useTodoWorksApi();
+  const { user } = useAuth();
+  const { workRows, workLoading, workError } = useTodoWorksApi(user?.userId);
 
   const filters = ["All", "Pending", "InProgress", "Completed", "Overdue"];
 
@@ -41,20 +42,42 @@ export default function TodoWorks() {
   const [filter, setFilter] = useState('All');
   const [query, setQuery] = useState('');
 
+  // const visibleCards = useMemo(() => {
+  //   return workRows.filter(
+  //     (r) =>
+  //       (filter === 'All' ? true : r.statusDisplay === filter) &&
+  //       (r.vehicleName.toLowerCase().includes(query.toLowerCase()) ||
+  //         r.workOrderId.toLowerCase().includes(query.toLowerCase()))
+  //   );
+  // }, [workRows, filter, query])
+
   const visibleCards = useMemo(() => {
-    return workRows.filter(
-      (r) =>
-        (filter === 'All' ? true : r.status === filter) &&
-        (r.vehicleName.toLowerCase().includes(query.toLowerCase()) ||
-          r.id.toLowerCase().includes(query.toLowerCase()))
+    console.log("🔍 Filtering workRows:", workRows);
+    console.log("🔍 Filter:", filter);
+    console.log("🔍 Query:", query);
+    
+    const filtered = workRows.filter(
+      (r) => {
+        const matchesFilter = filter === 'All' ? true : r.statusDisplay === filter;
+        const matchesSearch = query === '' || 
+          r.vehicleName.toLowerCase().includes(query.toLowerCase()) ||
+          r.workOrderId.toLowerCase().includes(query.toLowerCase());
+        
+        console.log(`Row ${r.workOrderId}: matchesFilter=${matchesFilter}, matchesSearch=${matchesSearch}`);
+        
+        return matchesFilter && matchesSearch;
+      }
     );
-  }, [workRows, filter, query])
+    
+    console.log("✅ Filtered results:", filtered);
+    return filtered;
+  }, [workRows, filter, query]);
 
   const totalWorks = workRows.length;
-  const pendingWorks = workRows.filter(r => r.status === "Pending").length;
-  const inProgressWorks = workRows.filter(r => r.status === "InProgress").length;
-  const completedWorks = workRows.filter(r => r.status === "Completed").length;
-  const overduedWorks = workRows.filter(r => r.status === "Overdue").length;
+  const pendingWorks = workRows.filter(r => r.statusDisplay === "Pending").length;
+  const inProgressWorks = workRows.filter(r => r.statusDisplay === "InProgress").length;
+  const completedWorks = workRows.filter(r => r.statusDisplay === "Completed").length;
+  const overduedWorks = workRows.filter(r => r.statusDisplay === "Overdue").length;
 
   if (workLoading) return <Loader />;
   if (workError)
@@ -165,7 +188,7 @@ export default function TodoWorks() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {visibleCards.map((r) => (
             <div
-              key={r.id}
+              key={r.workOrderId}
               className="bg-white border border-[#d8dadf] rounded-2xl shadow-[0_4px_16px_3px_rgba(173,173,173,0.12)] overflow-hidden p-6"
             >
               <div className="flex items-start justify-between mb-4">
@@ -175,13 +198,13 @@ export default function TodoWorks() {
                   </div>
                   <div>
                     <div className="font-semibold">{r.vehicleName}</div>
-                    <div className="text-xs text-gray-500">ID: {r.id}</div>
+                    <div className="text-xs text-gray-500">ID: {r.workOrderId}</div>
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-2">
                   <div className="flex items-center">
-                    <WorkStatusDot status={r.status} />
-                    <span className='font-medium text-[13px]'>{r.status}</span>
+                    <WorkStatusDot status={r.statusDisplay} />
+                    <span className='font-medium text-[13px]'>{r.statusDisplay}</span>
                   </div>
                   <div className="">
                     <WorkPriority status={r.priorityDisplay} label={r.priority} />
@@ -192,7 +215,7 @@ export default function TodoWorks() {
               <div className="grid grid-cols-2 gap-3 text-sm text-gray-600 mb-4">
                 <div className="flex items-center gap-2">
                   <UserIcon size={16} className="text-gray-500" />
-                  {r.customerName || r.customer}
+                  {r.customerName}
                 </div>
                 <div className="text-right flex items-center justify-end gap-2">
                   <IdentificationBadgeIcon
@@ -207,17 +230,17 @@ export default function TodoWorks() {
                 </div>
                 <div className="text-right flex items-center justify-end gap-2">
                   <ClockIcon size={16} className="text-gray-500" />
-                  {r.estimateHour ? `${r.estimateHour} hours` : r.eta}
+                  {r.estimateHour}
                 </div>
               </div>
 
               <div className="text-sm text-gray-700 mb-4 bg-gray-50 p-3 rounded-md">
-                {r.description || r.issue}
+                {r.description}
               </div>
 
               <div className="flex items-center justify-end">
                 <button
-                  onClick={() => navigate(`view-detail/${r.id}`)}
+                  onClick={() => navigate(`view-detail/${r.workOrderId}`)}
                   className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 transition-colors text-white rounded-full cursor-pointer"
                 >
                   View Details
