@@ -1,20 +1,23 @@
 import { useEffect, useState } from "react";
 import axiousInstance from "./axiousInstance";
-import { getClaimStatusLabel } from "../constants/ClaimStatus";
 
 export const useVehicleApi = () => {
     const [vehicles, setVehicles] = useState([]);
     const [vehicle, setVehicle] = useState(null);
-    const [vehicleLoading, setLoading] = useState(true);
+    const [vehicleLoading, setLoading] = useState(false);
     const [vehicleError, setError] = useState(null);
 
-    // Fetch all vehicle
+    // Fetch all vehicles
     const fetchVehicle = async () => {
         try {
             setLoading(true);
             setError(null);
-            const response = await axiousInstance.get("/vehicle/get-all"); // GET /api/claims
+            
+            const response = await axiousInstance.get("/vehicle/get-all");
+            
+            console.log("Raw API Response:", response.data); // Debug log
 
+            // Handle response - your API returns array directly
             const data = Array.isArray(response.data)
                 ? response.data
                 : response.data?.data || [];
@@ -25,65 +28,84 @@ export const useVehicleApi = () => {
                 return;
             }
 
-            const formattedVehicle = response.data.map((vehicle) => ({
+            // Map the response to match your actual API structure
+            const formattedVehicles = data.map((vehicle) => ({
                 vin: vehicle.vin,
                 vehicleName: vehicle.vehicleName || "Unknown",
+                model: vehicle.model || "",
                 purchaseDate: vehicle.purchaseDate,
-                mileAge: vehicle.mileAge,
+                mileAge: vehicle.mileAge || 0,
+                customerId: vehicle.customerId,
+                firstName: vehicle.firstName || "",
+                lastName: vehicle.lastName || "",
+                phoneNumber: vehicle.phoneNumber || "",
+                email: vehicle.email || "",
+                fullName: vehicle.fullName || `${vehicle.firstName} ${vehicle.lastName}`.trim(),
             }));
 
-            setVehicles(formattedVehicle);
+            console.log("Formatted vehicles:", formattedVehicles); // Debug log
+            setVehicles(formattedVehicles);
         } catch (err) {
-            console.error("Fetch claims failed", err)
+            console.error("Fetch vehicles failed", err);
+            console.error("Error details:", err.response?.data || err.message);
             setError(err);
+            
             // fallback mock data
-            setVehicles([
+            const mockData = [
                 {
-                    vin: "LSV1E7AL0MC123456",
-                    vehicleName: "VinFast VF 3",
-                    purchaseDate: "2023-10-12",
-                    mileage: "4000",
-                    manufacturer: "VinFast",
+                    vin: "0f51b827-bcee-46e7-b624-3571dc14ba12",
+                    vehicleName: "Vf8",
+                    model: "Doi moi nhat",
+                    purchaseDate: "2024-11-01T09:00:00Z",
+                    mileAge: 45000,
+                    customerId: "f69efef6-c13a-412c-9c63-d4277c27b279",
+                    firstName: "Nguyen",
+                    lastName: "Thinh",
+                    phoneNumber: "0909090909",
+                    email: "example@gmail.com",
+                    fullName: "Nguyen Thinh"
                 },
-            ]);
+            ];
+            console.log("Using mock data:", mockData);
+            setVehicles(mockData);
         } finally {
             setLoading(false);
         }
     };
 
-    // Fetch vehicle by Id
-    const fetchClaimById = async (id) => {
+    // Fetch vehicle by VIN
+    const fetchVehicleByVin = async (vin) => {
         try {
             setLoading(true);
             setError(null);
 
-            const response = await axiousInstance.get(`/claims/${id}`);
-            const claim = response.data?.data || response.data;
+            const response = await axiousInstance.get(`/vehicle/${vin}`);
+            const vehicleData = response.data?.data || response.data;
 
-            if (!claim) {
-                throw new Error("Claim not found");
+            if (!vehicleData) {
+                throw new Error("Vehicle not found");
             }
 
-            const formattedClaim = {
-                claimId: claim.claimId,
-                claimDate: new Date(claim.claimDate).toISOString().split("T")[0],
-                vin: claim.vin,
-                claimStatus: getClaimStatusLabel(claim.claimStatus),
-                issueDescription: claim.issueDescription,
-                vehicleName: claim.vehicleName || "Unknown",
-                purchaseDate: new Date(claim.purchaseDate).toISOString().split("T")[0],
-                mileAge: claim.mileage,
-                parts: claim.parts || [],
-                totalCost: claim.totalCost,
-                policyName: claim.policyName,
-                serviceCenterName: claim.serviceCenterName,
-                technicianName: claim.technicianName,
+            const formattedVehicle = {
+                vin: vehicleData.vin,
+                vehicleName: vehicleData.vehicleName || "Unknown",
+                model: vehicleData.model || "",
+                purchaseDate: vehicleData.purchaseDate,
+                mileAge: vehicleData.mileAge || 0,
+                customerId: vehicleData.customerId,
+                firstName: vehicleData.firstName || "",
+                lastName: vehicleData.lastName || "",
+                phoneNumber: vehicleData.phoneNumber || "",
+                email: vehicleData.email || "",
+                fullName: vehicleData.fullName || `${vehicleData.firstName} ${vehicleData.lastName}`.trim(),
             };
 
-            setVehicle(formattedClaim);
+            setVehicle(formattedVehicle);
+            return formattedVehicle;
         } catch (err) {
-            console.error("Fetch claim by ID failed: ", err);
+            console.error("Fetch vehicle by VIN failed: ", err);
             setError(err);
+            return null;
         } finally {
             setLoading(false);
         }
@@ -91,35 +113,63 @@ export const useVehicleApi = () => {
 
     const createVehicle = async (payload) => {
         try {
-            const response = await axiousInstance.post("/claims", payload);
-            // Optionally refetch updated claim list
-            // await fetchClaims(payload.userId);
+            setLoading(true);
+            setError(null);
+            
+            const response = await axiousInstance.post("/vehicle", payload);
+            
+            // Refetch all vehicles after creation
+            await fetchVehicle();
+            
             return { success: true, data: response.data };
         } catch (error) {
-            console.error("Failed to create claim:", error);
+            console.error("Failed to create vehicle:", error);
+            setError(error);
             return { success: false, error };
+        } finally {
+            setLoading(false);
         }
     };
 
-    const updateVehicle = async (id, payload) => {
-        await axiousInstance.put(`/claims/${id}`, payload);
-        await fetchVehicle();
+    const updateVehicle = async (vin, payload) => {
+        try {
+            setLoading(true);
+            setError(null);
+            
+            await axiousInstance.put(`/vehicle/${vin}`, payload);
+            
+            // Refetch all vehicles after update
+            await fetchVehicle();
+            
+            return { success: true };
+        } catch (error) {
+            console.error("Failed to update vehicle:", error);
+            setError(error);
+            return { success: false, error };
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const deleteVehicle = async (id) => {
+    const deleteVehicle = async (vin) => {
         try {
-            await axiousInstance.delete(`/claims/${id}`);
+            setLoading(true);
+            setError(null);
+            
+            await axiousInstance.delete(`/vehicle/${vin}`);
+            
+            // Refetch all vehicles after deletion
             await fetchVehicle();
+            
             return { success: true };
         } catch (err) {
-            console.error("Remove claim request failed: ", err);
+            console.error("Remove vehicle request failed: ", err);
+            setError(err);
             return { success: false, error: err };
+        } finally {
+            setLoading(false);
         }
     };
-
-    // useEffect(() => {
-    //     fetchVehicle();
-    // }, []);
 
     return {
         vehicles,
@@ -127,6 +177,7 @@ export const useVehicleApi = () => {
         vehicleLoading,
         vehicleError,
         fetchVehicle,
+        fetchVehicleByVin,
         createVehicle,
         updateVehicle,
         deleteVehicle,
