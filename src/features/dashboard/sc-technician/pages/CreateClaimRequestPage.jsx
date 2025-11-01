@@ -17,12 +17,14 @@ import { useNavigate, useParams } from "react-router-dom";
 import Loader from "../../../../components/Loader";
 import { v4 as uuidv4 } from "uuid";
 import { useAuth } from "../../../../app/AuthProvider";
+import { useVehicleApi } from "../../../../api/useVehicleApi";
 
 export default function CreateClaimRequestsPage() {
     const [claimId] = useState(uuidv4()); // Generate once
     const navigate = useNavigate();
     const { user } = useAuth();
     const { createClaim } = useWarrantyClaims(user?.userId);
+    const { vehicles, vehicleLoading, vehicleError, fetchVehicle } = useVehicleApi();
 
     const displayName = user?.username || user?.name || user?.fullName || "User";
 
@@ -33,7 +35,9 @@ export default function CreateClaimRequestsPage() {
         technicianName: "",
         vin: "",
         issueDescription: "",
-        policyId: "",
+        vehicleName: "",
+        purchaseDate: "",
+        mileAge: "",
         partItems: [
             {
                 partId: "",
@@ -42,6 +46,32 @@ export default function CreateClaimRequestsPage() {
             },
         ],
     });
+
+    // 🔹 Load all vehicles when page loads
+    useEffect(() => {
+        fetchVehicle();
+    }, []);
+
+    // 🔹 When VIN changes, auto-fill vehicle info
+    const handleVinChange = (e) => {
+        const selectedVin = e.target.value;
+        setFormData((prev) => ({ ...prev, vin: selectedVin }));
+
+        const selectedVehicle = vehicles.find((v) => v.vin === selectedVin);
+        if (selectedVehicle) {
+            setFormData((prev) => ({
+                ...prev,
+                vin: selectedVin,
+                vehicleName: selectedVehicle.vehicleName || "",
+                purchaseDate: selectedVehicle.purchaseDate
+                    ? new Date(selectedVehicle.purchaseDate)
+                        .toISOString()
+                        .split("T")[0]
+                    : "",
+                mileage: selectedVehicle.mileAge || "",
+            }));
+        }
+    };
 
     // Handle input changes
     const handleChange = (e) => {
@@ -63,7 +93,7 @@ export default function CreateClaimRequestsPage() {
             ...prev,
             partItems: [
                 ...prev.partItems,
-                { partId: "", partName: "", partNumber: "", quantity: 1, price: 0 },
+                { partId: "", partName: "", partNumber: "" },
             ],
         }));
     };
@@ -80,17 +110,18 @@ export default function CreateClaimRequestsPage() {
         e.preventDefault();
 
         const payload = {
+            claimId: formData.claimId,
+            userId: user?.userId,
             claimDate: new Date().toISOString(),
-            vin: formData.vin,
+            claimStatus: 0,
             issueDescription: formData.issueDescription,
-            policyId: formData.policyId,
-            partItems: formData.partItems.map((item) => ({
-                partId: item.partId,
-                partName: item.partName,
-                quantity: Number(item.quantity),
-                partNumber: item.partNumber,
-                price: Number(item.price),
-            })),
+            vin: formData.vin,
+            // partItems: formData.partItems.map((item) => ({
+            //     partId: item.partId,
+            //     partNumber: item.partNumber,
+            //     partName: item.partName,
+            // })),
+            isAtive: true,
         };
 
         try {
@@ -124,7 +155,7 @@ export default function CreateClaimRequestsPage() {
                         Create new Claim Request
                     </h2>
                 </div>
-                
+
                 <form className="space-y-10" onSubmit={handleSubmit}>
                     <div className="bg-white border-[3px] border-[#EBEBEB] rounded-2xl p-10">
                         <div className="text-md text-indigo-600 font-medium mb-6 flex items-center gap-2">
@@ -191,16 +222,27 @@ export default function CreateClaimRequestsPage() {
                                     onChange={handleChange}
                                     required
                                 /> */}
-                                <select 
+                                <select
+                                    name="vin"
+                                    value={formData.vin}
+                                    onChange={handleVinChange}
                                     className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     required
                                 >
-                                    <option></option>
+                                    <option value="">Select VIN</option>
+                                    {vehicles.map((v) => (
+                                        <option key={v.vin} value={v.vin}>
+                                            {v.vin}
+                                        </option>
+                                    ))}
                                 </select>
                             </div>
                             <div className="w-full">
                                 <p className="text-sm mb-2 text-[#6B716F]">Vehicle Name</p>
                                 <input
+                                    name="vehicleName"
+                                    value={formData.vehicleName}
+                                    readOnly
                                     className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="Enter vehicle name"
                                 />
@@ -211,6 +253,9 @@ export default function CreateClaimRequestsPage() {
                                 </p>
                                 <input
                                     type="date"
+                                    name="purchaseDate"
+                                    value={formData.purchaseDate}
+                                    readOnly
                                     className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="Purchase Date of vehicle"
                                 />
@@ -220,6 +265,9 @@ export default function CreateClaimRequestsPage() {
                                     Current Mileage (km)
                                 </p>
                                 <input
+                                    name="mileage"
+                                    value={formData.mileage}
+                                    readOnly
                                     className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="Current Mileage (km)"
                                 />
@@ -314,6 +362,9 @@ export default function CreateClaimRequestsPage() {
                         <div>
                             <p className="text-sm mb-2 text-[#6B716F]">Issue Description</p>
                             <textarea
+                                name="issueDescription"
+                                value={formData.issueDescription}
+                                onChange={handleChange}
                                 className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none min-h-[120px]"
                                 placeholder="Provide a detailed description of the issue..."
                             />
