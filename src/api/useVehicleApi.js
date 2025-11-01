@@ -9,26 +9,69 @@ export const useVehicleApi = () => {
 
     // Fetch all vehicles
     const fetchVehicle = async () => {
+        // console.log("🚗 fetchVehicle called");
         try {
             setLoading(true);
             setError(null);
-            
+
+            // console.log("📡 Making API call to /vehicle/get-all");
             const response = await axiousInstance.get("/vehicle/get-all");
-            
-            console.log("Raw API Response:", response.data); // Debug log
 
-            // Handle response - your API returns array directly
-            const data = Array.isArray(response.data)
-                ? response.data
-                : response.data?.data || [];
+            // console.log("✅ Full response object:", response);
+            // console.log("✅ response.data:", response.data);
+            // console.log("✅ response.status:", response.status);
 
-            if (!Array.isArray(data)) {
-                console.warn("Unexpected response structure:", response.data);
+            // Handle different response structures
+            // Try multiple possible locations for the data
+            let data = null;
+
+            if (Array.isArray(response.data)) {
+                // Data is directly in response.data
+                data = response.data;
+                // console.log("📦 Found data in response.data (array)");
+            } else if (response.data?.data && Array.isArray(response.data.data)) {
+                // Data is in response.data.data
+                data = response.data.data;
+                // console.log("📦 Found data in response.data.data");
+            } else if (Array.isArray(response)) {
+                // Data is directly in response
+                data = response;
+                // console.log("📦 Found data in response (array)");
+            } else {
+                // If response.data is undefined, the data might be in the response itself
+                // This can happen with some axios configurations
+                // console.log("📦 Checking alternative response structure...");
+                // console.log("📦 typeof response:", typeof response);
+                // console.log("📦 response keys:", Object.keys(response));
+
+                // Try to find an array property
+                for (const key of Object.keys(response)) {
+                    if (Array.isArray(response[key])) {
+                        data = response[key];
+                        // console.log(`📦 Found data in response.${key}`);
+                        break;
+                    }
+                }
+            }
+
+            // console.log("📦 Final extracted data:", data);
+            // console.log("📦 Is data an array?", Array.isArray(data));
+            // console.log("📦 Data length:", data?.length);
+
+            if (!data || !Array.isArray(data)) {
+                // console.warn("⚠️ Could not find array data in response");
+                // console.warn("⚠️ Full response structure:", JSON.stringify(response, null, 2));
                 setVehicles([]);
                 return;
             }
 
-            // Map the response to match your actual API structure
+            if (data.length === 0) {
+                // console.warn("⚠️ API returned empty array");
+                setVehicles([]);
+                return;
+            }
+
+            // Map the response
             const formattedVehicles = data.map((vehicle) => ({
                 vin: vehicle.vin,
                 vehicleName: vehicle.vehicleName || "Unknown",
@@ -43,32 +86,20 @@ export const useVehicleApi = () => {
                 fullName: vehicle.fullName || `${vehicle.firstName} ${vehicle.lastName}`.trim(),
             }));
 
-            console.log("Formatted vehicles:", formattedVehicles); // Debug log
+            // console.log("✨ Formatted vehicles:", formattedVehicles);
+            // console.log("✨ About to call setVehicles with:", formattedVehicles.length, "vehicles");
+
             setVehicles(formattedVehicles);
+
+            // console.log("✅ setVehicles called successfully");
         } catch (err) {
-            console.error("Fetch vehicles failed", err);
-            console.error("Error details:", err.response?.data || err.message);
+            // console.error("❌ Fetch vehicles failed", err);
+            // console.error("❌ Error response:", err.response);
+            // console.error("❌ Error details:", err.response?.data || err.message);
             setError(err);
-            
-            // fallback mock data
-            const mockData = [
-                {
-                    vin: "0f51b827-bcee-46e7-b624-3571dc14ba12",
-                    vehicleName: "Vf8",
-                    model: "Doi moi nhat",
-                    purchaseDate: "2024-11-01T09:00:00Z",
-                    mileAge: 45000,
-                    customerId: "f69efef6-c13a-412c-9c63-d4277c27b279",
-                    firstName: "Nguyen",
-                    lastName: "Thinh",
-                    phoneNumber: "0909090909",
-                    email: "example@gmail.com",
-                    fullName: "Nguyen Thinh"
-                },
-            ];
-            console.log("Using mock data:", mockData);
-            setVehicles(mockData);
+            setVehicles([]);
         } finally {
+            // console.log("🏁 Setting loading to false");
             setLoading(false);
         }
     };
@@ -115,12 +146,12 @@ export const useVehicleApi = () => {
         try {
             setLoading(true);
             setError(null);
-            
+
             const response = await axiousInstance.post("/vehicle", payload);
-            
+
             // Refetch all vehicles after creation
             await fetchVehicle();
-            
+
             return { success: true, data: response.data };
         } catch (error) {
             console.error("Failed to create vehicle:", error);
@@ -135,12 +166,12 @@ export const useVehicleApi = () => {
         try {
             setLoading(true);
             setError(null);
-            
+
             await axiousInstance.put(`/vehicle/${vin}`, payload);
-            
+
             // Refetch all vehicles after update
             await fetchVehicle();
-            
+
             return { success: true };
         } catch (error) {
             console.error("Failed to update vehicle:", error);
@@ -155,12 +186,12 @@ export const useVehicleApi = () => {
         try {
             setLoading(true);
             setError(null);
-            
+
             await axiousInstance.delete(`/vehicle/${vin}`);
-            
+
             // Refetch all vehicles after deletion
             await fetchVehicle();
-            
+
             return { success: true };
         } catch (err) {
             console.error("Remove vehicle request failed: ", err);
@@ -170,6 +201,12 @@ export const useVehicleApi = () => {
             setLoading(false);
         }
     };
+
+    // Auto-fetch vehicles when hook is initialized
+    useEffect(() => {
+        console.log("useVehicleApi: Auto-fetching vehicles on mount");
+        fetchVehicle();
+    }, []);
 
     return {
         vehicles,

@@ -12,24 +12,24 @@ import {
     XCircleIcon,
 } from "@phosphor-icons/react";
 import { useWarrantyClaims } from "../../../../api/useWarrantyClaims";
-import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Loader from "../../../../components/Loader";
-import { v4 as uuidv4 } from "uuid";
 import { useAuth } from "../../../../app/AuthProvider";
 import { useVehicleApi } from "../../../../api/useVehicleApi";
+import { ErrorNotification, SuccessNotification } from "../../../../components/Notification";
 
 export default function CreateClaimRequestsPage() {
-    const [claimId] = useState(uuidv4()); // Generate once
     const navigate = useNavigate();
     const { user } = useAuth();
+    const [notification, setNotification] = useState(null);
     const { createClaim } = useWarrantyClaims(user?.userId);
-    const { vehicles, vehicleLoading, vehicleError, fetchVehicle } = useVehicleApi();
+    const { vehicles, vehicleLoading, vehicleError } = useVehicleApi();
 
     const displayName = user?.username || user?.name || user?.fullName || "User";
 
     const [formData, setFormData] = useState({
-        claimDate: new Date().toISOString().split("T")[0], // Default to today
+        claimDate: new Date().toISOString().split("T")[0],
         centerName: user?.serviceCenterName || "",
         vin: "",
         issueDescription: "",
@@ -43,28 +43,15 @@ export default function CreateClaimRequestsPage() {
                 replacementDate: "",
             },
         ],
-        actionType: 0, // Default to first option
+        actionType: 0,
     });
-
-    // 🔹 Load all vehicles when page loads
-    useEffect(() => {
-        console.log("Fetching vehicles...");
-        fetchVehicle();
-    }, []);
-
-    // Debug: Log vehicles when they change
-    useEffect(() => {
-        console.log("Vehicles updated:", vehicles);
-        console.log("Vehicle loading:", vehicleLoading);
-        console.log("Vehicle error:", vehicleError);
-    }, [vehicles, vehicleLoading, vehicleError]);
 
     // 🔹 When VIN changes, auto-fill vehicle info
     const handleVinChange = (e) => {
         const selectedVin = e.target.value;
         setFormData((prev) => ({ ...prev, vin: selectedVin }));
-
         const selectedVehicle = vehicles.find((v) => v.vin === selectedVin);
+
         if (selectedVehicle) {
             setFormData((prev) => ({
                 ...prev,
@@ -80,13 +67,11 @@ export default function CreateClaimRequestsPage() {
         }
     };
 
-    // Handle input changes
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    // Handle part changes
     const handlePartChange = (index, e) => {
         const { name, value } = e.target;
         const updatedParts = [...formData.partItems];
@@ -94,7 +79,6 @@ export default function CreateClaimRequestsPage() {
         setFormData((prev) => ({ ...prev, partItems: updatedParts }));
     };
 
-    // ➕ Add new part
     const handleAddPart = () => {
         setFormData((prev) => ({
             ...prev,
@@ -105,7 +89,6 @@ export default function CreateClaimRequestsPage() {
         }));
     };
 
-    // 🗑 Remove part
     const handleRemovePart = (index) => {
         setFormData((prev) => ({
             ...prev,
@@ -113,7 +96,6 @@ export default function CreateClaimRequestsPage() {
         }));
     };
 
-    // Handle action type (service center request)
     const handleActionTypeChange = (e) => {
         setFormData((prev) => ({
             ...prev,
@@ -124,8 +106,8 @@ export default function CreateClaimRequestsPage() {
     async function handleSubmit(e) {
         e.preventDefault();
 
-        // Build the payload matching the API schema
         const payload = {
+            userId: user?.userId,
             claimDate: new Date(formData.claimDate).toISOString(),
             centerName: formData.centerName,
             vin: formData.vin,
@@ -136,8 +118,8 @@ export default function CreateClaimRequestsPage() {
             partItems: formData.partItems.map((item) => ({
                 partName: item.partName,
                 partNumber: item.partNumber,
-                replacementDate: item.replacementDate 
-                    ? new Date(item.replacementDate).toISOString() 
+                replacementDate: item.replacementDate
+                    ? new Date(item.replacementDate).toISOString()
                     : new Date().toISOString(),
             })),
             actionType: formData.actionType,
@@ -146,14 +128,24 @@ export default function CreateClaimRequestsPage() {
         try {
             const result = await createClaim(payload);
             if (result.success) {
-                alert("✅ Claim created successfully!");
+                setNotification({
+                    type: "success",
+                    message: "Request created successfully!",
+                    subText: new Date().toLocaleString(),
+                });
                 navigate("/claims");
             } else {
-                alert("❌ Failed to create claim.");
+                setNotification({
+                    type: "failed",
+                    message: "Failed to create claim request.",
+                });
             }
         } catch (err) {
-            console.error("Error creating claim:", err);
-            alert("❌ Something went wrong.");
+            setNotification({
+                type: "error",
+                message: "Failed to create claim request.",
+                subText: err || "Please try again later."
+            });
         }
     }
 
@@ -219,6 +211,21 @@ export default function CreateClaimRequestsPage() {
                         <div className="text-md text-indigo-600 font-medium mb-6 flex items-center gap-2">
                             <CarIcon size={20} weight="bold" /> Vehicle Information
                         </div>
+
+                        {/* DEBUG INFO - Remove this after fixing */}
+                        {/* <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-sm">
+                            <p className="font-bold mb-2">🔍 Debug Info:</p>
+                            <p>Loading: {vehicleLoading ? "Yes" : "No"}</p>
+                            <p>Error: {vehicleError ? "Yes" : "No"}</p>
+                            <p>Vehicles Count: {vehicles?.length || 0}</p>
+                            <p>Is Array: {Array.isArray(vehicles) ? "Yes" : "No"}</p>
+                            {vehicles && vehicles.length > 0 && (
+                                <p className="mt-2 text-xs bg-white p-2 rounded">
+                                    Sample: {JSON.stringify(vehicles[0], null, 2)}
+                                </p>
+                            )}
+                        </div> */}
+
                         <div className="grid grid-cols-3 gap-10">
                             <div className="w-full">
                                 <p className="text-sm mb-2 text-[#6B716F]">VIN code</p>
@@ -233,18 +240,18 @@ export default function CreateClaimRequestsPage() {
                                     <option value="">
                                         {vehicleLoading ? "Loading vehicles..." : "Select VIN"}
                                     </option>
-                                    {!vehicleLoading && vehicles.length === 0 && (
+                                    {!vehicleLoading && vehicles && vehicles.length === 0 && (
                                         <option value="" disabled>No vehicles available</option>
                                     )}
-                                    {vehicles.map((v) => (
+                                    {vehicles && vehicles.length > 0 && vehicles.map((v) => (
                                         <option key={v.vin} value={v.vin}>
-                                            {v.vehicleName} ({v.model}) - {v.fullName}
+                                            {v.vin} - {v.vehicleName} ({v.model}) - {v.fullName}
                                         </option>
                                     ))}
                                 </select>
                                 {vehicleError && (
                                     <p className="text-sm text-red-500 mt-1">
-                                        Error loading vehicles
+                                        Error loading vehicles: {vehicleError.message}
                                     </p>
                                 )}
                             </div>
@@ -394,7 +401,7 @@ export default function CreateClaimRequestsPage() {
                                 <div className="w-20 h-12 bg-gray-200 rounded-md" />
                             </div>
                             <div>
-                                <button 
+                                <button
                                     type="button"
                                     className="px-4 py-2 rounded-full bg-indigo-600 hover:bg-indigo-700 transition-all text-white cursor-pointer">
                                     Choose a file
@@ -413,33 +420,33 @@ export default function CreateClaimRequestsPage() {
                         </div>
                         <div className="space-y-2 text-md">
                             <label className="flex items-center gap-2 cursor-pointer">
-                                <input 
-                                    type="radio" 
-                                    name="actionType" 
+                                <input
+                                    type="radio"
+                                    name="actionType"
                                     value="0"
                                     checked={formData.actionType === 0}
                                     onChange={handleActionTypeChange}
-                                /> 
+                                />
                                 Request replacement part approval
                             </label>
                             <label className="flex items-center gap-2 cursor-pointer">
-                                <input 
-                                    type="radio" 
-                                    name="actionType" 
+                                <input
+                                    type="radio"
+                                    name="actionType"
                                     value="1"
                                     checked={formData.actionType === 1}
                                     onChange={handleActionTypeChange}
-                                /> 
+                                />
                                 Request repair approval
                             </label>
                             <label className="flex items-center gap-2 cursor-pointer">
-                                <input 
-                                    type="radio" 
-                                    name="actionType" 
+                                <input
+                                    type="radio"
+                                    name="actionType"
                                     value="2"
                                     checked={formData.actionType === 2}
                                     onChange={handleActionTypeChange}
-                                /> 
+                                />
                                 Request reimbursement (repair completed in advance)
                             </label>
                         </div>
@@ -464,6 +471,33 @@ export default function CreateClaimRequestsPage() {
                     </div>
                 </form>
             </div>
+            {/* ✅ Notification logic */}
+            {notification?.type === "success" && (
+                <SuccessNotification
+                    message={notification.message}
+                    subText={notification.subText}
+                    actionText="Close"
+                    onAction={() => setNotification(null)}
+                />
+            )}
+
+            {notification?.type === "failed" && (
+                <ErrorNotification
+                    message={notification.message}
+                    subText={notification.subText}
+                    actionText="Close"
+                    onAction={() => setNotification(null)}
+                />
+            )}
+
+            {notification?.type === "error" && (
+                <ErrorNotification
+                    message={notification.message}
+                    subText={notification.subText}
+                    actionText="Close"
+                    onAction={() => setNotification(null)}
+                />
+            )}
         </div>
     );
 }
