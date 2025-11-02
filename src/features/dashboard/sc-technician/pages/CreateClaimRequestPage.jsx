@@ -12,11 +12,12 @@ import {
     XCircleIcon,
 } from "@phosphor-icons/react";
 import { useWarrantyClaims } from "../../../../api/useWarrantyClaims";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Loader from "../../../../components/Loader";
 import { useAuth } from "../../../../app/AuthProvider";
 import { useVehicleApi } from "../../../../api/useVehicleApi";
+import { usePartApi } from "../../../../api/usePartApi";
 import { ErrorNotification, SuccessNotification } from "../../../../components/Notification";
 
 export default function CreateClaimRequestsPage() {
@@ -25,8 +26,10 @@ export default function CreateClaimRequestsPage() {
     const [notification, setNotification] = useState(null);
     const { createClaim } = useWarrantyClaims(user?.userId);
     const { vehicles, vehicleLoading, vehicleError } = useVehicleApi();
+    const { fetchPartsByVin, partLoading } = usePartApi();
 
     const displayName = user?.username || user?.name || user?.fullName || "User";
+    const [availableParts, setAvailableParts] = useState([]); // Store parts fetched from API
 
     const [formData, setFormData] = useState({
         claimDate: new Date().toISOString().split("T")[0],
@@ -46,13 +49,35 @@ export default function CreateClaimRequestsPage() {
         actionType: 0,
     });
 
-    // 🔹 When VIN changes, auto-fill vehicle info
-    const handleVinChange = (e) => {
+    // 🔹 When VIN changes, auto-fill vehicle info AND parts info
+    const handleVinChange = async (e) => {
         const selectedVin = e.target.value;
         setFormData((prev) => ({ ...prev, vin: selectedVin }));
+
+        if (!selectedVin) {
+            // Reset form if VIN is cleared
+            setFormData((prev) => ({
+                ...prev,
+                vin: "",
+                vehicleName: "",
+                purchaseDate: "",
+                mileage: "",
+                partItems: [
+                    {
+                        partNumber: "",
+                        partName: "",
+                        replacementDate: "",
+                    },
+                ],
+            }));
+            return;
+        }
+
+        // Find selected vehicle
         const selectedVehicle = vehicles.find((v) => v.vin === selectedVin);
 
         if (selectedVehicle) {
+            // Update vehicle information
             setFormData((prev) => ({
                 ...prev,
                 vin: selectedVin,
@@ -64,6 +89,66 @@ export default function CreateClaimRequestsPage() {
                     : "",
                 mileage: selectedVehicle.mileAge || "",
             }));
+
+            // Fetch and auto-fill parts information
+            try {
+                console.log("🔍 Calling fetchPartsByVin for:", selectedVin);
+                const partData = await fetchPartsByVin(selectedVin);
+                
+                console.log("📦 Received part data:", partData);
+                console.log("📦 Part data type:", typeof partData);
+                console.log("📦 Is array:", Array.isArray(partData));
+                console.log("📦 Part data length:", partData?.length);
+                
+                if (partData && Array.isArray(partData) && partData.length > 0) {
+                    console.log("✅ Processing", partData.length, "parts");
+                    
+                    // Store available parts for dropdown
+                    setAvailableParts(partData);
+
+                    // Initialize form with one empty part item for user to select
+                    setFormData((prev) => ({
+                        ...prev,
+                        partItems: [
+                            {
+                                partNumber: "",
+                                partName: "",
+                                replacementDate: "",
+                            },
+                        ],
+                    }));
+                    
+                    console.log("✅ Available parts stored for dropdown");
+                } else {
+                    console.warn("⚠️ No parts data or empty array received");
+                    // No parts found, keep one empty part item
+                    setAvailableParts([]);
+                    setFormData((prev) => ({
+                        ...prev,
+                        partItems: [
+                            {
+                                partNumber: "",
+                                partName: "",
+                                replacementDate: "",
+                            },
+                        ],
+                    }));
+                }
+            } catch (error) {
+                console.error("❌ Failed to fetch parts for VIN:", error);
+                // Keep default part item if fetch fails
+                setAvailableParts([]);
+                setFormData((prev) => ({
+                    ...prev,
+                    partItems: [
+                        {
+                            partNumber: "",
+                            partName: "",
+                            replacementDate: "",
+                        },
+                    ],
+                }));
+            }
         }
     };
 
@@ -75,7 +160,23 @@ export default function CreateClaimRequestsPage() {
     const handlePartChange = (index, e) => {
         const { name, value } = e.target;
         const updatedParts = [...formData.partItems];
-        updatedParts[index][name] = value;
+        
+        // If part name is being changed, auto-fill part number
+        if (name === "partName") {
+            const selectedPart = availableParts.find(p => p.partName === value);
+            if (selectedPart) {
+                updatedParts[index] = {
+                    ...updatedParts[index],
+                    partName: value,
+                    partNumber: selectedPart.vehiclePartId || selectedPart.partId || "",
+                };
+            } else {
+                updatedParts[index][name] = value;
+            }
+        } else {
+            updatedParts[index][name] = value;
+        }
+        
         setFormData((prev) => ({ ...prev, partItems: updatedParts }));
     };
 
@@ -212,20 +313,6 @@ export default function CreateClaimRequestsPage() {
                             <CarIcon size={20} weight="bold" /> Vehicle Information
                         </div>
 
-                        {/* DEBUG INFO - Remove this after fixing */}
-                        {/* <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-sm">
-                            <p className="font-bold mb-2">🔍 Debug Info:</p>
-                            <p>Loading: {vehicleLoading ? "Yes" : "No"}</p>
-                            <p>Error: {vehicleError ? "Yes" : "No"}</p>
-                            <p>Vehicles Count: {vehicles?.length || 0}</p>
-                            <p>Is Array: {Array.isArray(vehicles) ? "Yes" : "No"}</p>
-                            {vehicles && vehicles.length > 0 && (
-                                <p className="mt-2 text-xs bg-white p-2 rounded">
-                                    Sample: {JSON.stringify(vehicles[0], null, 2)}
-                                </p>
-                            )}
-                        </div> */}
-
                         <div className="grid grid-cols-3 gap-10">
                             <div className="w-full">
                                 <p className="text-sm mb-2 text-[#6B716F]">VIN code</p>
@@ -235,10 +322,12 @@ export default function CreateClaimRequestsPage() {
                                     onChange={handleVinChange}
                                     className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     required
-                                    disabled={vehicleLoading}
+                                    disabled={vehicleLoading || partLoading}
                                 >
                                     <option value="">
-                                        {vehicleLoading ? "Loading vehicles..." : "Select VIN"}
+                                        {vehicleLoading ? "Loading vehicles..." : 
+                                         partLoading ? "Loading parts..." : 
+                                         "Select VIN"}
                                     </option>
                                     {!vehicleLoading && vehicles && vehicles.length === 0 && (
                                         <option value="" disabled>No vehicles available</option>
@@ -297,6 +386,9 @@ export default function CreateClaimRequestsPage() {
                         <div className="flex items-center justify-between w-full mb-6">
                             <div className="text-md text-indigo-600 font-medium flex items-center gap-2">
                                 <PackageIcon size={20} weight="bold" /> Part Information
+                                {partLoading && (
+                                    <span className="text-sm text-gray-500 ml-2">(Loading parts...)</span>
+                                )}
                             </div>
                             <button
                                 type="button"
@@ -326,25 +418,38 @@ export default function CreateClaimRequestsPage() {
 
                                 <div className="w-full">
                                     <p className="text-sm mb-2 text-[#6B716F]">Part Name</p>
-                                    <input
+                                    <select
                                         name="partName"
                                         className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full"
-                                        placeholder="Part Name"
                                         value={part.partName}
                                         onChange={(e) => handlePartChange(index, e)}
                                         required
-                                    />
+                                        disabled={availableParts.length === 0}
+                                    >
+                                        <option value="">
+                                            {availableParts.length === 0 
+                                                ? "Select a VIN first" 
+                                                : "Select Part Name"}
+                                        </option>
+                                        {availableParts.map((availablePart) => (
+                                            <option 
+                                                key={availablePart.partId} 
+                                                value={availablePart.partName}
+                                            >
+                                                {availablePart.partName}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
 
                                 <div className="w-full">
                                     <p className="text-sm mb-2 text-[#6B716F]">Part Number</p>
                                     <input
                                         name="partNumber"
-                                        className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full"
-                                        placeholder="Part Number"
+                                        className="p-3 bg-[#F9FAFB] border-[3px] border-[#EBEBEB] rounded-2xl w-full"
+                                        placeholder="Part Number (Auto-filled)"
                                         value={part.partNumber}
-                                        onChange={(e) => handlePartChange(index, e)}
-                                        required
+                                        readOnly
                                     />
                                 </div>
 
