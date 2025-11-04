@@ -8,6 +8,7 @@ import RoleRoute from "./RoleRoute";
 import SCStaffLayout from "../layout/SCStaffLayout";
 import Unauthorized from "../components/Unauthorized";
 import EVMStaffLayout from "../layout/EVMStaffLayout";
+import AdminLayout from "../layout/AdminLayout";
 
 // Lazy load pages
 const LoginPage = lazy(() => import("../features/auth/pages/Login"));
@@ -35,6 +36,11 @@ const SCStaffProfilePage = lazy(() => import("../features/dashboard/sc-staff/pag
 
 // EVM-Staff
 const EVMDashboardPage = lazy(() => import("../features/dashboard/evm-staff/pages/Dashboard"));
+
+// Admin
+const AdminDashboardPage = lazy(() => import("../features/dashboard/admin/pages/Dashboard"));
+const AdminManageUsersPage = lazy(() => import("../features/dashboard/admin/pages/ManageUsers"));
+const AdminReportsPage = lazy(() => import("../features/dashboard/admin/pages/Reports"));
 
 const router = createBrowserRouter([
     {
@@ -107,6 +113,21 @@ const router = createBrowserRouter([
         ),
         children: [
             { index: true, path: "dashboard", element: <Suspense fallback={<Loader />}><EVMDashboardPage /></Suspense> },
+        ],
+    },
+    {
+        path: "/admin",
+        element: (
+            <ProtectedRoute>
+                <RoleRoute allowedRoles={["Admin", "3"]}>
+                    <AdminLayout />
+                </RoleRoute>
+            </ProtectedRoute>
+        ),
+        children: [
+            { index: true, path: "dashboard", element: <Suspense fallback={<Loader />}><AdminDashboardPage /></Suspense> },
+            { path: "manage-users", element: <Suspense fallback={<Loader />}><AdminManageUsersPage /></Suspense> },
+            { path: "reports", element: <Suspense fallback={<Loader />}><AdminReportsPage /></Suspense> },
         ],
     },
 

@@ -67,6 +67,8 @@ export const CAMPAIGN_API = {
     DELETE: "/campaigns/:id",
     UPDATE_STATUS: "/campaigns/:id/status",
     ASSIGN_TECHNICIAN: "/campaigns/:id/assign",
+}
+
 export const USER_API = {
     GET_BY_CENTER: "/user/by-center/:centerId",
     GET_BY_ROLE: "/user/by-role/:role",
