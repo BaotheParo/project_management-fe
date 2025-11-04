@@ -77,6 +77,21 @@ const WorkOrderCard = ({ order, onAssignClick }) => {
           >
             Assign Technician
           </button>
+        ) : order.status === 'Assigned' ? (
+          <div className="space-y-2">
+            <div className="text-center">
+              <span className="text-sm font-semibold">
+                <span className="text-[#65758B]">Technician:</span>{' '}
+                <span className="text-black">{order.technician}</span>
+              </span>
+            </div>
+            <button 
+              onClick={() => onAssignClick(order)}
+              className="w-full bg-white border-2 border-[#626AE7] text-[#626AE7] py-2.5 rounded-2xl text-sm font-semibold hover:bg-[#F5F6FF] transition-colors"
+            >
+              Reassign Technician
+            </button>
+          </div>
         ) : (
           <div className="text-center">
             <span className="text-sm font-semibold">

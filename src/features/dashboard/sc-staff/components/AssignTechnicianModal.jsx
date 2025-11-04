@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const AssignTechnicianModal = ({
   isOpen,
@@ -9,7 +9,22 @@ const AssignTechnicianModal = ({
 }) => {
   const [selectedTechnicianId, setSelectedTechnicianId] = useState(null);
 
+  // Pre-select the current technician when modal opens
+  useEffect(() => {
+    if (isOpen && selectedOrder && selectedOrder.technician) {
+      // Find the technician by name and pre-select them
+      const currentTech = availableTechnicians.find(
+        (tech) => tech.name === selectedOrder.technician
+      );
+      if (currentTech) {
+        setSelectedTechnicianId(currentTech.id);
+      }
+    }
+  }, [isOpen, selectedOrder, availableTechnicians]);
+
   if (!isOpen || !selectedOrder) return null;
+
+  const isReassigning = selectedOrder.status !== 'Pending';
 
   const handleAssign = () => {
     if (selectedTechnicianId) {
@@ -39,7 +54,7 @@ const AssignTechnicianModal = ({
         {/* Modal Header */}
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold">
-            Assign Technician for order {selectedOrder.id}
+            {isReassigning ? 'Reassign' : 'Assign'} Technician for order {selectedOrder.id}
           </h3>
           <button
             onClick={handleClose}
@@ -95,7 +110,7 @@ const AssignTechnicianModal = ({
                   value={tech.id}
                   checked={selectedTechnicianId === tech.id}
                   onChange={(e) =>
-                    setSelectedTechnicianId(parseInt(e.target.value))
+                    setSelectedTechnicianId(e.target.value)
                   }
                   className="w-5 h-5 appearance-none border-2 border-gray-300 rounded-full checked:border-[#626AE7] checked:border-[6px] transition-all cursor-pointer"
                 />
@@ -133,7 +148,7 @@ const AssignTechnicianModal = ({
                 : "bg-gray-300 text-gray-500 cursor-not-allowed"
             }`}
           >
-            Assign
+            {isReassigning ? 'Reassign' : 'Assign'}
           </button>
         </div>
       </div>
