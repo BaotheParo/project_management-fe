@@ -122,6 +122,7 @@ export const usePartApi = () => {
             const formattedParts = partData.map(part => ({
                 partId: part.partId,
                 partName: part.partName,
+                partNumbers: part.partNumbers || [],
                 partDescription: part.partDescription,
                 vehiclePartId: part.vehiclePartId,
                 status: part.status,

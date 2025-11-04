@@ -23,7 +23,9 @@ import { ErrorNotification, SuccessNotification } from "../../../../components/N
 export default function CreateClaimRequestsPage() {
     const navigate = useNavigate();
     const { user } = useAuth();
-    const [notification, setNotification] = useState(null);
+    const [successNotification, setSuccessNotification] = useState(null);
+    const [failNotification, setFailNotification] = useState(null);
+    const [errorNotification, setErrorNotification] = useState(null);
     const { createClaim } = useWarrantyClaims(user?.userId);
     const { vehicles, vehicleLoading, vehicleError } = useVehicleApi();
     const { fetchPartsByVin, partLoading } = usePartApi();
@@ -43,7 +45,7 @@ export default function CreateClaimRequestsPage() {
             {
                 partNumber: "",
                 partName: "",
-                replacementDate: "",
+                replacementDate: new Date().toISOString().split("T")[0],
             },
         ],
         actionType: 0,
@@ -66,7 +68,7 @@ export default function CreateClaimRequestsPage() {
                     {
                         partNumber: "",
                         partName: "",
-                        replacementDate: "",
+                        replacementDate: new Date().toISOString().split("T")[0],
                     },
                 ],
             }));
@@ -94,15 +96,15 @@ export default function CreateClaimRequestsPage() {
             try {
                 console.log("🔍 Calling fetchPartsByVin for:", selectedVin);
                 const partData = await fetchPartsByVin(selectedVin);
-                
+
                 console.log("📦 Received part data:", partData);
                 console.log("📦 Part data type:", typeof partData);
                 console.log("📦 Is array:", Array.isArray(partData));
                 console.log("📦 Part data length:", partData?.length);
-                
+
                 if (partData && Array.isArray(partData) && partData.length > 0) {
                     console.log("✅ Processing", partData.length, "parts");
-                    
+
                     // Store available parts for dropdown
                     setAvailableParts(partData);
 
@@ -113,11 +115,11 @@ export default function CreateClaimRequestsPage() {
                             {
                                 partNumber: "",
                                 partName: "",
-                                replacementDate: "",
+                                replacementDate: new Date().toISOString().split("T")[0],
                             },
                         ],
                     }));
-                    
+
                     console.log("✅ Available parts stored for dropdown");
                 } else {
                     console.warn("⚠️ No parts data or empty array received");
@@ -129,7 +131,7 @@ export default function CreateClaimRequestsPage() {
                             {
                                 partNumber: "",
                                 partName: "",
-                                replacementDate: "",
+                                replacementDate: new Date().toISOString().split("T")[0],
                             },
                         ],
                     }));
@@ -144,7 +146,7 @@ export default function CreateClaimRequestsPage() {
                         {
                             partNumber: "",
                             partName: "",
-                            replacementDate: "",
+                            replacementDate: new Date().toISOString().split("T")[0],
                         },
                     ],
                 }));
@@ -160,23 +162,26 @@ export default function CreateClaimRequestsPage() {
     const handlePartChange = (index, e) => {
         const { name, value } = e.target;
         const updatedParts = [...formData.partItems];
-        
-        // If part name is being changed, auto-fill part number
+
         if (name === "partName") {
             const selectedPart = availableParts.find(p => p.partName === value);
             if (selectedPart) {
                 updatedParts[index] = {
                     ...updatedParts[index],
                     partName: value,
-                    partNumber: selectedPart.vehiclePartId || selectedPart.partId || "",
+                    partNumber: "",
+                    availablePartNumbers: selectedPart.partNumbers || [],
                 };
-            } else {
-                updatedParts[index][name] = value;
             }
+        } else if (name === "partNumber") {
+            updatedParts[index] = {
+                ...updatedParts[index],
+                partNumber: value,
+            };
         } else {
             updatedParts[index][name] = value;
         }
-        
+
         setFormData((prev) => ({ ...prev, partItems: updatedParts }));
     };
 
@@ -185,7 +190,7 @@ export default function CreateClaimRequestsPage() {
             ...prev,
             partItems: [
                 ...prev.partItems,
-                { partName: "", partNumber: "", replacementDate: "" },
+                { partName: "", partNumber: "", replacementDate: new Date().toISOString().split("T")[0] },
             ],
         }));
     };
@@ -207,13 +212,13 @@ export default function CreateClaimRequestsPage() {
     async function handleSubmit(e) {
         e.preventDefault();
 
+        const id = user?.userId;
         const payload = {
-            userId: user?.userId,
             claimDate: new Date(formData.claimDate).toISOString(),
             centerName: formData.centerName,
             vin: formData.vin,
             vehicleName: formData.vehicleName,
-            mileage: parseInt(formData.mileage) || 0,
+            mileage: Number.parseInt(formData.mileage) || 0,
             purchaseDate: new Date(formData.purchaseDate).toISOString(),
             issueDescription: formData.issueDescription,
             partItems: formData.partItems.map((item) => ({
@@ -227,22 +232,22 @@ export default function CreateClaimRequestsPage() {
         };
 
         try {
-            const result = await createClaim(payload);
+            const result = await createClaim(id, payload);
             if (result.success) {
-                setNotification({
+                setSuccessNotification({
                     type: "success",
                     message: "Request created successfully!",
                     subText: new Date().toLocaleString(),
                 });
-                navigate("/claims");
+                navigate("/sc-technician/claims");
             } else {
-                setNotification({
+                setFailNotification({
                     type: "failed",
                     message: "Failed to create claim request.",
                 });
             }
         } catch (err) {
-            setNotification({
+            setErrorNotification({
                 type: "error",
                 message: "Failed to create claim request.",
                 subText: err || "Please try again later."
@@ -325,9 +330,9 @@ export default function CreateClaimRequestsPage() {
                                     disabled={vehicleLoading || partLoading}
                                 >
                                     <option value="">
-                                        {vehicleLoading ? "Loading vehicles..." : 
-                                         partLoading ? "Loading parts..." : 
-                                         "Select VIN"}
+                                        {vehicleLoading ? "Loading vehicles..." :
+                                            partLoading ? "Loading parts..." :
+                                                "Select VIN"}
                                     </option>
                                     {!vehicleLoading && vehicles && vehicles.length === 0 && (
                                         <option value="" disabled>No vehicles available</option>
@@ -427,13 +432,13 @@ export default function CreateClaimRequestsPage() {
                                         disabled={availableParts.length === 0}
                                     >
                                         <option value="">
-                                            {availableParts.length === 0 
-                                                ? "Select a VIN first" 
+                                            {availableParts.length === 0
+                                                ? "Select a VIN first"
                                                 : "Select Part Name"}
                                         </option>
                                         {availableParts.map((availablePart) => (
-                                            <option 
-                                                key={availablePart.partId} 
+                                            <option
+                                                key={availablePart.partId}
                                                 value={availablePart.partName}
                                             >
                                                 {availablePart.partName}
@@ -444,13 +449,25 @@ export default function CreateClaimRequestsPage() {
 
                                 <div className="w-full">
                                     <p className="text-sm mb-2 text-[#6B716F]">Part Number</p>
-                                    <input
+                                    <select
                                         name="partNumber"
-                                        className="p-3 bg-[#F9FAFB] border-[3px] border-[#EBEBEB] rounded-2xl w-full"
-                                        placeholder="Part Number (Auto-filled)"
+                                        className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full"
                                         value={part.partNumber}
-                                        readOnly
-                                    />
+                                        onChange={(e) => handlePartChange(index, e)}
+                                        required
+                                        disabled={!part.availablePartNumbers || part.availablePartNumbers.length === 0}
+                                    >
+                                        <option value="">
+                                            {(!part.availablePartNumbers || part.availablePartNumbers.length === 0)
+                                                ? "Select Part Name first"
+                                                : "Select Part Number"}
+                                        </option>
+                                        {part.availablePartNumbers?.map((num, i) => (
+                                            <option key={i} value={num}>
+                                                {num}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
 
                                 <div className="w-full">
@@ -577,30 +594,30 @@ export default function CreateClaimRequestsPage() {
                 </form>
             </div>
             {/* ✅ Notification logic */}
-            {notification?.type === "success" && (
+            {successNotification?.type === "success" && (
                 <SuccessNotification
-                    message={notification.message}
-                    subText={notification.subText}
+                    message={successNotification.message}
+                    subText={successNotification.subText}
                     actionText="Close"
-                    onAction={() => setNotification(null)}
+                    onAction={() => setSuccessNotification(null)}
                 />
             )}
 
-            {notification?.type === "failed" && (
+            {failNotification?.type === "failed" && (
                 <ErrorNotification
-                    message={notification.message}
-                    subText={notification.subText}
+                    message={failNotification.message}
+                    subText={failNotification.subText}
                     actionText="Close"
-                    onAction={() => setNotification(null)}
+                    onAction={() => setFailNotification(null)}
                 />
             )}
 
-            {notification?.type === "error" && (
+            {errorNotification?.type === "error" && (
                 <ErrorNotification
-                    message={notification.message}
-                    subText={notification.subText}
+                    message={errorNotification.message}
+                    subText={errorNotification.subText}
                     actionText="Close"
-                    onAction={() => setNotification(null)}
+                    onAction={() => setErrorNotification(null)}
                 />
             )}
         </div>
