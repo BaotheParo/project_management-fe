@@ -117,6 +117,7 @@ export const useAuthApi = () => {
                     ...(data.email && { email: data.email }),
                     ...(data.fullName && { fullName: data.fullName }),
                     ...(data.coverImage && { coverImage: data.coverImage }),
+                    ...(data.serviceCenterName && { serviceCenterName: data.serviceCenterName }),
                 };
 
             console.log("Auth me - Storing user data:", userData);

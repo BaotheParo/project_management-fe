@@ -236,7 +236,7 @@ export default function ClaimRequestsPage() {
                         <DotsThreeIcon size={20} weight="bold" />
                       </button>
 
-                      {openActionFor === r.claimId && (
+                      {openActionFor === r.claimId && r.claimStatus === "Pending" && (
                         <div
                           ref={menuRef}
                           className="absolute -right-10 top-7 w-32 bg-white border border-[#DEE1E6] rounded-lg shadow-lg z-50 pointer-events-auto"
@@ -244,7 +244,7 @@ export default function ClaimRequestsPage() {
                           <button
                             onClick={() => {
                               setOpenActionFor(null);
-                              navigate(`edit/claim/${r.claimId}`);
+                              navigate(`edit/${r.claimId}`);
                             }}
                             className="w-full text-left rounded-tl-lg rounded-tr-lg transition-all px-3 py-2 hover:bg-gray-50 cursor-pointer"
                           >

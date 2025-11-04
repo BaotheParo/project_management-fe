@@ -12,61 +12,189 @@ import {
     XCircleIcon,
 } from "@phosphor-icons/react";
 import { useWarrantyClaims } from "../../../../api/useWarrantyClaims";
-import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Loader from "../../../../components/Loader";
-import { v4 as uuidv4 } from "uuid";
 import { useAuth } from "../../../../app/AuthProvider";
+import { useVehicleApi } from "../../../../api/useVehicleApi";
+import { usePartApi } from "../../../../api/usePartApi";
+import { ErrorNotification, SuccessNotification } from "../../../../components/Notification";
 
 export default function CreateClaimRequestsPage() {
-    const [claimId] = useState(uuidv4()); // Generate once
     const navigate = useNavigate();
     const { user } = useAuth();
+    const [successNotification, setSuccessNotification] = useState(null);
+    const [failNotification, setFailNotification] = useState(null);
+    const [errorNotification, setErrorNotification] = useState(null);
     const { createClaim } = useWarrantyClaims(user?.userId);
+    const { vehicles, vehicleLoading, vehicleError } = useVehicleApi();
+    const { fetchPartsByVin, partLoading } = usePartApi();
 
     const displayName = user?.username || user?.name || user?.fullName || "User";
+    const [availableParts, setAvailableParts] = useState([]); // Store parts fetched from API
 
     const [formData, setFormData] = useState({
+        claimDate: new Date().toISOString().split("T")[0],
+        centerName: user?.serviceCenterName || "",
         vin: "",
         issueDescription: "",
-        policyId: "",
+        vehicleName: "",
+        purchaseDate: "",
+        mileage: "",
         partItems: [
             {
-                partId: "",
-                partName: "",
-                quantity: 1,
                 partNumber: "",
-                price: 0.0,
+                partName: "",
+                replacementDate: new Date().toISOString().split("T")[0],
             },
         ],
+        actionType: 0,
     });
 
-    // Handle input changes
+    // 🔹 When VIN changes, auto-fill vehicle info AND parts info
+    const handleVinChange = async (e) => {
+        const selectedVin = e.target.value;
+        setFormData((prev) => ({ ...prev, vin: selectedVin }));
+
+        if (!selectedVin) {
+            // Reset form if VIN is cleared
+            setFormData((prev) => ({
+                ...prev,
+                vin: "",
+                vehicleName: "",
+                purchaseDate: "",
+                mileage: "",
+                partItems: [
+                    {
+                        partNumber: "",
+                        partName: "",
+                        replacementDate: new Date().toISOString().split("T")[0],
+                    },
+                ],
+            }));
+            return;
+        }
+
+        // Find selected vehicle
+        const selectedVehicle = vehicles.find((v) => v.vin === selectedVin);
+
+        if (selectedVehicle) {
+            // Update vehicle information
+            setFormData((prev) => ({
+                ...prev,
+                vin: selectedVin,
+                vehicleName: selectedVehicle.vehicleName || "",
+                purchaseDate: selectedVehicle.purchaseDate
+                    ? new Date(selectedVehicle.purchaseDate)
+                        .toISOString()
+                        .split("T")[0]
+                    : "",
+                mileage: selectedVehicle.mileAge || "",
+            }));
+
+            // Fetch and auto-fill parts information
+            try {
+                console.log("🔍 Calling fetchPartsByVin for:", selectedVin);
+                const partData = await fetchPartsByVin(selectedVin);
+
+                console.log("📦 Received part data:", partData);
+                console.log("📦 Part data type:", typeof partData);
+                console.log("📦 Is array:", Array.isArray(partData));
+                console.log("📦 Part data length:", partData?.length);
+
+                if (partData && Array.isArray(partData) && partData.length > 0) {
+                    console.log("✅ Processing", partData.length, "parts");
+
+                    // Store available parts for dropdown
+                    setAvailableParts(partData);
+
+                    // Initialize form with one empty part item for user to select
+                    setFormData((prev) => ({
+                        ...prev,
+                        partItems: [
+                            {
+                                partNumber: "",
+                                partName: "",
+                                replacementDate: new Date().toISOString().split("T")[0],
+                            },
+                        ],
+                    }));
+
+                    console.log("✅ Available parts stored for dropdown");
+                } else {
+                    console.warn("⚠️ No parts data or empty array received");
+                    // No parts found, keep one empty part item
+                    setAvailableParts([]);
+                    setFormData((prev) => ({
+                        ...prev,
+                        partItems: [
+                            {
+                                partNumber: "",
+                                partName: "",
+                                replacementDate: new Date().toISOString().split("T")[0],
+                            },
+                        ],
+                    }));
+                }
+            } catch (error) {
+                console.error("❌ Failed to fetch parts for VIN:", error);
+                // Keep default part item if fetch fails
+                setAvailableParts([]);
+                setFormData((prev) => ({
+                    ...prev,
+                    partItems: [
+                        {
+                            partNumber: "",
+                            partName: "",
+                            replacementDate: new Date().toISOString().split("T")[0],
+                        },
+                    ],
+                }));
+            }
+        }
+    };
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    // Handle part changes
     const handlePartChange = (index, e) => {
         const { name, value } = e.target;
         const updatedParts = [...formData.partItems];
-        updatedParts[index][name] = value;
+
+        if (name === "partName") {
+            const selectedPart = availableParts.find(p => p.partName === value);
+            if (selectedPart) {
+                updatedParts[index] = {
+                    ...updatedParts[index],
+                    partName: value,
+                    partNumber: "",
+                    availablePartNumbers: selectedPart.partNumbers || [],
+                };
+            }
+        } else if (name === "partNumber") {
+            updatedParts[index] = {
+                ...updatedParts[index],
+                partNumber: value,
+            };
+        } else {
+            updatedParts[index][name] = value;
+        }
+
         setFormData((prev) => ({ ...prev, partItems: updatedParts }));
     };
 
-    // ➕ Add new part
     const handleAddPart = () => {
         setFormData((prev) => ({
             ...prev,
             partItems: [
                 ...prev.partItems,
-                { partId: "", partName: "", partNumber: "", quantity: 1, price: 0 },
+                { partName: "", partNumber: "", replacementDate: new Date().toISOString().split("T")[0] },
             ],
         }));
     };
 
-    // 🗑 Remove part
     const handleRemovePart = (index) => {
         setFormData((prev) => ({
             ...prev,
@@ -74,36 +202,58 @@ export default function CreateClaimRequestsPage() {
         }));
     };
 
+    const handleActionTypeChange = (e) => {
+        setFormData((prev) => ({
+            ...prev,
+            actionType: parseInt(e.target.value),
+        }));
+    };
+
     async function handleSubmit(e) {
         e.preventDefault();
 
+        const id = user?.userId;
         const payload = {
-            claimDate: new Date().toISOString(),
+            claimDate: new Date(formData.claimDate).toISOString(),
+            centerName: formData.centerName,
             vin: formData.vin,
+            vehicleName: formData.vehicleName,
+            mileage: Number.parseInt(formData.mileage) || 0,
+            purchaseDate: new Date(formData.purchaseDate).toISOString(),
             issueDescription: formData.issueDescription,
-            policyId: formData.policyId,
             partItems: formData.partItems.map((item) => ({
-                partId: item.partId,
                 partName: item.partName,
-                quantity: Number(item.quantity),
                 partNumber: item.partNumber,
-                price: Number(item.price),
+                replacementDate: item.replacementDate
+                    ? new Date(item.replacementDate).toISOString()
+                    : new Date().toISOString(),
             })),
+            actionType: formData.actionType,
         };
 
         try {
-            const result = await createClaim(payload);
+            const result = await createClaim(id, payload);
             if (result.success) {
-                alert("✅ Claim created successfully!");
-                navigate("/claims");
+                setSuccessNotification({
+                    type: "success",
+                    message: "Request created successfully!",
+                    subText: new Date().toLocaleString(),
+                });
+                navigate("/sc-technician/claims");
             } else {
-                alert("❌ Failed to create claim.");
+                setFailNotification({
+                    type: "failed",
+                    message: "Failed to create claim request.",
+                });
             }
         } catch (err) {
-            console.error("Error creating claim:", err);
-            alert("❌ Something went wrong.");
+            setErrorNotification({
+                type: "error",
+                message: "Failed to create claim request.",
+                subText: err || "Please try again later."
+            });
         }
-    };
+    }
 
     return (
         <div className="w-full">
@@ -117,6 +267,12 @@ export default function CreateClaimRequestsPage() {
             </div>
 
             <div className="mb-6 mt-20">
+                <div className="mt-20 mb-6">
+                    <h2 className="text-xl font-semibold mb-1">
+                        Create new Claim Request
+                    </h2>
+                </div>
+
                 <form className="space-y-10" onSubmit={handleSubmit}>
                     <div className="bg-white border-[3px] border-[#EBEBEB] rounded-2xl p-10">
                         <div className="text-md text-indigo-600 font-medium mb-6 flex items-center gap-2">
@@ -124,26 +280,24 @@ export default function CreateClaimRequestsPage() {
                         </div>
                         <div className="grid grid-cols-3 gap-10">
                             <div className="w-full">
-                                <p className="text-sm mb-2 text-[#6B716F]">Claim Id</p>
-                                <input
-                                    readOnly={true}
-                                    className="p-3 bg-[#F9FAFB] border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
-                                    placeholder="Claim ID"
-                                    aria-disabled
-                                    defaultValue={claimId}
-                                />
-                            </div>
-                            <div className="w-full">
                                 <p className="text-sm mb-2 text-[#6B716F]">Claim Date</p>
                                 <input
+                                    type="date"
+                                    name="claimDate"
+                                    value={formData.claimDate}
+                                    onChange={handleChange}
                                     className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="Claim Date"
+                                    required
                                 />
                             </div>
                             <div className="w-full">
                                 <p className="text-sm mb-2 text-[#6B716F]">Service Center</p>
                                 <input
-                                    className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
+                                    name="centerName"
+                                    value={formData.centerName}
+                                    onChange={handleChange}
+                                    className="p-3 bg-[#F9FAFB] border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="Service Center"
                                 />
                             </div>
@@ -153,13 +307,8 @@ export default function CreateClaimRequestsPage() {
                                     readOnly={true}
                                     className="p-3 bg-[#F9FAFB] border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="Created By"
+                                    defaultValue={displayName}
                                 />
-                            </div>
-                            <div className="w-full">
-                                <p className="text-sm mb-2 text-[#6B716F]">Manufacturer</p>
-                                <select className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none">
-                                    <option>Select Manufacturer</option>
-                                </select>
                             </div>
                         </div>
                     </div>
@@ -168,33 +317,45 @@ export default function CreateClaimRequestsPage() {
                         <div className="text-md text-indigo-600 font-medium mb-6 flex items-center gap-2">
                             <CarIcon size={20} weight="bold" /> Vehicle Information
                         </div>
+
                         <div className="grid grid-cols-3 gap-10">
                             <div className="w-full">
                                 <p className="text-sm mb-2 text-[#6B716F]">VIN code</p>
-                                <input
+                                <select
                                     name="vin"
-                                    className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
-                                    placeholder="VIN code"
                                     value={formData.vin}
-                                    onChange={handleChange}
-                                    required
-                                />
-                            </div>
-                            <div className="w-full">
-                                <p className="text-sm mb-2 text-[#6B716F]">Policy ID</p>
-                                <input
-                                    name="policyId"
+                                    onChange={handleVinChange}
                                     className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
-                                    placeholder="Policy ID"
-                                    value={formData.policyId}
-                                    onChange={handleChange}
                                     required
-                                />
+                                    disabled={vehicleLoading || partLoading}
+                                >
+                                    <option value="">
+                                        {vehicleLoading ? "Loading vehicles..." :
+                                            partLoading ? "Loading parts..." :
+                                                "Select VIN"}
+                                    </option>
+                                    {!vehicleLoading && vehicles && vehicles.length === 0 && (
+                                        <option value="" disabled>No vehicles available</option>
+                                    )}
+                                    {vehicles && vehicles.length > 0 && vehicles.map((v) => (
+                                        <option key={v.vin} value={v.vin}>
+                                            {v.vin} - {v.vehicleName} ({v.model}) - {v.fullName}
+                                        </option>
+                                    ))}
+                                </select>
+                                {vehicleError && (
+                                    <p className="text-sm text-red-500 mt-1">
+                                        Error loading vehicles: {vehicleError.message}
+                                    </p>
+                                )}
                             </div>
                             <div className="w-full">
                                 <p className="text-sm mb-2 text-[#6B716F]">Vehicle Name</p>
                                 <input
-                                    className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
+                                    name="vehicleName"
+                                    value={formData.vehicleName}
+                                    readOnly
+                                    className="p-3 bg-[#F9FAFB] border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="Enter vehicle name"
                                 />
                             </div>
@@ -203,7 +364,11 @@ export default function CreateClaimRequestsPage() {
                                     Purchase Date of vehicle
                                 </p>
                                 <input
-                                    className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
+                                    type="date"
+                                    name="purchaseDate"
+                                    value={formData.purchaseDate}
+                                    readOnly
+                                    className="p-3 bg-[#F9FAFB] border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="Purchase Date of vehicle"
                                 />
                             </div>
@@ -212,7 +377,10 @@ export default function CreateClaimRequestsPage() {
                                     Current Mileage (km)
                                 </p>
                                 <input
-                                    className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
+                                    name="mileage"
+                                    value={formData.mileage}
+                                    readOnly
+                                    className="p-3 bg-[#F9FAFB] border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="Current Mileage (km)"
                                 />
                             </div>
@@ -220,20 +388,21 @@ export default function CreateClaimRequestsPage() {
                     </div>
 
                     <div className="bg-white border-[3px] border-[#EBEBEB] rounded-2xl p-10">
-                        <div className="text-md text-indigo-600 font-medium mb-6 flex items-center gap-2">
-                            <div className="flex items-center justify-between w-full mb-6">
-                                <div className="flex items-center gap-2">
-                                    <PackageIcon size={20} weight="bold" /> Part Information
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={handleAddPart}
-                                    className="flex items-center gap-2 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full transition-all cursor-pointer"
-                                >
-                                    <PlusCircleIcon size={20} weight="bold" />
-                                    Add Part
-                                </button>
+                        <div className="flex items-center justify-between w-full mb-6">
+                            <div className="text-md text-indigo-600 font-medium flex items-center gap-2">
+                                <PackageIcon size={20} weight="bold" /> Part Information
+                                {partLoading && (
+                                    <span className="text-sm text-gray-500 ml-2">(Loading parts...)</span>
+                                )}
                             </div>
+                            <button
+                                type="button"
+                                onClick={handleAddPart}
+                                className="flex items-center gap-2 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full transition-all cursor-pointer"
+                            >
+                                <PlusCircleIcon size={20} weight="bold" />
+                                Add Part
+                            </button>
                         </div>
                         {formData.partItems.map((part, index) => (
                             <div
@@ -253,70 +422,66 @@ export default function CreateClaimRequestsPage() {
                                 </div>
 
                                 <div className="w-full">
-                                    <p className="text-sm mb-2 text-[#6B716F]">Part Id</p>
-                                    <input
-                                        name="partId"
-                                        className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full"
-                                        placeholder="Part Id"
-                                        value={part.partId}
-                                        onChange={(e) => handlePartChange(index, e)}
-                                    />
-                                </div>
-
-                                <div className="w-full">
                                     <p className="text-sm mb-2 text-[#6B716F]">Part Name</p>
-                                    <input
+                                    <select
                                         name="partName"
                                         className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full"
-                                        placeholder="Part Name"
                                         value={part.partName}
                                         onChange={(e) => handlePartChange(index, e)}
-                                    />
+                                        required
+                                        disabled={availableParts.length === 0}
+                                    >
+                                        <option value="">
+                                            {availableParts.length === 0
+                                                ? "Select a VIN first"
+                                                : "Select Part Name"}
+                                        </option>
+                                        {availableParts.map((availablePart) => (
+                                            <option
+                                                key={availablePart.partId}
+                                                value={availablePart.partName}
+                                            >
+                                                {availablePart.partName}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
 
                                 <div className="w-full">
                                     <p className="text-sm mb-2 text-[#6B716F]">Part Number</p>
-                                    <input
+                                    <select
                                         name="partNumber"
                                         className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full"
-                                        placeholder="Part Number"
                                         value={part.partNumber}
                                         onChange={(e) => handlePartChange(index, e)}
-                                    />
+                                        required
+                                        disabled={!part.availablePartNumbers || part.availablePartNumbers.length === 0}
+                                    >
+                                        <option value="">
+                                            {(!part.availablePartNumbers || part.availablePartNumbers.length === 0)
+                                                ? "Select Part Name first"
+                                                : "Select Part Number"}
+                                        </option>
+                                        {part.availablePartNumbers?.map((num, i) => (
+                                            <option key={i} value={num}>
+                                                {num}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
 
                                 <div className="w-full">
-                                    <p className="text-sm mb-2 text-[#6B716F]">Quantity</p>
-                                    <input
-                                        name="quantity"
-                                        className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full"
-                                        placeholder="Quantity"
-                                        value={part.quantity}
-                                        onChange={(e) => handlePartChange(index, e)}
-                                    />
-                                </div>
-
-                                <div className="w-full">
-                                    <p className="text-sm mb-2 text-[#6B716F]">Price</p>
-                                    <input
-                                        name="price"
-                                        className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full"
-                                        placeholder="Price"
-                                        value={part.price}
-                                        onChange={(e) => handlePartChange(index, e)}
-                                    />
-                                </div>
-
-                                {/* <div className="w-full">
                                     <p className="text-sm mb-2 text-[#6B716F]">
                                         Replacement Date
                                     </p>
                                     <input
                                         type="date"
+                                        name="replacementDate"
                                         className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full"
                                         value={part.replacementDate}
+                                        onChange={(e) => handlePartChange(index, e)}
                                     />
-                                </div> */}
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -328,8 +493,12 @@ export default function CreateClaimRequestsPage() {
                         <div>
                             <p className="text-sm mb-2 text-[#6B716F]">Issue Description</p>
                             <textarea
+                                name="issueDescription"
+                                value={formData.issueDescription}
+                                onChange={handleChange}
                                 className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none min-h-[120px]"
                                 placeholder="Provide a detailed description of the issue..."
+                                required
                             />
                         </div>
                     </div>
@@ -354,7 +523,9 @@ export default function CreateClaimRequestsPage() {
                                 <div className="w-20 h-12 bg-gray-200 rounded-md" />
                             </div>
                             <div>
-                                <button className="px-4 py-2 rounded-full bg-indigo-600 hover:bg-indigo-700 transition-all text-white cursor-pointer">
+                                <button
+                                    type="button"
+                                    className="px-4 py-2 rounded-full bg-indigo-600 hover:bg-indigo-700 transition-all text-white cursor-pointer">
                                     Choose a file
                                 </button>
                                 <p className="mt-3 text-sm text-[#6B7280]">
@@ -371,21 +542,41 @@ export default function CreateClaimRequestsPage() {
                         </div>
                         <div className="space-y-2 text-md">
                             <label className="flex items-center gap-2 cursor-pointer">
-                                <input type="radio" name="service" /> Request replacement part
-                                approval
+                                <input
+                                    type="radio"
+                                    name="actionType"
+                                    value="0"
+                                    checked={formData.actionType === 0}
+                                    onChange={handleActionTypeChange}
+                                />
+                                Request replacement part approval
                             </label>
                             <label className="flex items-center gap-2 cursor-pointer">
-                                <input type="radio" name="service" /> Request repair approval
+                                <input
+                                    type="radio"
+                                    name="actionType"
+                                    value="1"
+                                    checked={formData.actionType === 1}
+                                    onChange={handleActionTypeChange}
+                                />
+                                Request repair approval
                             </label>
                             <label className="flex items-center gap-2 cursor-pointer">
-                                <input type="radio" name="service" /> Request reimbursement
-                                (repair completed in advance)
+                                <input
+                                    type="radio"
+                                    name="actionType"
+                                    value="2"
+                                    checked={formData.actionType === 2}
+                                    onChange={handleActionTypeChange}
+                                />
+                                Request reimbursement (repair completed in advance)
                             </label>
                         </div>
                     </div>
 
                     <div className="flex items-center justify-end gap-3 mt-6">
                         <button
+                            type="button"
                             onClick={() => navigate(-1)}
                             className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#F1F3F4] hover:bg-[#dfe0e2] transition-all cursor-pointer"
                         >
@@ -402,6 +593,33 @@ export default function CreateClaimRequestsPage() {
                     </div>
                 </form>
             </div>
+            {/* ✅ Notification logic */}
+            {successNotification?.type === "success" && (
+                <SuccessNotification
+                    message={successNotification.message}
+                    subText={successNotification.subText}
+                    actionText="Close"
+                    onAction={() => setSuccessNotification(null)}
+                />
+            )}
+
+            {failNotification?.type === "failed" && (
+                <ErrorNotification
+                    message={failNotification.message}
+                    subText={failNotification.subText}
+                    actionText="Close"
+                    onAction={() => setFailNotification(null)}
+                />
+            )}
+
+            {errorNotification?.type === "error" && (
+                <ErrorNotification
+                    message={errorNotification.message}
+                    subText={errorNotification.subText}
+                    actionText="Close"
+                    onAction={() => setErrorNotification(null)}
+                />
+            )}
         </div>
     );
 }

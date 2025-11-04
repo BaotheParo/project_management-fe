@@ -1,6 +1,7 @@
-import { useState, useMemo } from "react";
-import { MOCK_WORK_ORDERS } from "../constants/mockData";
+import { useState, useMemo, useEffect } from "react";
+import { useWorkOrderData } from "./useWorkOrderData";
 import { WORK_ORDER_STATUS, PRIORITY } from "../constants/statusConstants";
+import axiosInstance from "../../../../api/axiousInstance";
 
 import {
   CheckCircleIcon,
@@ -10,10 +11,20 @@ import {
 } from "@phosphor-icons/react";
 
 export function useWorkOrders() {
-  const [orders, setOrders] = useState(MOCK_WORK_ORDERS);
+  // Fetch real data from API
+  const { workOrders: apiWorkOrders, loading: apiLoading, error: apiError, refetch: refetchWorkOrders } = useWorkOrderData();
+  
+  const [orders, setOrders] = useState([]);
   const [activeFilter, setActiveFilter] = useState(WORK_ORDER_STATUS.ALL);
   const [selectedPriority, setSelectedPriority] = useState(PRIORITY.ALL);
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Update orders when API data changes
+  useEffect(() => {
+    if (apiWorkOrders && apiWorkOrders.length > 0) {
+      setOrders(apiWorkOrders);
+    }
+  }, [apiWorkOrders]);
 
   // Calculate stats from orders
   const stats = useMemo(() => {
@@ -87,14 +98,24 @@ export function useWorkOrders() {
   };
 
   // Handle technician assignment
-  const assignTechnician = (order, technician) => {
-    setOrders(
-      orders.map((o) =>
-        o.id === order.id
-          ? { ...o, status: "Assigned", technician: technician.name }
-          : o
-      )
-    );
+  const assignTechnician = async (order, technician) => {
+    try {
+      console.log('Assigning technician:', { orderId: order.id, technicianId: technician.id });
+      
+      // Call API to assign technician to work order
+      await axiosInstance.patch(`/work-orders/${order.id}/assign`, {
+        technicianId: technician.id
+      });
+
+      console.log('Technician assigned successfully');
+
+      // Refetch work orders from API to get updated data
+      refetchWorkOrders();
+    } catch (error) {
+      console.error('Error assigning technician:', error);
+      // You might want to show an error notification to the user here
+      throw error; // Re-throw to let the caller handle it if needed
+    }
   };
 
   return {
@@ -110,5 +131,7 @@ export function useWorkOrders() {
     stats: stats.cards,
     getFilterCount,
     assignTechnician,
+    loading: apiLoading,
+    error: apiError,
   };
 }

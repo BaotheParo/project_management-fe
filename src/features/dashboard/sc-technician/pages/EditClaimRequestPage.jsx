@@ -358,6 +358,11 @@ export default function EditClaimRequestsPage() {
             </div>
 
             <div className="mb-6 mt-20">
+                <div className="mt-20 mb-6">
+                    <h2 className="text-xl font-semibold mb-1">
+                        Edit Claim Request
+                    </h2>
+                </div>
                 <form className="space-y-10">
                     <div className="bg-white border-[3px] border-[#EBEBEB] rounded-2xl p-10">
                         <div className="text-md text-indigo-600 font-medium mb-6 flex items-center gap-2">
@@ -371,7 +376,7 @@ export default function EditClaimRequestsPage() {
                                     className="p-3 bg-[#F9FAFB] border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="Claim ID"
                                     aria-disabled
-                                    defaultValue={row?.claimId || ""}
+                                    defaultValue={row?.claimId}
                                 />
                             </div>
                             <div className="w-full">
@@ -390,7 +395,7 @@ export default function EditClaimRequestsPage() {
                                 <input
                                     className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="Service Center"
-                                    defaultValue={row?.serviceCenterName || "WC-2003-9192332"}
+                                    defaultValue={row?.serviceCenterName}
                                 />
                             </div>
                             <div className="w-full">
@@ -399,15 +404,15 @@ export default function EditClaimRequestsPage() {
                                     readOnly={true}
                                     className="p-3 bg-[#F9FAFB] border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="Created By"
-                                    defaultValue={row?.technicianName || ""}
+                                    defaultValue={row?.technicianName}
                                 />
                             </div>
-                            {/* <div className="w-full">
+                            <div className="w-full">
                                 <p className="text-sm mb-2 text-[#6B716F]">Manufacturer</p>
                                 <select className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none">
                                     <option>Select Manufacturer</option>
                                 </select>
-                            </div> */}
+                            </div>
                         </div>
                     </div>
 
