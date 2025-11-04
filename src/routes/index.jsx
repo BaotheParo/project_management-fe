@@ -20,6 +20,8 @@ const SCTechnicianEditClaimRequestsPage = lazy(() => import("../features/dashboa
 const SCTechnicianCreateClaimRequestsPage = lazy(() => import("../features/dashboard/sc-technician/pages/CreateClaimRequestPage"));
 const SCTechnicianTodoWorksPage = lazy(() => import("../features/dashboard/sc-technician/pages/WorksPage"));
 const SCTechnicianTodoWorksDetailPage = lazy(() => import("../features/dashboard/sc-technician/pages/WorkDetails"));
+const SCTechnicianCampaignsPage = lazy(() => import("../features/dashboard/sc-technician/pages/CampaignsPage"));
+const SCTechnicianCampaignDetailPage = lazy(() => import("../features/dashboard/sc-technician/pages/CampaignDetailPage"));
 const SCTechnicianProfilePage = lazy(() => import("../features/dashboard/sc-technician/pages/ProfilePage"));
 
 // Sc-Staff
@@ -71,6 +73,8 @@ const router = createBrowserRouter([
             { path: "claims/edit/:id", element: <Suspense fallback={<Loader />}><SCTechnicianEditClaimRequestsPage /></Suspense> },
             { path: "todos", element: <Suspense fallback={<Loader />}><SCTechnicianTodoWorksPage /></Suspense> },
             { path: "todos/view-detail/:id", element: <Suspense fallback={<Loader />}><SCTechnicianTodoWorksDetailPage /></Suspense> },
+            { path: "campaigns", element: <Suspense fallback={<Loader />}><SCTechnicianCampaignsPage /></Suspense> },
+            { path: "campaigns/view-detail/:id", element: <Suspense fallback={<Loader />}><SCTechnicianCampaignDetailPage /></Suspense> },
             { path: "profile", element: <Suspense fallback={<Loader />}><SCTechnicianProfilePage /></Suspense> },
         ],
     },

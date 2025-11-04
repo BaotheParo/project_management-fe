@@ -1,6 +1,6 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { HouseIcon, ListIcon, ClipboardTextIcon, UserIcon, MinusCircleIcon, CaretDownIcon } from '@phosphor-icons/react'
+import { HouseIcon, ListIcon, ClipboardTextIcon, UserIcon, MinusCircleIcon, CaretDownIcon, MegaphoneIcon } from '@phosphor-icons/react'
 import logo from '../../../../assets/group4.png'
 import { useAuthApi } from '../../../../api/useAuthApi'
 import NavItem from '../../../../components/Sidebar/NavItem'
@@ -35,6 +35,9 @@ export default function Sidebar() {
           </div>
           <div className="py-0">
             <NavItem to="/sc-technician/todos" icon={ListIcon} label="Todo Works" />
+          </div>
+          <div className="py-0">
+            <NavItem to="/sc-technician/campaigns" icon={MegaphoneIcon} label="Campaigns" />
           </div>
         </nav>
       </div>

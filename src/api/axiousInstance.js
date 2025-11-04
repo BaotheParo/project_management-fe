@@ -1,7 +1,17 @@
 import axios from "axios";
 
+// Use proxy in development to avoid CORS, direct URL in production
+const getBaseURL = () => {
+    // In development with Vite proxy, use relative path
+    if (import.meta.env.DEV) {
+        return "/api"; // Vite proxy will forward to backend
+    }
+    // In production, use full URL
+    return import.meta.env.VITE_API_BASE_URL || "https://dev-be-wm.fleeforezz.site/api";
+};
+
 const axiosInstance = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL || "https://dev-be-wm.fleeforezz.site/api", // your ASP.NET Web API base URL
+    baseURL: getBaseURL(),
     headers: {
         "Content-Type": "application/json"
     }
