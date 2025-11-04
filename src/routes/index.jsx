@@ -7,6 +7,7 @@ import NotFound from "../components/NotFound";
 import RoleRoute from "./RoleRoute";
 import SCStaffLayout from "../layout/SCStaffLayout";
 import Unauthorized from "../components/Unauthorized";
+import EVMStaffLayout from "../layout/EVMStaffLayout";
 
 // Lazy load pages
 const LoginPage = lazy(() => import("../features/auth/pages/Login"));
@@ -29,6 +30,9 @@ const SCStaffReportPage = lazy(() => import("../features/dashboard/sc-staff/page
 const SCStaffPartRequestPage = lazy(() => import("../features/dashboard/sc-staff/pages/PartRequests"));
 const SCStaffBillPage = lazy(() => import("../features/dashboard/sc-staff/pages/BillOfCharge"));
 const SCStaffProfilePage = lazy(() => import("../features/dashboard/sc-staff/pages/Profile"));
+
+// EVM-Staff
+const EVMDashboardPage = lazy(() => import("../features/dashboard/evm-staff/pages/Dashboard"));
 
 const router = createBrowserRouter([
     {
@@ -74,7 +78,7 @@ const router = createBrowserRouter([
         path: "/sc-staff",
         element: (
             <ProtectedRoute>
-                <RoleRoute allowedRoles={["SCStaff"]}>
+                <RoleRoute allowedRoles={["SCStaff", "0"]}>
                     <SCStaffLayout />
                 </RoleRoute>
             </ProtectedRoute>
@@ -86,6 +90,19 @@ const router = createBrowserRouter([
             { path: "report", element: <Suspense fallback={<Loader />}><SCStaffReportPage /></Suspense> },
             { path: "bill", element: <Suspense fallback={<Loader />}><SCStaffBillPage /></Suspense> },
             { path: "profile", element: <Suspense fallback={<Loader />}><SCStaffProfilePage /></Suspense> },
+        ],
+    },
+    {
+        path: "/evm-staff",
+        element: (
+            <ProtectedRoute>
+                <RoleRoute allowedRoles={["EVMStaff", "2"]}>
+                    <EVMStaffLayout />
+                </RoleRoute>
+            </ProtectedRoute>
+        ),
+        children: [
+            { index: true, path: "dashboard", element: <Suspense fallback={<Loader />}><EVMDashboardPage /></Suspense> },
         ],
     },
 
