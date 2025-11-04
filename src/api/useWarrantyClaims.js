@@ -105,7 +105,7 @@ export const useWarrantyClaims = (userId) => {
         try {
             const response = await axiousInstance.post("/claims", payload);
             // Optionally refetch updated claim list
-            // await fetchClaims(payload.userId);
+            await fetchClaims(payload.userId);
             return { success: true, data: response.data };
         } catch (error) {
             console.error("Failed to create claim:", error);
