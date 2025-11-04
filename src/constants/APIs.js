@@ -48,3 +48,16 @@ export const PART_ITEM_API = {
     CHECK_EXISTS: "/partitems/:id/exists",
     CHECK_PARTNUMBER_EXISTS: "/partitems/partnumber-exists",
 }
+
+export const CAMPAIGN_API = {
+    GET_ALL: "/campaigns",
+    GET_BY_ID: "/campaigns/:id",
+    GET_BY_USER: "/campaigns/user/:userId",
+    GET_BY_TECHNICIAN: "/campaigns/technician/:technicianId",
+    GET_BY_STATUS: "/campaigns/status/:status",
+    CREATE: "/campaigns",
+    UPDATE: "/campaigns/:id",
+    DELETE: "/campaigns/:id",
+    UPDATE_STATUS: "/campaigns/:id/status",
+    ASSIGN_TECHNICIAN: "/campaigns/:id/assign",
+}
