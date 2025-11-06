@@ -1,6 +1,6 @@
 import React from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
-import { HouseIcon, ListIcon, ClipboardTextIcon, UserIcon, MinusCircleIcon, WrenchIcon, PenIcon } from '@phosphor-icons/react'
+import { HouseIcon, WrenchIcon, PenIcon, UserIcon, MinusCircleIcon } from '@phosphor-icons/react'
 import logo from '../../../../assets/group4.png'
 import { useAuthApi } from '../../../../api/useAuthApi'
 
@@ -42,7 +42,7 @@ const NavItem = ({ to, icon: Icon, label, end, onClick }) => {
 
 export default function Sidebar() {
   const navigate = useNavigate()
-  const { logout, loading } = useAuthApi();
+  const { logout } = useAuthApi();
 
   const handleLogout = () => {
     logout() // clear token, role, etc.
@@ -65,12 +65,6 @@ export default function Sidebar() {
           </div>
           <div className="py-0">
             <NavItem to="/sc-staff/part-request" icon={WrenchIcon } label="Part Request" />
-          </div>
-          <div className="py-0">
-            <NavItem to="/sc-staff/report" icon={ClipboardTextIcon} label="Warranty Report" />
-          </div>
-          <div className="py-0">
-            <NavItem to="/sc-staff/bill" icon={UserIcon} label="Bill Of Charge" />
           </div>
           <div className="py-0">
             <NavItem to="/sc-staff/profile" icon={UserIcon} label="Profile" />

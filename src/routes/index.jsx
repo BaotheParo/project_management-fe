@@ -18,6 +18,8 @@ const ForgotPasswordPage = lazy(() => import("../features/auth/pages/ForgotPassw
 const AdminDashboardPage = lazy(() => import("../features/dashboard/admin/pages/Dashboard"));
 const AdminManageUsersPage = lazy(() => import("../features/dashboard/admin/pages/ManageUsers"));
 const AdminReportsPage = lazy(() => import("../features/dashboard/admin/pages/Reports"));
+const AdminWarrantyReportPage = lazy(() => import("../features/dashboard/sc-staff/pages/WarrantyReport"));
+const AdminBillPage = lazy(() => import("../features/dashboard/sc-staff/pages/BillOfCharge"));
 
 // Sc-Technician
 const SCTechnicianDashboardPage = lazy(() => import("../features/dashboard/sc-technician/pages/DashboardPage"));
@@ -34,9 +36,7 @@ const SCTechnicianProfilePage = lazy(() => import("../features/dashboard/sc-tech
 const SCStaffDashboardPage = lazy(() => import("../features/dashboard/sc-staff/pages/Dashboard"));
 const SCStaffRequestDetailPage = lazy(() => import("../features/dashboard/sc-staff/pages/WarrantyRequestDetail"))
 const SCStaffAssignWorkerPage = lazy(() => import("../features/dashboard/sc-staff/pages/AssignWorker"));
-const SCStaffReportPage = lazy(() => import("../features/dashboard/sc-staff/pages/WarrantyReport"));
 const SCStaffPartRequestPage = lazy(() => import("../features/dashboard/sc-staff/pages/PartRequests"));
-const SCStaffBillPage = lazy(() => import("../features/dashboard/sc-staff/pages/BillOfCharge"));
 const SCStaffProfilePage = lazy(() => import("../features/dashboard/sc-staff/pages/Profile"));
 
 // EVM-Staff
@@ -98,8 +98,6 @@ const router = createBrowserRouter([
             { path: "warranty-request/:id", element: <Suspense fallback={<Loader />}><SCStaffRequestDetailPage /></Suspense> },
             { path: "assign-worker", element: <Suspense fallback={<Loader />}><SCStaffAssignWorkerPage /></Suspense> },
             { path: "part-request", element: <Suspense fallback={<Loader />}><SCStaffPartRequestPage /></Suspense> },
-            { path: "report", element: <Suspense fallback={<Loader />}><SCStaffReportPage /></Suspense> },
-            { path: "bill", element: <Suspense fallback={<Loader />}><SCStaffBillPage /></Suspense> },
             { path: "profile", element: <Suspense fallback={<Loader />}><SCStaffProfilePage /></Suspense> },
         ],
     },
@@ -129,6 +127,8 @@ const router = createBrowserRouter([
             { index: true, path: "dashboard", element: <Suspense fallback={<Loader />}><AdminDashboardPage /></Suspense> },
             { path: "manage-users", element: <Suspense fallback={<Loader />}><AdminManageUsersPage /></Suspense> },
             { path: "reports", element: <Suspense fallback={<Loader />}><AdminReportsPage /></Suspense> },
+            { path: "warranty-report", element: <Suspense fallback={<Loader />}><AdminWarrantyReportPage /></Suspense> },
+            { path: "bill", element: <Suspense fallback={<Loader />}><AdminBillPage /></Suspense> },
         ],
     },
 
