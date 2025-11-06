@@ -25,6 +25,11 @@ axiosInstance.interceptors.request.use(
             config.headers["Authorization"] = `Bearer ${token}`;
         }
         
+        // Don't set Content-Type for FormData, let browser set it with boundary
+        if (config.data instanceof FormData) {
+            delete config.headers["Content-Type"];
+        }
+        
         // 🔍 Debug: Log outgoing requests
         if (config.method?.toUpperCase() === 'PUT' && config.url?.includes('/claims/')) {
             console.log("🚀 [Axios] Sending PUT request to:", config.url);
