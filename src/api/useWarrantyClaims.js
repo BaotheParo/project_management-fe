@@ -144,6 +144,8 @@ export const useWarrantyClaims = (userId) => {
                 policyName: claim.policyName,
                 serviceCenterName: claim.serviceCenterName,
                 technicianName: claim.technicianName,
+                action: claim.action,
+                actionDisplay: claim.actionDisplay,
             };
 
             setRow(formattedClaim);
