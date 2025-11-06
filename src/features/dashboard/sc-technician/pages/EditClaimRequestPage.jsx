@@ -27,7 +27,13 @@ export default function EditClaimRequestsPage() {
     // 🧩 Add dynamic parts state
     const [parts, setParts] = useState([]);
     
-    // 📝 Form state for controlled inputs
+    // 🖼️ Images state
+    const [uploadedImages, setUploadedImages] = useState([]);
+    
+    // �️ Modal state for image preview
+    const [selectedImage, setSelectedImage] = useState(null);
+    
+    // �📝 Form state for controlled inputs
     const [formData, setFormData] = useState({
         vin: "",
         vehicleName: "",
@@ -116,6 +122,24 @@ export default function EditClaimRequestsPage() {
                         price: 0,
                     },
                 ]);
+            }
+            
+            // Handle images - populate from API response
+            if (row.images && Array.isArray(row.images) && row.images.length > 0) {
+                const validImages = row.images
+                    .filter(img => img !== null && img !== undefined)
+                    .sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0)) // Sort by orderIndex
+                    .map(img => ({
+                        imageId: img.imageId,
+                        url: img.imageUrl,
+                        description: img.description || '',
+                        orderIndex: img.orderIndex || 0,
+                        isExisting: true, // Flag to identify existing images from API
+                    }));
+                
+                setUploadedImages(validImages);
+            } else {
+                setUploadedImages([]);
             }
         }
     }, [row]);
@@ -333,6 +357,55 @@ export default function EditClaimRequestsPage() {
 
     return (
         <div className="w-full">
+            {/* Image Modal */}
+            {selectedImage && (
+                <div 
+                    className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4"
+                    onClick={() => setSelectedImage(null)}
+                >
+                    <div 
+                        className="relative max-w-5xl max-h-[90vh] bg-white rounded-lg overflow-hidden"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Close button */}
+                        <button
+                            onClick={() => setSelectedImage(null)}
+                            className="absolute top-4 right-4 z-10 bg-white rounded-full p-2 hover:bg-gray-100 transition-colors shadow-lg"
+                        >
+                            <XCircleIcon size={24} weight="bold" />
+                        </button>
+                        
+                        {/* Image */}
+                        <img 
+                            src={selectedImage.url} 
+                            alt={selectedImage.description || 'Evidence'}
+                            className="max-w-full max-h-[80vh] object-contain"
+                        />
+                        
+                        {/* Image info */}
+                        <div className="p-4 bg-white border-t">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="font-medium text-gray-900">
+                                        Image #{selectedImage.orderIndex + 1}
+                                    </p>
+                                    {selectedImage.description && (
+                                        <p className="text-sm text-gray-600 mt-1">
+                                            {selectedImage.description}
+                                        </p>
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium">
+                                        Order: {selectedImage.orderIndex + 1}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            
             {/* Notifications */}
             {notification && notification.type === "success" && (
                 <SuccessNotification
@@ -640,24 +713,50 @@ export default function EditClaimRequestsPage() {
                             <CloudArrowUpIcon size={50} color="#9CA3AF" weight="fill" />
                             <div className="leading-1 mt-4 mb-10">
                                 <p className="mb-3 text-xl font-medium">
-                                    Upload Images or Videos
+                                    Uploaded Images
                                 </p>
                                 <p className="mb-3 text-md text-[#6B7280] font-medium">
-                                    Drag and drop files here or click to browse
+                                    {uploadedImages.length > 0 
+                                        ? `${uploadedImages.length} image(s) uploaded` 
+                                        : 'No images uploaded yet'}
                                 </p>
                             </div>
-                            <div className="flex items-center justify-center gap-3 mb-3">
-                                <div className="w-20 h-12 bg-gray-200 rounded-md" />
-                                <div className="w-20 h-12 bg-gray-200 rounded-md" />
-                                <div className="w-20 h-12 bg-gray-200 rounded-md" />
-                            </div>
+                            
+                            {/* Display uploaded images */}
+                            {uploadedImages.length > 0 ? (
+                                <div className="w-full mb-6">
+                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                        {uploadedImages.map((image, index) => (
+                                            <div key={image.imageId || index} className="relative group">
+                                                <img 
+                                                    src={image.url} 
+                                                    alt={image.description || `Evidence ${index + 1}`}
+                                                    className="w-full h-32 object-cover rounded-lg border-2 border-gray-300 hover:border-indigo-500 transition-colors cursor-pointer"
+                                                    onClick={() => setSelectedImage(image)}
+                                                />
+                                                {image.description && (
+                                                    <div className="mt-1 text-xs text-gray-600 text-left px-1 truncate">
+                                                        {image.description}
+                                                    </div>
+                                                )}
+                                                <div className="absolute top-2 right-2 bg-indigo-600 text-white text-xs px-2 py-1 rounded-full">
+                                                    #{image.orderIndex + 1}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex items-center justify-center gap-3 mb-3">
+                                    <div className="w-20 h-12 bg-gray-200 rounded-md" />
+                                    <div className="w-20 h-12 bg-gray-200 rounded-md" />
+                                    <div className="w-20 h-12 bg-gray-200 rounded-md" />
+                                </div>
+                            )}
+                            
                             <div>
-                                <button className="px-4 py-2 rounded-full bg-indigo-600 hover:bg-indigo-700 transition-all text-white cursor-pointer">
-                                    Choose a file
-                                </button>
                                 <p className="mt-3 text-sm text-[#6B7280]">
-                                    Max file size: 10MB per file. Supported formats: JPG, PNG,MP4,
-                                    MOV
+                                    Images from the original claim submission
                                 </p>
                             </div>
                         </div>
