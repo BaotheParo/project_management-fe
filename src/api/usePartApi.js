@@ -119,18 +119,26 @@ export const usePartApi = () => {
             // console.log("✨ Found", partData.length, "parts");
 
             // Format each part in the array
-            const formattedParts = partData.map(part => ({
-                partId: part.partId,
-                partName: part.partName,
-                partNumbers: part.partNumbers || [],
-                partDescription: part.partDescription,
-                vehiclePartId: part.vehiclePartId,
-                status: part.status,
-                vin: part.vin,
-                vehicleName: part.vehicleName || "Unknown",
-                model: part.model || "",
-                quantity: part.quantity || 0,
-            }));
+            const formattedParts = partData.map(part => {
+                // Handle both partNumber (array) and partNumbers (array) from API
+                const partNumbersArray = part.partNumber || part.partNumbers || [];
+                // Ensure it's an array
+                const numbersArray = Array.isArray(partNumbersArray) ? partNumbersArray : [];
+                
+                return {
+                    partId: part.partId,
+                    partName: part.partName,
+                    partNumber: numbersArray, // Store as partNumber (to match API)
+                    partNumbers: numbersArray, // Also store as partNumbers (for backward compatibility)
+                    partDescription: part.partDescription,
+                    vehiclePartId: part.vehiclePartId,
+                    status: part.status,
+                    vin: part.vin,
+                    vehicleName: part.vehicleName || "Unknown",
+                    model: part.model || "",
+                    quantity: part.quantity || 0,
+                };
+            });
 
             // console.log("✅ Formatted parts:", formattedParts);
 
