@@ -18,7 +18,7 @@ export default function Dashboard() {
   console.log("User object:", user)
 
   const { rows = [], loading, error } = useWarrantyClaims(user?.userId);
-  const { workRows = [], workLoading, workError } = useTodoWorksApi();
+  const { workRows = [], workLoading, workError } = useTodoWorksApi(user?.userId);
 
   const totalClaims = rows.filter(r => r.isActive === true).length;
   const acceptedClaims = rows.filter(r => r.claimStatus === "Accepted").length;
@@ -45,7 +45,7 @@ export default function Dashboard() {
         <div className='flex items-center gap-5'>
           <button
             onClick={() => {
-              navigate('/create');
+              navigate('/sc-technician/claims/create');
             }}
             className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 transition-all text-white px-9 py-3 rounded-full cursor-pointer"
           >

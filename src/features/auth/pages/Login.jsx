@@ -33,9 +33,9 @@ export default function Login() {
         case "0":
           navigate("/sc-staff/dashboard");
           break;
-        case "EVM":
+        case "EVMStaff":
         case "2":
-          navigate("/evm/dashboard");
+          navigate("/evm-staff/dashboard");
           break;
         case "Admin":
         case "3":

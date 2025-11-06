@@ -101,11 +101,12 @@ export const useWarrantyClaims = (userId) => {
         }
     };
 
-    const createClaim = async (payload) => {
+    const createClaim = async (id, payload) => {
         try {
-            const response = await axiousInstance.post("/claims", payload);
+            console.log("📦 Sending createClaim payload:", JSON.stringify(payload, null, 2));
+            const response = await axiousInstance.post(`/claims?technicianId=${id}`, payload);
             // Optionally refetch updated claim list
-            // await fetchClaims(payload.userId);
+            await fetchClaims(payload.userId);
             return { success: true, data: response.data };
         } catch (error) {
             console.error("Failed to create claim:", error);
@@ -114,8 +115,48 @@ export const useWarrantyClaims = (userId) => {
     };
 
     const updateClaim = async (id, payload) => {
-        await axiousInstance.put(`/claims/${id}`, payload);
-        await fetchClaims();
+        try {
+            console.log("🔵 [useWarrantyClaims] updateClaim called");
+            console.log("📝 Claim ID:", id);
+            console.log("📦 Payload:", payload);
+            
+            const response = await axiousInstance.put(`/claims/${id}`, payload);
+            
+            console.log("✅ [useWarrantyClaims] Update response:", response);
+            console.log("✅ [useWarrantyClaims] Update response data:", JSON.stringify(response, null, 2));
+            
+            // Note: Axios interceptor returns response.data, not full response
+            // If we reach here without error, update was successful
+            const isSuccess = response !== null && response !== undefined && 
+                             !response?.error && !response?.message?.includes('error');
+            
+            console.log("✅ [useWarrantyClaims] Update successful:", isSuccess);
+            console.log("✅ [useWarrantyClaims] Response type:", typeof response);
+            
+            // Always refetch claims list after update (backend should have updated)
+            if (userId) {
+                console.log("🔄 [useWarrantyClaims] Refetching claims list after update...");
+                console.log("🔄 [useWarrantyClaims] UserId:", userId);
+                try {
+                    await fetchClaims(userId);
+                    console.log("✅ [useWarrantyClaims] Claims list refetched successfully");
+                } catch (fetchErr) {
+                    console.error("❌ [useWarrantyClaims] Failed to refetch claims:", fetchErr);
+                }
+            } else {
+                console.warn("⚠️ [useWarrantyClaims] No userId available to refetch claims");
+            }
+            
+            return response;
+        } catch (error) {
+            console.error("❌ [useWarrantyClaims] Update failed:", error);
+            console.error("❌ Error details:", {
+                message: error.message,
+                status: error.response?.status,
+                data: error.response?.data,
+            });
+            throw error;
+        }
     };
 
     const deleteClaim = async (id) => {

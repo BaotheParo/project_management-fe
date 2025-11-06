@@ -15,7 +15,7 @@ import StatusDot from "../components/ClaimStatusDot";
 import DeleteModal from "../components/DeleteClaimRequest";
 import { useWarrantyClaims } from "../../../../api/useWarrantyClaims";
 import Loader from "../../../../components/Loader";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { ErrorNotification, SuccessNotification } from "../../../../components/Notification";
 import { useAuth } from "../../../../app/AuthProvider";
 
@@ -24,6 +24,7 @@ export default function ClaimRequestsPage() {
   const menuRef = useRef(null);
   const [currentPage, setCurrentPage] = useState(1);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [notification, setNotification] = useState(null);
 
@@ -62,8 +63,30 @@ export default function ClaimRequestsPage() {
 
   const [deletingRow, setDeletingRow] = useState(null);
 
+  // ⚠️ CRITICAL: Declare user BEFORE using it in useEffect
   const { user } = useAuth();
-  const { rows, loading, error } = useWarrantyClaims(user?.userId);
+  const { rows, loading, error, fetchClaims } = useWarrantyClaims(user?.userId);
+
+  // 🔄 Refetch claims when returning from edit page
+  useEffect(() => {
+    if (location.state?.refresh && user?.userId && fetchClaims) {
+      console.log("🔄 [ClaimRequestsPage] Refreshing claims list after edit...");
+      console.log("🔄 [ClaimRequestsPage] Refresh timestamp:", location.state?.timestamp);
+      
+      // Delay slightly to ensure backend has processed
+      setTimeout(async () => {
+        try {
+          await fetchClaims(user?.userId);
+          console.log("✅ [ClaimRequestsPage] Claims list refreshed successfully");
+        } catch (err) {
+          console.error("❌ [ClaimRequestsPage] Failed to refresh claims:", err);
+        }
+      }, 300);
+      
+      // Clear the refresh flag to prevent unnecessary refetches
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, user?.userId, fetchClaims, navigate, location.pathname]);
 
   const totalClaims = rows.filter(r => r.isActive === true).length;
   const pendingClaims = rows.filter((r) => r.claimStatus === "Pending" && r.isActive === true).length;
@@ -213,7 +236,7 @@ export default function ClaimRequestsPage() {
                         <DotsThreeIcon size={20} weight="bold" />
                       </button>
 
-                      {openActionFor === r.claimId && (
+                      {openActionFor === r.claimId && r.claimStatus === "Pending" && (
                         <div
                           ref={menuRef}
                           className="absolute -right-10 top-7 w-32 bg-white border border-[#DEE1E6] rounded-lg shadow-lg z-50 pointer-events-auto"
@@ -221,7 +244,7 @@ export default function ClaimRequestsPage() {
                           <button
                             onClick={() => {
                               setOpenActionFor(null);
-                              navigate(`edit/claim/${r.claimId}`);
+                              navigate(`edit/${r.claimId}`);
                             }}
                             className="w-full text-left rounded-tl-lg rounded-tr-lg transition-all px-3 py-2 hover:bg-gray-50 cursor-pointer"
                           >
