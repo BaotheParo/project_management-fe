@@ -42,11 +42,6 @@ const SCStaffProfilePage = lazy(() => import("../features/dashboard/sc-staff/pag
 // EVM-Staff
 const EVMDashboardPage = lazy(() => import("../features/dashboard/evm-staff/pages/Dashboard"));
 
-// Admin
-const AdminDashboardPage = lazy(() => import("../features/dashboard/admin/pages/Dashboard"));
-const AdminManageUsersPage = lazy(() => import("../features/dashboard/admin/pages/ManageUsers"));
-const AdminReportsPage = lazy(() => import("../features/dashboard/admin/pages/Reports"));
-
 const router = createBrowserRouter([
     {
         path: "/login",
