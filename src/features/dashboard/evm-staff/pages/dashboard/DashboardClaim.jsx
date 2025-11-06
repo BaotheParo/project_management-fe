@@ -1,6 +1,9 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeftIcon } from "@phosphor-icons/react";
+import { useWarrantyClaims } from "../../../../../api/useWarrantyClaims";
+import Loader from "../../../../../components/Loader";
+import { usePartApi } from "../../../../../api/usePartApi";
 
 const DashboardClaim = () => {
   const navigate = useNavigate();
@@ -8,9 +11,26 @@ const DashboardClaim = () => {
   // Use the ID from URL
   const claimId = id;
 
+  
+  useEffect(() => {
+    if (id) {
+      fetchClaimById(id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  const { row, fetchClaimById, loading, error } = useWarrantyClaims();
+  const { part, partLoading, partError, fetchPartsByVin } = usePartApi();
+
   const handleBack = () => {
     navigate("/evm-staff");
   };
+
+  if (loading) return <Loader />;
+  if (error)
+    return (
+      <p className="text-red-500">Error loading claims: {error.message}</p>
+    );
 
   return (
     <div className="w-full">
@@ -31,36 +51,38 @@ const DashboardClaim = () => {
               <div className="text-sm font-medium text-gray-500 mb-1">
                 Claim ID
               </div>
-              <div className="text-lg font-medium text-gray-900">{claimId}</div>
+              <div className="text-lg font-medium text-gray-900">{row.claimId}</div>
             </div>
             <div>
               <div className="text-sm font-medium text-gray-500 mb-1">
                 Claim Date
               </div>
               <div className="text-lg font-medium text-gray-900">
-                02/12/2025
+                {row.claimDate}
               </div>
             </div>
             <div>
               <div className="text-sm font-medium text-gray-500 mb-1">
                 Created By
               </div>
-              <div className="text-lg font-medium text-gray-900">Jso</div>
+              <div className="text-lg font-medium text-gray-900">
+                {row.technicianName}
+              </div>
             </div>
             <div>
               <div className="text-sm font-medium text-gray-500 mb-1">
                 Service Center
               </div>
               <div className="text-lg font-medium text-gray-900">
-                WC-2003-9192332
+                {row.serviceCenterName}
               </div>
             </div>
-            <div>
+            {/* <div>
               <div className="text-sm font-medium text-gray-500 mb-1">
                 Manufacturer
               </div>
               <div className="text-lg font-medium text-gray-900">VinFast</div>
-            </div>
+            </div> */}
           </div>
         </div>
 
@@ -74,7 +96,7 @@ const DashboardClaim = () => {
                 VIN Code
               </div>
               <div className="text-lg font-medium text-gray-900">
-                LSV1E7AL0MC123458
+                {row.vin}
               </div>
             </div>
             <div>
@@ -82,21 +104,23 @@ const DashboardClaim = () => {
                 Vehicle Name
               </div>
               <div className="text-lg font-medium text-gray-900">
-                VinFast VF-3
+                {row.vehicleName}
               </div>
             </div>
             <div>
               <div className="text-sm font-medium text-gray-500 mb-1">
                 Current Mileage (km)
               </div>
-              <div className="text-lg font-medium text-gray-900">8,433</div>
+              <div className="text-lg font-medium text-gray-900">
+                {row.mileAge}
+              </div>
             </div>
             <div>
               <div className="text-sm font-medium text-gray-500 mb-1">
                 Purchase Date of Vehicle
               </div>
               <div className="text-lg font-medium text-gray-900">
-                12/23/2012
+                {row.purchaseDate}
               </div>
             </div>
           </div>
@@ -107,11 +131,13 @@ const DashboardClaim = () => {
             Part Information
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div>
+            {/* <div>
               <div className="text-sm font-medium text-gray-500 mb-1">
                 Part Name
               </div>
-              <div className="text-lg font-medium text-gray-900">Battery</div>
+              <div className="text-lg font-medium text-gray-900">
+                Battery
+              </div>
             </div>
             <div>
               <div className="text-sm font-medium text-gray-500 mb-1">
@@ -128,7 +154,7 @@ const DashboardClaim = () => {
               <div className="text-lg font-medium text-gray-900">
                 05/16/2025
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
 
@@ -142,8 +168,7 @@ const DashboardClaim = () => {
             </div>
             <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
               <p className="text-base text-gray-700 leading-relaxed">
-                My car cannot start like normal, when start the engine the sound
-                is noisy as hell.
+                {row.issueDescription}
               </p>
             </div>
           </div>
@@ -209,7 +234,7 @@ const DashboardClaim = () => {
                 onClick={() =>
                   navigate(`/evm-staff/claim/${claimId}/part-supply`)
                 }
-                className="w-full bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+                className="w-full bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors font-medium cursor-pointer"
               >
                 Approve Claim
               </button>

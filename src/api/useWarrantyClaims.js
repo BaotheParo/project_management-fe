@@ -8,8 +8,62 @@ export const useWarrantyClaims = (userId) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    // Fetch all claims
+    const fetchClaims = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await axiousInstance.get(`/claims`); // GET /api/claims
+
+            const data = Array.isArray(response.data)
+                ? response.data
+                : response.data?.data || [];
+
+            if (!Array.isArray(data)) {
+                console.warn("Unexpected response structure:", response.data);
+                setRows([]);
+                return;
+            }
+
+            const formattedClaims = response.data.map((claim) => ({
+                claimId: claim.claimId,
+                claimDate: new Date(claim.claimDate).toISOString().split("T")[0],
+                vin: claim.vin,
+                claimStatus: getClaimStatusLabel(claim.claimStatus),
+                issueDescription: claim.issueDescription,
+                vehicleName: claim.vehicleName || "Unknown",
+                purchaseDate: new Date(claim.purchaseDate).toISOString().split("T")[0],
+                mileAge: claim.mileage,
+                parts: claim.parts || [],
+                totalCost: claim.totalCost,
+                policyName: claim.policyName,
+                serviceCenterName: claim.serviceCenterName,
+                userId: claim.userId,
+                technicianName: claim.technicianName,
+                isActive: claim.isActive,
+            }));
+
+            setRows(formattedClaims);
+        } catch (err) {
+            console.error("Fetch claims failed", err)
+            setError(err);
+            // fallback mock data
+            setRows([
+                {
+                    id: "RO-001",
+                    vehicle: "VinFast VF-3",
+                    vin: "LSV1E7AL0MC123456",
+                    status: "In Progress",
+                    claimDate: "2025-10-25",
+                },
+            ]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     // Fetch all claims for specific technician
-    const fetchClaims = async (userId) => {
+    const fetchClaimsByTechnician = async (userId) => {
         if (!userId) return;
         try {
             setLoading(true);
@@ -182,6 +236,7 @@ export const useWarrantyClaims = (userId) => {
         loading,
         error,
         fetchClaims,
+        fetchClaimsByTechnician,
         fetchClaimById,
         createClaim,
         updateClaim,
