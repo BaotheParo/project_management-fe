@@ -21,8 +21,6 @@ export default function CampaignDetailPage() {
     const { user } = useAuth();
     const { campaign, fetchCampaignById, updateCampaignStatus, loading, error } = useCampaignsApi(user?.userId);
     const [isUpdating, setIsUpdating] = useState(false);
-    const [showStatusModal, setShowStatusModal] = useState(false);
-    const [selectedStatus, setSelectedStatus] = useState(null);
     const [successNotification, setSuccessNotification] = useState(null);
     const [errorNotification, setErrorNotification] = useState(null);
 
@@ -55,7 +53,6 @@ export default function CampaignDetailPage() {
                     actionText: "Close",
                     onAction: () => { setSuccessNotification(null) },
                 });
-                setShowStatusModal(false);
                 // Refetch campaign data
                 await fetchCampaignById(id);
             } else {
@@ -314,73 +311,13 @@ export default function CampaignDetailPage() {
                                         : "Complete Campaign"}
                             </button>
 
-                            <button
-                                onClick={() => setShowStatusModal(true)}
-                                disabled={isUpdating}
-                                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 transition-colors text-white rounded-full cursor-pointer disabled:bg-gray-400"
-                            >
-                                Update Status
-                            </button>
-
-                            <button
-                                onClick={() => navigate(-1)}
-                                className="px-4 py-2 bg-gray-500 hover:bg-gray-600 transition-colors text-white rounded-full cursor-pointer"
-                            >
-                                Go Back
-                            </button>
+                            {/* Only Complete Campaign button kept per request */}
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Status Update Modal */}
-            {showStatusModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-                        <h3 className="text-lg font-semibold mb-4">Update Campaign Status</h3>
-                        <div className="space-y-3 mb-6">
-                            {statusOptions.map((option) => (
-                                <button
-                                    key={option.value}
-                                    onClick={() => setSelectedStatus(option.value)}
-                                    className={`w-full text-left px-4 py-2 rounded-lg border-2 transition-colors ${
-                                        selectedStatus === option.value
-                                            ? "border-indigo-600 bg-indigo-50"
-                                            : "border-gray-200 hover:border-gray-300"
-                                    }`}
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <span className={`w-3 h-3 rounded-full ${option.color}`} />
-                                        <span className="font-medium">{option.label}</span>
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => {
-                                    setShowStatusModal(false);
-                                    setSelectedStatus(null);
-                                }}
-                                className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg cursor-pointer"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={() => {
-                                    if (selectedStatus !== null) {
-                                        handleUpdateStatus(selectedStatus);
-                                    }
-                                }}
-                                disabled={selectedStatus === null || isUpdating}
-                                className="flex-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg cursor-pointer disabled:bg-gray-400 disabled:cursor-not-allowed"
-                            >
-                                {isUpdating ? "Updating..." : "Update"}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Status update modal removed — only Complete Campaign action is supported for SC-Technician */}
         </div>
     );
 }

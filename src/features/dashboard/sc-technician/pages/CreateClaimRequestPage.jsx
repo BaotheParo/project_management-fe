@@ -20,6 +20,32 @@ import { useVehicleApi } from "../../../../api/useVehicleApi";
 import { usePartApi } from "../../../../api/usePartApi";
 import { ErrorNotification, SuccessNotification } from "../../../../components/Notification";
 import axiousInstance from "../../../../api/axiousInstance";
+import profilePlaceholder from "../../../../assets/profile-placeholder.png";
+
+// Normalize image src for backend-relative URLs
+const normalizeSrc = (src) => {
+    if (!src) return src;
+    if (/^(https?:|data:|blob:)/.test(src)) return src;
+
+    const backendEnv = import.meta.env.VITE_API_BASE_URL;
+    const axiosBase = axiousInstance.defaults.baseURL || '';
+    let backendHost;
+    if (backendEnv) {
+        backendHost = backendEnv.replace(/\/$/, '');
+    } else if (axiosBase && axiosBase !== '/api') {
+        backendHost = axiosBase.replace(/\/$/, '');
+    } else if (import.meta.env.DEV) {
+        // In dev, if axiosBase is '/api' (Vite proxy) or not helpful, prefer local backend
+        backendHost = 'http://localhost:5081';
+    } else {
+        backendHost = window.location.origin.replace(/\/$/, '');
+    }
+
+    if (src.startsWith('/')) {
+        return backendHost + src;
+    }
+    return backendHost + '/' + src.replace(/^\//, '');
+};
 
 export default function CreateClaimRequestsPage() {
     const navigate = useNavigate();
@@ -334,6 +360,10 @@ export default function CreateClaimRequestsPage() {
     const handleFileSelect = (e) => {
         const files = Array.from(e.target.files);
         handleFiles(files);
+        // Reset file input to allow selecting the same file again
+        if (e.target) {
+            e.target.value = '';
+        }
     };
 
     const handleFiles = (files) => {
@@ -343,6 +373,12 @@ export default function CreateClaimRequestsPage() {
         const allowedExtensions = ['.jpg', '.jpeg', '.png', '.mp4', '.mov'];
 
         files.forEach((file) => {
+            // Skip invalid files (no size, no name, etc.)
+            if (!file || !file.name || file.size === 0) {
+                console.warn("Skipping invalid file:", file);
+                return;
+            }
+
             // Check file size
             if (file.size > maxSize) {
                 setErrorNotification({
@@ -372,7 +408,13 @@ export default function CreateClaimRequestsPage() {
                 name: file.name,
                 size: file.size,
             }));
-            setUploadedFiles((prev) => [...prev, ...newFiles]);
+            
+            setUploadedFiles((prev) => {
+                // Simple duplicate check: only add if name+size not already exists
+                const existing = new Set(prev.map(f => `${f.name}-${f.size}`));
+                const unique = newFiles.filter(f => !existing.has(`${f.name}-${f.size}`));
+                return [...prev, ...unique];
+            });
         }
     };
 
@@ -390,12 +432,11 @@ export default function CreateClaimRequestsPage() {
 
     const handleRemoveFile = (index) => {
         setUploadedFiles((prev) => {
-            const newFiles = [...prev];
-            if (newFiles[index].preview) {
-                URL.revokeObjectURL(newFiles[index].preview);
+            const fileToRemove = prev[index];
+            if (fileToRemove?.preview?.startsWith('blob:')) {
+                URL.revokeObjectURL(fileToRemove.preview);
             }
-            newFiles.splice(index, 1);
-            return newFiles;
+            return prev.filter((_, i) => i !== index);
         });
     };
 
@@ -422,29 +463,57 @@ export default function CreateClaimRequestsPage() {
     const uploadFiles = async (files) => {
         const uploadedUrls = [];
         
+        // Try different upload endpoints
+        const uploadEndpoints = [
+            '/upload',
+            '/files/upload',
+            '/api/upload',
+            '/files',
+        ];
+        
         for (const fileObj of files) {
-            try {
-                const formData = new FormData();
-                formData.append('file', fileObj.file);
-                
-                // Upload file to API
-                // Note: axiousInstance interceptor returns response.data, so response is already the data
-                const response = await axiousInstance.post('/upload', formData);
-                
-                // Get file URL from response (response is already data due to interceptor)
-                const fileUrl = response?.url || response?.fileUrl || response?.data?.url || response?.data;
-                if (fileUrl && typeof fileUrl === 'string') {
-                    uploadedUrls.push(fileUrl);
-                    console.log(`✅ File ${fileObj.name} uploaded, URL:`, fileUrl);
-                } else {
-                    console.warn('⚠️ No file URL in response:', response);
-                    // If response is a string URL directly
-                    if (typeof response === 'string') {
+            let uploaded = false;
+            
+            // Try each endpoint until one works
+            for (const endpoint of uploadEndpoints) {
+                try {
+                    const formData = new FormData();
+                    formData.append('file', fileObj.file);
+                    
+                    console.log(`📤 Trying to upload ${fileObj.name} to ${endpoint}...`);
+                    const response = await axiousInstance.post(endpoint, formData);
+                    
+                    // Get file URL from response (response is already data due to interceptor)
+                    const fileUrl = response?.url || response?.fileUrl || response?.data?.url || response?.data;
+                    if (fileUrl && typeof fileUrl === 'string') {
+                        uploadedUrls.push(fileUrl);
+                        console.log(`✅ File ${fileObj.name} uploaded to ${endpoint}, URL:`, fileUrl);
+                        uploaded = true;
+                        break; // Success, move to next file
+                    } else if (typeof response === 'string') {
+                        // If response is a string URL directly
                         uploadedUrls.push(response);
+                        console.log(`✅ File ${fileObj.name} uploaded to ${endpoint}, URL:`, response);
+                        uploaded = true;
+                        break;
+                    } else {
+                        console.warn(`⚠️ No file URL in response from ${endpoint}:`, response);
+                    }
+                } catch (error) {
+                    // If 404, try next endpoint
+                    if (error.response?.status === 404) {
+                        console.warn(`⚠️ Endpoint ${endpoint} not found (404), trying next...`);
+                        continue;
+                    } else {
+                        // Other errors, log and try next endpoint
+                        console.error(`❌ Failed to upload ${fileObj.name} to ${endpoint}:`, error);
+                        continue;
                     }
                 }
-            } catch (error) {
-                console.error(`❌ Failed to upload file ${fileObj.name}:`, error);
+            }
+            
+            if (!uploaded) {
+                console.error(`❌ Failed to upload file ${fileObj.name} to all endpoints`);
                 // Continue with other files even if one fails
             }
         }
@@ -457,7 +526,7 @@ export default function CreateClaimRequestsPage() {
 
         const id = user?.userId;
         
-        // Upload files first if any
+        // Try to upload files first to get URLs
         let evidenceUrls = [];
         if (uploadedFiles.length > 0) {
             try {
@@ -466,33 +535,55 @@ export default function CreateClaimRequestsPage() {
                 console.log("✅ Uploaded files, URLs:", evidenceUrls);
             } catch (error) {
                 console.error("❌ File upload failed:", error);
-                setErrorNotification({
-                    type: "error",
-                    message: "Failed to upload files.",
-                    subText: error.message || "Please try again later."
-                });
-                return;
+                // Continue anyway, will try to send files directly in FormData
             }
         }
         
+        // Backend expects JSON with ClaimImages as array of objects (not strings)
+        // Backend expects PascalCase field names (VIN, CenterName, VehicleName, etc.)
+        const hasFiles = uploadedFiles.length > 0;
+        
+        // Prepare ClaimImages: backend expects array of objects, not strings
+        let claimImages = [];
+        if (evidenceUrls.length > 0) {
+            // If we have URLs, format as objects
+            claimImages = evidenceUrls.map(url => ({
+                imageUrl: url,
+                fileName: url.split('/').pop() || 'image.jpg'
+            }));
+        } else if (hasFiles) {
+            // If upload failed, create placeholder objects with file names
+            // Backend might need actual URLs, but we'll try with file names first
+            claimImages = uploadedFiles.map(f => ({
+                fileName: f.name,
+                imageUrl: `placeholder/${f.name}` // Placeholder URL
+            }));
+            console.warn("⚠️ Upload failed, sending ClaimImages with placeholder URLs:", claimImages);
+        }
+        
+        // Backend expects PascalCase field names and direct payload (not wrapped in "request")
         const payload = {
-            claimDate: new Date(formData.claimDate).toISOString(),
-            centerName: formData.centerName,
-            vin: formData.vin,
-            vehicleName: formData.vehicleName,
-            mileage: Number.parseInt(formData.mileage) || 0,
-            purchaseDate: new Date(formData.purchaseDate).toISOString(),
-            issueDescription: formData.issueDescription,
-            partItems: formData.partItems.map((item) => ({
-                partName: item.partName,
-                partNumber: item.partNumber,
-                replacementDate: item.replacementDate
-                    ? new Date(item.replacementDate).toISOString()
-                    : new Date().toISOString(),
-            })),
-            actionType: formData.actionType,
-            evidenceUrls: evidenceUrls, // Add uploaded file URLs
+            ClaimDate: new Date(formData.claimDate).toISOString(),
+            CenterName: formData.centerName,
+            VIN: formData.vin,
+            VehicleName: formData.vehicleName,
+            Mileage: Number.parseInt(formData.mileage) || 0,
+            PurchaseDate: new Date(formData.purchaseDate).toISOString(),
+            IssueDescription: formData.issueDescription,
+            PartItems: formData.partItems
+                .filter(item => item.partName && item.partNumber) // Only include valid parts
+                .map((item) => ({
+                    PartName: item.partName,
+                    PartNumber: item.partNumber,
+                    ReplacementDate: item.replacementDate
+                        ? new Date(item.replacementDate).toISOString()
+                        : new Date().toISOString(),
+                })),
+            ActionType: formData.actionType,
+            ClaimImages: claimImages, // Backend expects array of ClaimImages objects
         };
+        
+        console.log("📤 Sending createClaim payload:", JSON.stringify(payload, null, 2));
 
         try {
             const result = await createClaim(id, payload);
@@ -504,16 +595,41 @@ export default function CreateClaimRequestsPage() {
                 });
                 navigate("/sc-technician/claims");
             } else {
+                console.error("❌ Create claim failed:", result.error);
+                console.error("❌ Error status:", result.error?.response?.status);
+                console.error("❌ Error data:", result.error?.response?.data);
+                
+                // Log validation errors in detail
+                if (result.error?.response?.data?.errors) {
+                    console.error("📋 Validation errors:", JSON.stringify(result.error.response.data.errors, null, 2));
+                    Object.entries(result.error.response.data.errors).forEach(([field, messages]) => {
+                        console.error(`   • ${field}:`, Array.isArray(messages) ? messages.join(', ') : messages);
+                    });
+                }
+                
                 setFailNotification({
                     type: "failed",
                     message: "Failed to create claim request.",
+                    subText: result.error?.response?.data?.title || result.error?.message || "Please check the form and try again."
                 });
             }
         } catch (err) {
+            console.error("❌ Create claim exception:", err);
+            console.error("❌ Error status:", err?.response?.status);
+            console.error("❌ Error data:", err?.response?.data);
+            
+            // Log validation errors in detail
+            if (err?.response?.data?.errors) {
+                console.error("📋 Validation errors:", JSON.stringify(err.response.data.errors, null, 2));
+                Object.entries(err.response.data.errors).forEach(([field, messages]) => {
+                    console.error(`   • ${field}:`, Array.isArray(messages) ? messages.join(', ') : messages);
+                });
+            }
+            
             setErrorNotification({
                 type: "error",
                 message: "Failed to create claim request.",
-                subText: err || "Please try again later."
+                subText: err?.response?.data?.title || err?.message || "Please try again later."
             });
         }
     }
@@ -806,18 +922,18 @@ export default function CreateClaimRequestsPage() {
                                 </p>
                             </div>
                             {uploadedFiles.length > 0 ? (
-                                <div className="flex items-center justify-center gap-3 mb-3 flex-wrap">
+                                <div className="grid grid-cols-3 gap-4 mb-3">
                                     {uploadedFiles.map((file, index) => (
-                                        <div key={index} className="relative">
+                                        <div key={`${file.name}-${index}`} className="relative aspect-[16/9] rounded-xl overflow-hidden border border-gray-200">
                                             {file.preview ? (
-                                                <img 
-                                                    src={file.preview} 
+                                                <img
+                                                    src={file.preview.startsWith('blob:') ? file.preview : normalizeSrc(file.preview)}
                                                     alt={file.name}
-                                                    className="w-20 h-12 object-cover rounded-md border-2 border-gray-300"
+                                                    className="w-full h-full object-cover"
                                                 />
                                             ) : (
-                                                <div className="w-20 h-12 bg-gray-200 rounded-md flex items-center justify-center">
-                                                    <PackageIcon size={20} color="#6B7280" />
+                                                <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                                                    <PackageIcon size={28} color="#6B7280" />
                                                 </div>
                                             )}
                                             <button
@@ -826,7 +942,7 @@ export default function CreateClaimRequestsPage() {
                                                     e.stopPropagation();
                                                     handleRemoveFile(index);
                                                 }}
-                                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
+                                                className="absolute top-2 right-2 bg-white border border-gray-200 text-red-600 rounded-full w-5 h-5 flex items-center justify-center text-xs shadow-sm hover:bg-red-50"
                                             >
                                                 ×
                                             </button>
@@ -834,11 +950,11 @@ export default function CreateClaimRequestsPage() {
                                     ))}
                                 </div>
                             ) : (
-                            <div className="flex items-center justify-center gap-3 mb-3">
-                                <div className="w-20 h-12 bg-gray-200 rounded-md" />
-                                <div className="w-20 h-12 bg-gray-200 rounded-md" />
-                                <div className="w-20 h-12 bg-gray-200 rounded-md" />
-                            </div>
+                                <div className="grid grid-cols-3 gap-4 mb-3">
+                                    <div className="aspect-[16/9] rounded-xl bg-gray-100" />
+                                    <div className="aspect-[16/9] rounded-xl bg-gray-100" />
+                                    <div className="aspect-[16/9] rounded-xl bg-gray-100" />
+                                </div>
                             )}
                             <div>
                                 <button
