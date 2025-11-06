@@ -4,11 +4,11 @@ import Sidebar from '../features/dashboard/admin/components/Sidebar'
 
 export default function AdminLayout() {
   return (
-    <div className="h-screen">
+    <div className="flex min-h-screen bg-[#F8F9FA]">
       <Sidebar />
-      <main className="ml-64 min-h-screen bg-gray-50">
+      <div className="flex-1 ml-64">
         <Outlet />
-      </main>
+      </div>
     </div>
   )
 }

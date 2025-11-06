@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import axiousInstance from "./axiousInstance";
 import { getClaimStatusLabel } from "../constants/ClaimStatus";
 
 export const useWarrantyClaims = (userId) => {
     const [rows, setRows] = useState([]);
     const [row, setRow] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false); // Changed to false - only set true when fetching
     const [error, setError] = useState(null);
 
     // Fetch all claims for specific technician
@@ -63,8 +63,8 @@ export const useWarrantyClaims = (userId) => {
         }
     };
 
-    // Fetch claim by Id
-    const fetchClaimById = async (id) => {
+    // Fetch claim by Id - wrapped in useCallback to prevent infinite loops
+    const fetchClaimById = useCallback(async (id) => {
         try {
             setLoading(true);
             setError(null);
@@ -99,7 +99,7 @@ export const useWarrantyClaims = (userId) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []); // Empty deps - function doesn't depend on external values
 
     const createClaim = async (id, payload) => {
         try {

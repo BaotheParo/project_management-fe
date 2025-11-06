@@ -39,7 +39,8 @@ export const useAuthApi = () => {
                     serviceCenterId: data.serviceCenterId
                 };
 
-            // console.log("Storing user data:", userData);
+            console.log("✅ Login successful - Storing user data:", userData);
+            console.log("✅ User role:", userData.role);
             setUser(userData);
             setIsInitialized(true);
             return data;
@@ -60,6 +61,8 @@ export const useAuthApi = () => {
         delete axiosClient.defaults.headers.common["Authorization"];
         setUser(null);
         setIsInitialized(false);
+        setLoading(false);
+        setError(null);
     }, []);
 
     // Check Auth on load
@@ -68,7 +71,8 @@ export const useAuthApi = () => {
         const storedUser = localStorage.getItem("user");
 
         if (!token) {
-            // console.log("No token found, skipping auth check");
+            console.log("No token found, skipping auth check");
+            setUser(null);
             setLoading(false);
             setIsInitialized(true);
             return;
@@ -87,38 +91,34 @@ export const useAuthApi = () => {
 
         // Skip auth check if already initialized (just logged in)
         if (isInitialized) {
-            // console.log("Already initialized, skipping auth check");
+            console.log("Already initialized, skipping auth check");
             setLoading(false);
             return;
         }
 
         try {
-            // console.log("Checking auth with token...");
+            console.log("Checking auth with token...");
             setLoading(true);
             axiosClient.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+            
+            // Try to get user info from /auth/me endpoint
             const response = await axiosClient.get("/auth/me");
-            const data = response.data?.data || response.data;
+            const data = response.data?.data || response.data || response;
 
-            // console.log("Auth check response:", data);
+            console.log("Auth check response:", data);
 
             // Store complete user data with role and serviceCenterId
-            const userData = data.user
-                ? {
-                    ...data.user,
-                    role: data.user.role || data.role,
-                    serviceCenterId: data.user.serviceCenterId || data.serviceCenterId
-                }
-                : {
-                    role: data.role,
-                    serviceCenterId: data.serviceCenterId,
-                    ...(data.userName && { username: data.userName }),
-                    ...(data.userId && { userId: data.userId }),
-                    ...(data.name && { name: data.name }),
-                    ...(data.email && { email: data.email }),
-                    ...(data.fullName && { fullName: data.fullName }),
-                    ...(data.coverImage && { coverImage: data.coverImage }),
-                    ...(data.serviceCenterName && { serviceCenterName: data.serviceCenterName }),
-                };
+            const userData = {
+                role: data.role,
+                serviceCenterId: data.serviceCenterId,
+                userId: data.userId,
+                userName: data.userName || data.username,
+                name: data.name || data.fullName,
+                email: data.email,
+                phoneNumber: data.phoneNumber,
+                coverImage: data.coverImage,
+                serviceCenterName: data.serviceCenterName,
+            };
 
             console.log("Auth me - Storing user data:", userData);
             localStorage.setItem("user", JSON.stringify(userData));
@@ -126,23 +126,32 @@ export const useAuthApi = () => {
             setIsInitialized(true);
         } catch (err) {
             console.error("Auth check failed:", err.response?.status, err.response?.data);
-            // Only logout if it's actually an auth error (401/403)
-            if (err.response?.status === 401 || err.response?.status === 403) {
-                // console.log("Invalid token, logging out");
+            
+            // If auth/me endpoint doesn't exist or token invalid, just use stored user if available
+            if (storedUser && err.response?.status === 404) {
+                console.log("⚠️ /auth/me endpoint not found, using stored user data");
+                setIsInitialized(true);
+            } else if (err.response?.status === 401 || err.response?.status === 403) {
+                console.log("Invalid token, logging out");
                 logout();
             } else {
                 // If it's a network error or server error, keep the stored user
-                // console.log("Auth check failed but keeping stored user");
+                console.log("Auth check failed but keeping stored user");
                 setIsInitialized(true);
             }
         } finally {
             setLoading(false);
         }
-    }, [logout, isInitialized]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     useEffect(() => {
-        checkAuth();
-    }, [checkAuth]);
+        // Only run checkAuth once on mount
+        if (!isInitialized) {
+            checkAuth();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     return { user, loading, error, login, logout, checkAuth };
 };

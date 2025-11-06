@@ -18,23 +18,21 @@ export const useAdminApi = () => {
         try {
             setLoading(true);
             setError(null);
+            
+            // Note: axiosInstance already returns response.data due to interceptor
             const response = await axiosInstance.get("/users");
             
-            const data = Array.isArray(response.data)
-                ? response.data
-                : response.data?.data || response.data?.items || [];
+            // Response is already the data array from backend
+            const data = Array.isArray(response) ? response : [];
 
-            if (!Array.isArray(data)) {
-                console.warn("Unexpected response structure:", response.data);
-                setUsers([]);
-                return;
-            }
-
+            console.log("✅ Backend users response:", response);
+            console.log("✅ Users data (array):", data);
+            
             setUsers(data);
             
             // Calculate stats from users data
-            const activeCount = data.filter(u => u.status === "Active" || u.isActive).length;
-            const inactiveCount = data.filter(u => u.status === "Inactive" || !u.isActive).length;
+            const activeCount = data.filter(u => u.isActive === true).length;
+            const inactiveCount = data.filter(u => u.isActive === false).length;
             
             setStats(prev => ({
                 ...prev,
@@ -43,7 +41,7 @@ export const useAdminApi = () => {
                 inactiveUsers: inactiveCount
             }));
         } catch (err) {
-            console.error("Fetch users failed:", err);
+            console.error("❌ Fetch users failed:", err);
             setError(err);
             setUsers([]);
         } finally {
@@ -112,11 +110,17 @@ export const useAdminApi = () => {
         try {
             setLoading(true);
             setError(null);
+            
+            console.log("🔄 Toggling user active status for userId:", userId);
             await axiosInstance.put(`/users/${userId}/active`);
+            console.log("✅ Toggle successful, refetching users...");
+            
+            // CRITICAL: Refetch users list to get updated data from backend
             await fetchUsers();
+            
             return { success: true, message: "User status updated successfully" };
         } catch (err) {
-            console.error("Toggle user active failed:", err);
+            console.error("❌ Toggle user active failed:", err);
             setError(err);
             throw err;
         } finally {

@@ -14,6 +14,11 @@ import AdminLayout from "../layout/AdminLayout";
 const LoginPage = lazy(() => import("../features/auth/pages/Login"));
 const ForgotPasswordPage = lazy(() => import("../features/auth/pages/ForgotPassword"));
 
+// Admin
+const AdminDashboardPage = lazy(() => import("../features/dashboard/admin/pages/Dashboard"));
+const AdminManageUsersPage = lazy(() => import("../features/dashboard/admin/pages/ManageUsers"));
+const AdminReportsPage = lazy(() => import("../features/dashboard/admin/pages/Reports"));
+
 // Sc-Technician
 const SCTechnicianDashboardPage = lazy(() => import("../features/dashboard/sc-technician/pages/DashboardPage"));
 const SCTechnicianClaimRequestsPage = lazy(() => import("../features/dashboard/sc-technician/pages/ClaimRequestsPage"));
@@ -95,6 +100,7 @@ const router = createBrowserRouter([
         ),
         children: [
             { index: true, path: "dashboard", element: <Suspense fallback={<Loader />}><SCStaffDashboardPage /></Suspense> },
+            { path: "warranty-request/:id", element: <Suspense fallback={<Loader />}><SCStaffRequestDetailPage /></Suspense> },
             { path: "assign-worker", element: <Suspense fallback={<Loader />}><SCStaffAssignWorkerPage /></Suspense> },
             { path: "part-request", element: <Suspense fallback={<Loader />}><SCStaffPartRequestPage /></Suspense> },
             { path: "report", element: <Suspense fallback={<Loader />}><SCStaffReportPage /></Suspense> },

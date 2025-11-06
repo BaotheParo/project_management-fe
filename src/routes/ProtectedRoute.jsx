@@ -1,6 +1,6 @@
+import { Navigate } from "react-router-dom";
 import { useAuth } from "../app/AuthProvider";
 import Loader from "../components/Loader";
-import Unauthorized from "../components/Unauthorized";
 
 export default function ProtectedRoute({ children }) {
     const { user, loading } = useAuth();
@@ -10,8 +10,8 @@ export default function ProtectedRoute({ children }) {
     }
 
     if (!user) {
-        // Redirect unauthenticated users to login, keep their previous location
-        return <Unauthorized />
+        // Redirect unauthenticated users to login
+        return <Navigate to="/login" replace />;
     }
 
     return children;

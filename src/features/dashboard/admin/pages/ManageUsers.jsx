@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { DotsThree, CalendarBlank, CaretLeft, CaretRight, MagnifyingGlass, Plus, PencilSimple, Power, X } from 'phosphor-react'
 import { useAdminApi } from '../../../../api/useAdminApi'
+import axiosInstance from '../../../../api/axiousInstance'
 import Loader from '../../../../components/Loader'
 
 const StatsCard = ({ title, count, subtitle, color }) => (
@@ -12,6 +13,136 @@ const StatsCard = ({ title, count, subtitle, color }) => (
     <div className="text-base font-medium text-[#686262]">{subtitle}</div>
   </div>
 )
+
+const EditUserModal = ({ isOpen, onClose, onSubmit, user }) => {
+  const [formData, setFormData] = useState({
+    name: user?.name || '',
+    email: user?.email || '',
+    role: user?.role || 'SC Staff',
+    status: user?.status || 'Active'
+  })
+
+  React.useEffect(() => {
+    if (user) {
+      setFormData({
+        name: user.name || '',
+        email: user.email || '',
+        role: user.role || 'SC Staff',
+        status: user.status || 'Active'
+      })
+    }
+  }, [user])
+
+  const handleChange = (e) => {
+    const { name, value } = e.target
+    setFormData(prev => ({ ...prev, [name]: value }))
+  }
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    onSubmit(formData)
+  }
+
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-semibold text-black">Edit User</h2>
+          <button 
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+          >
+            <X size={24} className="text-gray-600" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Full Name *
+            </label>
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-3 border-2 border-[#EBEBEB] rounded-xl focus:outline-none focus:border-[#626AE7] transition-colors"
+              placeholder="Enter full name"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Email Address *
+            </label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-3 border-2 border-[#EBEBEB] rounded-xl focus:outline-none focus:border-[#626AE7] transition-colors"
+              placeholder="user@example.com"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Role *
+            </label>
+            <select
+              name="role"
+              value={formData.role}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-3 border-2 border-[#EBEBEB] rounded-xl focus:outline-none focus:border-[#626AE7] transition-colors bg-white"
+            >
+              <option value="Admin">Admin</option>
+              <option value="SC Staff">SC Staff</option>
+              <option value="EVM Staff">EVM Staff</option>
+              <option value="Technician">Technician</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Status *
+            </label>
+            <select
+              name="status"
+              value={formData.status}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-3 border-2 border-[#EBEBEB] rounded-xl focus:outline-none focus:border-[#626AE7] transition-colors bg-white"
+            >
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+          </div>
+
+          <div className="flex gap-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-6 py-3 border-2 border-[#EBEBEB] text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex-1 px-6 py-3 bg-[#626AE7] text-white rounded-xl font-medium hover:bg-[#5159c9] transition-colors"
+            >
+              Save Changes
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
 
 const AddUserModal = ({ isOpen, onClose, onSubmit }) => {
   const [formData, setFormData] = useState({
@@ -157,44 +288,96 @@ const AddUserModal = ({ isOpen, onClose, onSubmit }) => {
 }
 
 export default function ManageUsers() {
-  const { users, stats, loading, toggleUserActive } = useAdminApi()
+  const { users, stats, loading, toggleUserActive, fetchUsers } = useAdminApi()
   const [currentPage, setCurrentPage] = useState(1)
   const [searchTerm, setSearchTerm] = useState('')
   const [roleFilter, setRoleFilter] = useState('All')
   const [openDropdown, setOpenDropdown] = useState(null)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [editingUser, setEditingUser] = useState(null)
   const [notification, setNotification] = useState(null)
+  const [isSubmitting, setIsSubmitting] = useState(false) // eslint-disable-line no-unused-vars
   const totalPages = 3
 
   const toggleDropdown = (index) => {
     setOpenDropdown(openDropdown === index ? null : index)
   }
 
-  const handleAddUser = async (newUserData) => {
+  const handleAddUser = async () => {
+    // Backend doesn't have POST /users endpoint yet - only GET and PUT
+    setIsAddModalOpen(false);
+    
+    setNotification({
+      type: 'error',
+      message: 'User creation not available - Backend only supports GET and PUT /users endpoints'
+    });
+    
+    setTimeout(() => {
+      setNotification(null);
+    }, 4000);
+  }
+
+  const handleEditUser = async (updatedData) => {
     try {
-      // Note: Backend doesn't have POST /users endpoint yet
-      // This will be added when backend implements user creation
-      console.log("Add user (not implemented yet):", newUserData)
-      setIsAddModalOpen(false)
+      setIsSubmitting(true);
+      
+      // Call backend API to update user
+      const response = await axiosInstance.put(`/users/${editingUser.userId}`, {
+        userName: updatedData.name,
+        email: updatedData.email,
+        role: updatedData.role,
+        phoneNumber: updatedData.phoneNumber || "",
+        isActive: updatedData.status === 'Active'
+      });
+      
+      console.log("✅ User updated:", response);
+      
+      setIsEditModalOpen(false);
+      setEditingUser(null);
+      setOpenDropdown(null);
+      
+      // Refresh users list
+      await fetchUsers();
+      
+      setNotification({
+        type: 'success',
+        message: `User "${updatedData.name}" updated successfully!`
+      });
+      
+      setTimeout(() => {
+        setNotification(null);
+      }, 3000);
+    } catch (err) {
+      console.error("❌ Update user failed:", err);
+      
+      let errorMessage = 'Failed to update user. Please try again.';
+      
+      if (err.response?.status === 405) {
+        errorMessage = 'User update not available - Backend endpoint not implemented';
+      } else if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.response?.data?.error) {
+        errorMessage = err.response.data.error;
+      }
       
       setNotification({
         type: 'error',
-        message: 'User creation not available yet (Backend endpoint pending)'
-      })
+        message: errorMessage
+      });
       
       setTimeout(() => {
-        setNotification(null)
-      }, 3000)
-    } catch {
-      setNotification({
-        type: 'error',
-        message: 'Failed to add user. Please try again.'
-      })
-      
-      setTimeout(() => {
-        setNotification(null)
-      }, 3000)
+        setNotification(null);
+      }, 3000);
+    } finally {
+      setIsSubmitting(false);
     }
+  }
+
+  const openEditModal = (user) => {
+    setEditingUser(user)
+    setIsEditModalOpen(true)
+    setOpenDropdown(null)
   }
 
   const handleToggleActive = async (userId, currentStatus) => {
@@ -267,6 +450,17 @@ export default function ManageUsers() {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onSubmit={handleAddUser}
+      />
+
+      {/* Edit User Modal */}
+      <EditUserModal 
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false)
+          setEditingUser(null)
+        }}
+        onSubmit={handleEditUser}
+        user={editingUser}
       />
 
       <div className="flex items-start justify-between mb-8">
@@ -385,7 +579,10 @@ export default function ManageUsers() {
                     
                     {openDropdown === index && (
                       <div className="absolute right-8 top-12 z-10 bg-white border border-[#E5E5E5] rounded-xl shadow-lg py-2 min-w-[150px]">
-                        <button className="w-full px-4 py-2 text-left text-[12px] font-medium text-black hover:bg-gray-50 flex items-center gap-2">
+                        <button 
+                          onClick={() => openEditModal(user)}
+                          className="w-full px-4 py-2 text-left text-[12px] font-medium text-black hover:bg-gray-50 flex items-center gap-2"
+                        >
                           <PencilSimple size={16} />
                           Edit User
                         </button>
@@ -396,7 +593,7 @@ export default function ManageUsers() {
                           }`}
                         >
                           <Power size={16} />
-                          {user.status === 'Active' ? 'Deactivate User' : 'Activate User'}
+                          {user.status === 'Active' ? 'Deactivate' : 'Activate'}
                         </button>
                       </div>
                     )}
