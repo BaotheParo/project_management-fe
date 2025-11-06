@@ -1,4 +1,4 @@
-import React from "react";
+import { React, useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   CheckIcon,
@@ -13,14 +13,29 @@ import {
 export default function PartSupply() {
   const navigate = useNavigate();
   const { claimId } = useParams();
-  // const [formData, setFormData] = useState({
-  //   partName: 'Engine Control Module',
-  //   description: 'Comprehensive warranty coverage for engine control module including diagnostic and replacement services under manufacturer specifications.',
-  //   duration: '36',
-  //   condition: 'Valid for vehicles under 100,000 miles',
-  //   effectiveDate: '2024-01-01',
-  //   expiryDate: '2027-01-01'
-  // })
+  const [claim, setClaim] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const fetchedClaim = await claimAPI.getClaimById(claimId);
+        setClaim(fetchedClaim);
+        setError(null);
+        console.log("Fetched claim:", fetchedClaim);
+      } catch (error) {
+        setError(error);
+        console.error("Error fetching claim:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
   const FormSection = ({ icon: Icon, title, colorClass }) => (
     <h2 className="flex items-center text-xl font-semibold text-gray-800 mb-6 mt-8 pt-4 border-t border-gray-200 first:mt-0 first:pt-0 first:border-t-0">
       <Icon size={24} weight="fill" className={`mr-3 ${colorClass}`} />
@@ -58,7 +73,7 @@ export default function PartSupply() {
                 Vin Code
               </div>
               <div className="text-lg font-medium text-gray-900">
-                LSV1E7AL0MC123458
+                {claim?.vin || "N/A"}
               </div>
             </div>
             <div>
@@ -66,21 +81,23 @@ export default function PartSupply() {
                 Vehicle Name
               </div>
               <div className="text-lg font-medium text-gray-900">
-                VinFast VF-3
+                {claim?.vehicleName || "N/A"}
               </div>
             </div>
             <div>
               <div className="text-sm font-medium text-gray-500 mb-1">
                 Current Mileage (km)
               </div>
-              <div className="text-lg font-medium text-gray-900">8,433</div>
+              <div className="text-lg font-medium text-gray-900">
+                {claim?.mileage || "N/A"}
+              </div>
             </div>
             <div>
               <div className="text-sm font-medium text-gray-500 mb-1">
                 Purchase Date of Vehicle
               </div>
               <div className="text-lg font-medium text-gray-900">
-                12/23/2012
+                {claim?.purchaseDate || "N/A"}
               </div>
             </div>
           </div>
@@ -97,7 +114,7 @@ export default function PartSupply() {
                 Vin Code
               </div>
               <div className="text-lg font-medium text-gray-900">
-                LSV1E7AL0MC123458
+                {claim?.vin || "N/A"}
               </div>
             </div>
             <div>
@@ -105,21 +122,23 @@ export default function PartSupply() {
                 Vehicle Name
               </div>
               <div className="text-lg font-medium text-gray-900">
-                VinFast VF-3
+                {claim?.vehicleName || "N/A"}
               </div>
             </div>
             <div>
               <div className="text-sm font-medium text-gray-500 mb-1">
                 Current Mileage (km)
               </div>
-              <div className="text-lg font-medium text-gray-900">8,433</div>
+              <div className="text-lg font-medium text-gray-900">
+                {claim?.mileage || "N/A"}
+              </div>
             </div>
             <div>
               <div className="text-sm font-medium text-gray-500 mb-1">
                 Purchase Date of Vehicle
               </div>
               <div className="text-lg font-medium text-gray-900">
-                12/23/2012
+                {claim?.purchaseDate || "N/A"}
               </div>
             </div>
           </div>
@@ -135,14 +154,16 @@ export default function PartSupply() {
               <div className="text-sm font-medium text-gray-500 mb-1">
                 Part Name
               </div>
-              <div className="text-lg font-medium text-gray-900">Battery</div>
+              <div className="text-lg font-medium text-gray-900">
+                {claim?.partName || "N/A"}
+              </div>
             </div>
             <div>
               <div className="text-sm font-medium text-gray-500 mb-1">
-                Part Code
+                Part ID
               </div>
               <div className="text-lg font-medium text-gray-900">
-                PIN12334SD
+                {claim?.partId || "N/A"}
               </div>
             </div>
             <div>

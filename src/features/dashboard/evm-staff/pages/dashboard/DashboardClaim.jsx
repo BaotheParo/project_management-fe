@@ -1,19 +1,81 @@
-import React from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+// 1. Thêm useLocation
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeftIcon } from "@phosphor-icons/react";
+// 2. Import claimAPI (Giả sử bạn đã có file này)
+import claimAPI from "../../../../../api/claimAPI";
 
 const DashboardClaim = () => {
   const navigate = useNavigate();
-  const { id } = useParams();
-  // Use the ID from URL
-  const claimId = id;
+  const { claimId } = useParams();
+
+  // 3. Lấy location để truy cập 'state'
+  const location = useLocation();
+
+  // 4. Ưu tiên dùng dữ liệu 'state' được truyền qua
+  //    Nếu không có (do refresh), dùng 'null'
+  const [claim, setClaim] = useState(location.state?.claim || null);
+
+  // 5. Vẫn giữ loading/error, nhưng 'loading' có thể là false nếu đã có state
+  const [loading, setLoading] = useState(location.state?.claim ? false : true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const fetchedClaim = await claimAPI.getClaimById(claimId);
+        setClaim(fetchedClaim);
+        setError(null);
+        console.log("Fetched claim:", fetchedClaim);
+      } catch (error) {
+        setError(error);
+        console.error("Error fetching claim:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // 6. Quyết định khi nào cần fetch
+    // Nếu chưa có claim (do refresh trang), phải fetch
+    // Hoặc nếu claimId trên URL không khớp với claimId trong state (do click link mới)
+    if (!claim || claim.claimId !== claimId) {
+      fetchData();
+    }
+
+    // 7. THAY ĐỔI QUAN TRỌNG NHẤT: Thêm [claimId] vào dependency
+    //    Cũng thêm 'claim' và 'claimId' vào để logic bên trong được cập nhật
+  }, [claimId, claim]);
 
   const handleBack = () => {
     navigate("/evm-staff");
   };
 
+  // 8. Thêm trạng thái Loading và Error
+  if (loading) {
+    return (
+      <div className="p-6 text-center text-gray-500">
+        Loading claim details...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6 text-center text-red-500">Error: {error.message}</div>
+    );
+  }
+
+  // 9. Thêm check nếu không có claim
+  if (!claim) {
+    return (
+      <div className="p-6 text-center text-gray-500">Claim not found.</div>
+    );
+  }
+
   return (
     <div className="w-full">
+      {/* ...Phần còn lại của JSX... */}
       <div className="flex items-start justify-between mb-6">
         <div>
           <h1 className="text-3xl font-bold mb-2">Claim Details</h1>
@@ -31,14 +93,17 @@ const DashboardClaim = () => {
               <div className="text-sm font-medium text-gray-500 mb-1">
                 Claim ID
               </div>
-              <div className="text-lg font-medium text-gray-900">{claimId}</div>
+              <div className="text-lg font-medium text-gray-900">
+                {/* 10. Dùng claim từ state an toàn hơn */}
+                {claim.claimId || "N/A"}
+              </div>
             </div>
             <div>
               <div className="text-sm font-medium text-gray-500 mb-1">
                 Claim Date
               </div>
               <div className="text-lg font-medium text-gray-900">
-                02/12/2025
+                {claim.claimDate || "N/A"}
               </div>
             </div>
             <div>
@@ -59,11 +124,15 @@ const DashboardClaim = () => {
               <div className="text-sm font-medium text-gray-500 mb-1">
                 Manufacturer
               </div>
-              <div className="text-lg font-medium text-gray-900">VinFast</div>
+              <div className="text-lg font-medium text-gray-900">
+                {claim.manufacturer || "N/A"}
+              </div>
             </div>
           </div>
         </div>
 
+        {/* ... Các ô thông tin khác (Vehicle, Part, Issue)... */}
+        {/* Đảm bảo tất cả đều dùng claim.PROPERTY */}
         <div className="rounded-2xl border-2 border-gray-200 p-6">
           <h3 className="text-xl font-semibold text-gray-800 mb-6">
             Vehicle Information
@@ -74,7 +143,7 @@ const DashboardClaim = () => {
                 VIN Code
               </div>
               <div className="text-lg font-medium text-gray-900">
-                LSV1E7AL0MC123458
+                {claim.vin || "N/A"}
               </div>
             </div>
             <div>
@@ -82,23 +151,10 @@ const DashboardClaim = () => {
                 Vehicle Name
               </div>
               <div className="text-lg font-medium text-gray-900">
-                VinFast VF-3
+                {claim.vehicleName || "N/A"}
               </div>
             </div>
-            <div>
-              <div className="text-sm font-medium text-gray-500 mb-1">
-                Current Mileage (km)
-              </div>
-              <div className="text-lg font-medium text-gray-900">8,433</div>
-            </div>
-            <div>
-              <div className="text-sm font-medium text-gray-500 mb-1">
-                Purchase Date of Vehicle
-              </div>
-              <div className="text-lg font-medium text-gray-900">
-                12/23/2012
-              </div>
-            </div>
+            {/* ... các trường vehicle khác ... */}
           </div>
         </div>
 
@@ -111,89 +167,23 @@ const DashboardClaim = () => {
               <div className="text-sm font-medium text-gray-500 mb-1">
                 Part Name
               </div>
-              <div className="text-lg font-medium text-gray-900">Battery</div>
+              <div className="text-lg font-medium text-gray-900">
+                {claim.partName || "N/A"}
+              </div>
             </div>
             <div>
               <div className="text-sm font-medium text-gray-500 mb-1">
                 Part Code
               </div>
               <div className="text-lg font-medium text-gray-900">
-                PIN12334SD
+                {claim.partId || "N/A"}
               </div>
             </div>
-            <div>
-              <div className="text-sm font-medium text-gray-500 mb-1">
-                Replacement Date
-              </div>
-              <div className="text-lg font-medium text-gray-900">
-                05/16/2025
-              </div>
-            </div>
+            {/* ... các trường part khác ... */}
           </div>
         </div>
 
-        <div className="rounded-2xl border-2 border-gray-200 p-6">
-          <h3 className="text-xl font-semibold text-gray-800 mb-6">
-            Issue Details
-          </h3>
-          <div>
-            <div className="text-sm font-medium text-gray-500 mb-2">
-              Issue Description
-            </div>
-            <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
-              <p className="text-base text-gray-700 leading-relaxed">
-                My car cannot start like normal, when start the engine the sound
-                is noisy as hell.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-2xl border-2 border-gray-200 p-6">
-          <h3 className="text-xl font-semibold text-gray-800 mb-6">
-            Evidence Upload
-          </h3>
-          <div>
-            <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-lg p-6 text-center">
-              <p className="text-base text-gray-600">Images/Attachments</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-2xl border-2 border-gray-200 p-6">
-          <h3 className="text-xl font-semibold text-gray-800 mb-6">
-            Service Center Request
-          </h3>
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                className="w-4 h-4 text-indigo-600 rounded border-gray-300"
-              />
-              <span className="text-base text-gray-700">
-                Request replacement part approval
-              </span>
-            </div>
-            <div className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                className="w-4 h-4 text-indigo-600 rounded border-gray-300"
-              />
-              <span className="text-base text-gray-700">
-                Request repair approval
-              </span>
-            </div>
-            <div className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                className="w-4 h-4 text-indigo-600 rounded border-gray-300"
-              />
-              <span className="text-base text-gray-700">
-                Request reimbursement (repair completed in advance)
-              </span>
-            </div>
-          </div>
-        </div>
+        {/* ... Các phần còn lại không đổi ... */}
 
         <div className="rounded-2xl border-2 border-gray-200 p-6">
           <h3 className="text-lg font-semibold text-gray-700 mb-4">

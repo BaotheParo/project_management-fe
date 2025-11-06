@@ -10,6 +10,7 @@ import Unauthorized from "../components/Unauthorized";
 import EVMStaffLayout from "../layout/EVMStaffLayout";
 
 // Lazy load pages
+/*prettier-ignore-start*/
 const LoginPage = lazy(() => import("../features/auth/pages/Login"));
 const ForgotPasswordPage = lazy(() =>
   import("../features/auth/pages/ForgotPassword")
@@ -92,6 +93,12 @@ const EVMCampaignPage = lazy(() =>
 const EVMCreateCampaignPage = lazy(() =>
   import("../features/dashboard/evm-staff/pages/campaign/CreateCampaign")
 );
+const EVMViewCampaignPage = lazy(() =>
+  import("../features/dashboard/evm-staff/pages/campaign/ViewCampaign")
+);
+const EVMEditCampaignPage = lazy(() =>
+  import("../features/dashboard/evm-staff/pages/campaign/EditCampaign")
+);
 const EVMPolicyPage = lazy(() =>
   import("../features/dashboard/evm-staff/pages/policy/Policy")
 );
@@ -107,7 +114,8 @@ const EVMCreatePolicyPage = lazy(() =>
 const EVMProfilePage = lazy(() =>
   import("../features/dashboard/evm-staff/pages/Profile")
 );
-
+/*prettier-ignore-end*/
+/* eslint-enable */
 const router = createBrowserRouter([
   {
     path: "/login",
@@ -350,6 +358,22 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<Loader />}>
             <EVMCreateCampaignPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "campaign/:id/view",
+        element: (
+          <Suspense fallback={<Loader />}>
+            <EVMViewCampaignPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "campaign/:id/edit",
+        element: (
+          <Suspense fallback={<Loader />}>
+            <EVMEditCampaignPage />
           </Suspense>
         ),
       },
