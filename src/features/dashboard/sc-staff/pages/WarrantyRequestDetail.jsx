@@ -1,18 +1,26 @@
-import React, { useState } from 'react'
-import { useParams } from 'react-router-dom'
+import React, { useState, useEffect } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import { CalendarBlank, Info, Car, Gear, Warning, Camera, Headphones } from 'phosphor-react'
+import { useWarrantyClaims } from '../../../../api/useWarrantyClaims'
+import { useSCStaffClaims } from '../../../../api/useSCStaffClaims'
+import { useAuth } from '../../../../app/AuthProvider'
+import Loader from '../../../../components/Loader'
+import { SuccessNotification } from '../../../../components/Notification'
 
-const InfoCard = ({ icon: Icon, title, children }) => (
-  <div className="border-[3px] border-[#EBEBEB] rounded-2xl p-6">
-    <div className="flex items-center gap-3 mb-6">
-      <Icon size={29} className="text-[#626AE7]" />
-      <h3 className="text-lg font-semibold text-[#686262]">{title}</h3>
+const InfoCard = ({ icon: Icon, title, children }) => {
+  const IconComponent = Icon
+  return (
+    <div className="border-[3px] border-[#EBEBEB] rounded-2xl p-6">
+      <div className="flex items-center gap-3 mb-6">
+        <IconComponent size={29} className="text-[#626AE7]" />
+        <h3 className="text-lg font-semibold text-[#686262]">{title}</h3>
+      </div>
+      <div className="space-y-6">
+        {children}
+      </div>
     </div>
-    <div className="space-y-6">
-      {children}
-    </div>
-  </div>
-)
+  )
+}
 
 const InfoField = ({ label, value }) => (
   <div>
@@ -28,44 +36,153 @@ const StatBadge = ({ label, value, color = 'text-black' }) => (
   </div>
 )
 
-const RadioOption = ({ label, checked, onChange }) => (
-  <label className="flex items-center gap-3 cursor-pointer">
-    <div className="relative">
-      <div className={`w-5 h-5 rounded-full border-2 ${checked ? 'border-[#626AE7] bg-[#626AE7]' : 'border-[#6B7280] bg-white'}`} />
-      {checked && <div className="w-3 h-3 rounded-full bg-white absolute top-1 left-1" />}
-    </div>
-    <span className="text-lg font-medium text-[#686262]">{label}</span>
-  </label>
-)
+const RadioOption = ({ label, checked, onChange }) => {
+  const handleClick = () => {
+    if (onChange) onChange()
+  }
+  
+  return (
+    <label className="flex items-center gap-3 cursor-pointer" onClick={handleClick}>
+      <div className="relative">
+        <div className={`w-5 h-5 rounded-full border-2 ${checked ? 'border-[#626AE7] bg-[#626AE7]' : 'border-[#6B7280] bg-white'}`} />
+        {checked && <div className="w-3 h-3 rounded-full bg-white absolute top-1 left-1" />}
+      </div>
+      <span className="text-lg font-medium text-[#686262]">{label}</span>
+    </label>
+  )
+}
 
 export default function WarrantyRequestDetail() {
   const { id } = useParams()
+  const navigate = useNavigate()
+  const { user } = useAuth()
   const [selectedRequest, setSelectedRequest] = useState('replacement')
-  const [showPartModal, setShowPartModal] = useState(false)
+  const [notification, setNotification] = useState(null)
 
-  const claimData = {
-    claimId: 'WC-2003-9192332',
-    claimDate: '02/12/2025',
-    createdBy: 'Jso',
-    manufacturer: 'VinFast',
-    serviceCenter: 'WC-2003-9192332',
-    vinCode: 'LSV1E7AL0MC123458',
-    vehicleName: 'VinFast VF-3',
-    currentMileage: '8,433',
-    purchaseDate: '12/23/2012',
-    partName: 'Battery',
-    partCode: 'PIN12334SD',
-    replacementDate: '05/16/2025',
-    issueDescription: 'My car cannot start like normal, when start the engine the sound is noisy as hell.',
-    images: [
-      'https://api.builder.io/api/v1/image/assets/TEMP/2cbfa0524981f52778587d8578a529c7eddfd946?width=350',
-      'https://api.builder.io/api/v1/image/assets/TEMP/0ea44651492d751b9f8920515492f3e9195b19e4?width=644',
-      'https://api.builder.io/api/v1/image/assets/TEMP/7659294167319636ceebbe6578953b5598dedc13?width=452'
-    ]
+  // ALL HOOKS MUST BE AT THE TOP - before any early returns
+  // Get stats from SC Staff claims hook
+  const { stats } = useSCStaffClaims(user?.serviceCenterId)
+  
+  // Fetch claim details using the hook - don't pass userId to avoid auto-fetching list
+  const { row: claimData, loading, error, fetchClaimById } = useWarrantyClaims()
+
+  // Fetch claim when component mounts or id changes
+  useEffect(() => {
+    if (id) {
+      fetchClaimById(id)
+    }
+  }, [id, fetchClaimById])
+
+  // Handler for accepting request - just navigate to assign worker
+  // Note: Work orders are created by EVM Staff or backend automatically
+  // SC Staff only assigns technicians to existing work orders
+  const handleAcceptRequest = () => {
+    console.log('Accepted claim:', claimData.claimId)
+    
+    // Show success notification
+    setNotification({
+      type: 'success',
+      message: 'Claim accepted successfully!',
+      subText: 'Redirecting to assign worker page...'
+    })
+    
+    // Navigate after a short delay
+    setTimeout(() => {
+      navigate('/sc-staff/assign-worker')
+    }, 1500)
+  }
+
+  // Handler for rejecting request - simplified: just show message and go back
+  const handleRejectRequest = () => {
+    if (!confirm('Are you sure you want to reject this claim?')) {
+      return
+    }
+    
+    // Show success notification
+    setNotification({
+      type: 'success',
+      message: 'Claim rejected.',
+      subText: 'Returning to dashboard...'
+    })
+    
+    // Navigate after a short delay
+    setTimeout(() => {
+      navigate('/sc-staff/dashboard')
+    }, 1500)
+  }
+
+  // Handler for parts request (forward)
+  const handlePartsRequest = () => {
+    // Show success notification
+    setNotification({
+      type: 'success',
+      message: 'Parts request sent successfully!',
+      subText: 'Returning to dashboard...'
+    })
+    
+    // Navigate after a short delay
+    setTimeout(() => {
+      navigate('/sc-staff/dashboard')
+    }, 1500)
+  }
+
+  // NOW we can have early returns - AFTER all hooks are called
+  // Show loader while fetching
+  if (loading) {
+    return (
+      <div className="p-12 w-full flex justify-center items-center min-h-[400px]">
+        <Loader />
+      </div>
+    )
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="p-12 w-full">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+          <p className="text-red-600 font-medium">Error loading claim details</p>
+          <p className="text-red-500 text-sm mt-2">{error.message || 'Please try again later'}</p>
+          <button 
+            onClick={() => navigate('/sc-staff/dashboard')}
+            className="mt-4 px-6 py-2 bg-[#626AE7] text-white rounded-lg hover:bg-[#5159c9] transition-colors"
+          >
+            Back to Dashboard
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // Show not found if no claim data
+  if (!claimData) {
+    return (
+      <div className="p-12 w-full">
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
+          <p className="text-gray-600 font-medium">Claim not found</p>
+          <p className="text-gray-500 text-sm mt-2">The claim you're looking for doesn't exist</p>
+          <button 
+            onClick={() => navigate('/sc-staff/dashboard')}
+            className="mt-4 px-6 py-2 bg-[#626AE7] text-white rounded-lg hover:bg-[#5159c9] transition-colors"
+          >
+            Back to Dashboard
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className="p-12 w-full">
+      {/* Success Notification */}
+      {notification && notification.type === 'success' && (
+        <SuccessNotification
+          message={notification.message}
+          subText={notification.subText}
+          onClose={() => setNotification(null)}
+        />
+      )}
+
       <div className="flex items-start justify-between mb-8">
         <div>
           <h1 className="text-[30px] font-semibold text-black mb-1">Hello, SC Staff</h1>
@@ -73,7 +190,7 @@ export default function WarrantyRequestDetail() {
         </div>
         
         <div className="flex items-center gap-3">
-          <span className="text-[17px] font-semibold text-[#393C3B]">16 May, 2025</span>
+          <span className="text-[17px] font-semibold text-[#393C3B]">{new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
           <div className="w-[45px] h-[45px] rounded-full bg-[#F1F3F4] flex items-center justify-center">
             <CalendarBlank size={25} className="text-black" />
           </div>
@@ -81,49 +198,71 @@ export default function WarrantyRequestDetail() {
       </div>
 
       <div className="flex gap-4 mb-8 flex-wrap">
-        <StatBadge label="Total Claim:" value="254" />
-        <StatBadge label="Pending:" value="200" />
-        <StatBadge label="In Progress:" value="50" color="text-[#EBB80F]" />
-        <StatBadge label="Completed:" value="03" color="text-[#54C020]" />
-        <StatBadge label="Overdue:" value="01" color="text-[#C02020]" />
+        <StatBadge label="Total Claim:" value={stats?.totalClaims?.toString().padStart(2, '0') || '00'} />
+        <StatBadge label="Accepted:" value={stats?.acceptedClaims?.toString().padStart(2, '0') || '00'} color="text-[#54C020]" />
       </div>
 
-      <div className="mb-8">
-        <h2 className="text-[25px] font-semibold text-black mb-2">Warranty Request Detail</h2>
-        <p className="text-base text-[#4B5563]">Fill out the form below to submit a new warranty claim request for electric vehicle components.</p>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h2 className="text-[25px] font-semibold text-black mb-2">Warranty Request Detail</h2>
+          <p className="text-base text-[#4B5563]">View detailed information about this warranty claim request.</p>
+        </div>
+        <button 
+          onClick={() => navigate('/sc-staff/dashboard')}
+          className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+        >
+          ← Back to Dashboard
+        </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         <InfoCard icon={Info} title="Basic Information">
           <div className="grid grid-cols-2 gap-6">
-            <InfoField label="Claim ID" value={claimData.claimId} />
-            <InfoField label="Claim Date" value={claimData.claimDate} />
-            <InfoField label="Created By" value={claimData.createdBy} />
-            <InfoField label="Manufacturer" value={claimData.manufacturer} />
+            <InfoField label="Claim ID" value={claimData.claimId || 'N/A'} />
+            <InfoField label="Claim Date" value={claimData.claimDate || 'N/A'} />
+            <InfoField label="Status" value={claimData.claimStatus || 'N/A'} />
+            <InfoField label="Policy Name" value={claimData.policyName || 'N/A'} />
             <div className="col-span-2">
-              <InfoField label="Service Center" value={claimData.serviceCenter} />
+              <InfoField label="Service Center" value={claimData.serviceCenterName || 'N/A'} />
+            </div>
+            <div className="col-span-2">
+              <InfoField label="Technician" value={claimData.technicianName || 'Not Assigned'} />
             </div>
           </div>
         </InfoCard>
 
         <InfoCard icon={Car} title="Vehicle Information">
           <div className="grid grid-cols-2 gap-6">
-            <InfoField label="VIN Code" value={claimData.vinCode} />
-            <InfoField label="Vehicle Name" value={claimData.vehicleName} />
-            <InfoField label="Current Mileage (km)" value={claimData.currentMileage} />
-            <InfoField label="Purchase Date of Vehicle" value={claimData.purchaseDate} />
+            <InfoField label="VIN Code" value={claimData.vin || 'N/A'} />
+            <InfoField label="Vehicle Name" value={claimData.vehicleName || 'Unknown'} />
+            <InfoField label="Current Mileage (km)" value={claimData.mileAge?.toLocaleString() || 'N/A'} />
+            <InfoField label="Purchase Date" value={claimData.purchaseDate || 'N/A'} />
           </div>
         </InfoCard>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        <InfoCard icon={Gear} title="Part Information">
-          <div className="grid grid-cols-2 gap-6">
-            <InfoField label="Part Name" value={claimData.partName} />
-            <InfoField label="Part Code" value={claimData.partCode} />
-            <div className="col-span-2">
-              <InfoField label="Replacement Date" value={claimData.replacementDate} />
-            </div>
+        <InfoCard icon={Gear} title="Parts Information">
+          <div className="space-y-4">
+            {claimData.parts && Array.isArray(claimData.parts) && claimData.parts.length > 0 ? (
+              claimData.parts.filter(part => part != null).map((part, index) => (
+                <div key={index} className="border-[2px] border-[#F4F4F4] rounded-xl p-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <InfoField label="Part Name" value={part?.partName || 'N/A'} />
+                    <InfoField label="Part Code" value={part?.partCode || 'N/A'} />
+                    <InfoField label="Quantity" value={part?.quantity?.toString() || '0'} />
+                    <InfoField label="Cost" value={`$${part?.cost?.toLocaleString() || '0'}`} />
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-gray-500 text-center py-4">No parts information available</div>
+            )}
+            {claimData.totalCost != null && claimData.totalCost > 0 && (
+              <div className="border-t-2 border-[#EBEBEB] pt-4 mt-4">
+                <InfoField label="Total Cost" value={`$${claimData.totalCost?.toLocaleString() || '0'}`} />
+              </div>
+            )}
           </div>
         </InfoCard>
 
@@ -152,7 +291,9 @@ export default function WarrantyRequestDetail() {
         <InfoCard icon={Warning} title="Issue Details">
           <div className="border-[3px] border-[#F4F4F4] rounded-2xl p-6 bg-white">
             <div className="text-base font-medium text-[#6B716F] mb-3">Issue Description</div>
-            <p className="text-xl font-medium text-black leading-relaxed">{claimData.issueDescription}</p>
+            <p className="text-xl font-medium text-black leading-relaxed">
+              {claimData.issueDescription || 'No description provided'}
+            </p>
           </div>
         </InfoCard>
 
@@ -161,14 +302,20 @@ export default function WarrantyRequestDetail() {
             <div className="text-lg font-semibold text-[#686262]">Actions</div>
           </div>
           <div className="space-y-3">
-            <button className="w-full py-3 bg-[#626AE7] rounded-2xl text-sm font-semibold text-white hover:bg-[#5159c9] transition-colors">
+            <button 
+              onClick={handleAcceptRequest}
+              className="w-full py-3 bg-[#626AE7] rounded-2xl text-sm font-semibold text-white hover:bg-[#5159c9] transition-colors"
+            >
               Accept Request
             </button>
-            <button className="w-full py-3 bg-[#F1F3F4] rounded-2xl text-sm font-semibold text-black hover:bg-[#e5e7e9] transition-colors">
+            <button 
+              onClick={handleRejectRequest}
+              className="w-full py-3 bg-[#F1F3F4] rounded-2xl text-sm font-semibold text-black hover:bg-[#e5e7e9] transition-colors"
+            >
               Reject Request
             </button>
             <button 
-              onClick={() => setShowPartModal(true)}
+              onClick={handlePartsRequest}
               className="w-full py-3 bg-[#F1F3F4] rounded-2xl text-sm font-semibold text-black hover:bg-[#e5e7e9] transition-colors"
             >
               Parts request
@@ -177,89 +324,18 @@ export default function WarrantyRequestDetail() {
         </div>
       </div>
 
+      {/* Evidence section - Note: API doesn't provide images yet */}
       <div className="mb-8">
         <InfoCard icon={Camera} title="Evidence Upload">
           <div className="border-[3px] border-dashed border-[#EBEBEB] rounded-2xl p-6 bg-white">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {claimData.images.map((image, index) => (
-                <div key={index} className="aspect-[3/2] rounded-xl overflow-hidden">
-                  <img 
-                    src={image} 
-                    alt={`Evidence ${index + 1}`} 
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              ))}
+            <div className="text-center py-8 text-gray-500">
+              <Camera size={48} className="mx-auto mb-3 text-gray-400" />
+              <p className="text-base">No evidence images available</p>
+              <p className="text-sm text-gray-400 mt-1">Images will be displayed here when uploaded</p>
             </div>
           </div>
         </InfoCard>
       </div>
-
-      {/* Part Request Modal */}
-      {showPartModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowPartModal(false)}>
-          <div className="bg-white rounded-3xl p-6 w-full max-w-sm mx-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            {/* Modal Header */}
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-sm font-medium text-gray-600">Part request for order {id || 'RO-002'}</h3>
-              <button 
-                onClick={() => setShowPartModal(false)}
-                className="w-6 h-6 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors"
-              >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path d="M12 4L4 12M4 4L12 12" stroke="#6B7280" strokeWidth="2" strokeLinecap="round"/>
-                </svg>
-              </button>
-            </div>
-
-            {/* Part Information Card */}
-            <div className="border-2 border-gray-200 rounded-2xl p-5 mb-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Gear size={24} className="text-[#626AE7]" />
-                <h4 className="text-base font-semibold text-gray-700">Part Information</h4>
-              </div>
-
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <div className="text-xs text-gray-500 mb-1">Part Name</div>
-                    <div className="text-base font-semibold text-black">{claimData.partName}</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-gray-500 mb-1">Part Code</div>
-                    <div className="text-base font-semibold text-black">{claimData.partCode}</div>
-                  </div>
-                </div>
-                
-                <div>
-                  <div className="text-xs text-gray-500 mb-1">Replacement Date</div>
-                  <div className="text-base font-semibold text-black">{claimData.replacementDate}</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-3">
-              <button 
-                onClick={() => setShowPartModal(false)}
-                className="flex-1 py-2.5 border border-gray-300 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={() => {
-                  // Handle request submission
-                  console.log('Part request submitted')
-                  setShowPartModal(false)
-                }}
-                className="flex-1 py-2.5 bg-[#626AE7] text-white rounded-xl text-sm font-semibold hover:bg-[#5159d6] transition-colors"
-              >
-                Request
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

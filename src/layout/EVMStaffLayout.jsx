@@ -4,11 +4,10 @@ import EVMSidebar from "../features/dashboard/evm-staff/components/EVMSidebar";
 
 export default function EVMStaffLayout() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <EVMSidebar />
-      <main className="ml-64 p-6">
+      <main className="p-14 flex-1 bg-white ml-[250px] overflow-y-auto min-h-screen">
         {/* Header inside content area*/}
-
         <Outlet />
       </main>
     </div>

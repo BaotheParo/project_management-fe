@@ -169,7 +169,13 @@ export const useCampaignsApi = (userId) => {
     const updateCampaignStatus = async (id, status) => {
         try {
             setLoading(true);
-            await axiousInstance.put(`/campaigns/${id}/status`, { status });
+            // Backend expects numeric enum value (0=Pending, 1=InProgress, 2=Completed, 3=Overdue)
+            // Send as raw JSON number so backend can bind directly to CampaignStatus enum
+            const statusNumber = typeof status === 'number' ? status : parseInt(status, 10);
+            const rawBody = JSON.stringify(statusNumber);
+            await axiousInstance.patch(`/campaigns/${id}/status`, rawBody, {
+                headers: { 'Content-Type': 'application/json' },
+            });
             
             // Refetch campaigns after update
             if (userId) {

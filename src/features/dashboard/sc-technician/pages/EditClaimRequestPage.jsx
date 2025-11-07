@@ -17,6 +17,42 @@ import { useNavigate, useParams } from "react-router-dom";
 import Loader from "../../../../components/Loader";
 import { SuccessNotification, ErrorNotification } from "../../../../components/Notification";
 import { useAuth } from "../../../../app/AuthProvider";
+import axiousInstance from "../../../../api/axiousInstance";
+import profilePlaceholder from "../../../../assets/profile-placeholder.png";
+
+// Normalize image src: if backend returns a relative path (e.g. "placeholder/.."),
+// prefix with a sensible backend base URL. Prefer VITE_API_BASE_URL if defined,
+// otherwise fall back to axiosInstance.defaults.baseURL (unless it's '/api')
+// or window.location.origin.
+const normalizeSrc = (src) => {
+    if (!src) return src;
+    // If already absolute (http/https), data or blob or root-relative, handle specially
+    if (/^(https?:|data:|blob:)/.test(src)) return src;
+
+    // If root-relative (starts with '/'), prefer backend URL over dev proxy '/api'
+    const backendEnv = import.meta.env.VITE_API_BASE_URL;
+    const axiosBase = axiousInstance.defaults.baseURL || '';
+
+    // Determine backend host: prefer explicit env, then axiosBase if present, else in dev fallback to localhost:5081, else window.location.origin
+    let backendHost;
+    if (backendEnv) {
+        backendHost = backendEnv.replace(/\/$/, '');
+    } else if (axiosBase && axiosBase !== '/api') {
+        backendHost = axiosBase.replace(/\/$/, '');
+    } else if (import.meta.env.DEV) {
+        backendHost = 'http://localhost:5081';
+    } else {
+        backendHost = window.location.origin.replace(/\/$/, '');
+    }
+
+    // If src already starts with '/', it's root-relative on backend host
+    if (src.startsWith('/')) {
+        return backendHost + src;
+    }
+
+    // Otherwise src is relative without leading slash
+    return backendHost + '/' + src.replace(/^\//, '');
+};
 
 export default function EditClaimRequestsPage() {
     const navigate = useNavigate();
@@ -41,7 +77,11 @@ export default function EditClaimRequestsPage() {
         mileAge: "",
         issueDescription: "",
         claimDate: "",
+        actionType: 0, // Service Center Request
     });
+    
+    // 📁 File upload state
+    const [uploadedFiles, setUploadedFiles] = useState([]);
     
     // 🔄 Loading state for submit
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -79,7 +119,30 @@ export default function EditClaimRequestsPage() {
                 mileAge: row.mileAge || row.mileage || "",
                 issueDescription: row.issueDescription || "",
                 claimDate: formatDateForInput(row.claimDate),
+                actionType: row.actionType || 0, // Load actionType from data
             });
+            
+            // Load Evidence Upload (ClaimImages) from data
+            if (row.claimImages && Array.isArray(row.claimImages) && row.claimImages.length > 0) {
+                const existingFiles = row.claimImages.map((img, index) => ({
+                    file: null, // No file object, just URL
+                    preview: img.imageUrl || img.url || img, // Use URL as preview
+                    name: img.fileName || img.name || `image-${index + 1}.jpg`,
+                    size: 0,
+                    url: img.imageUrl || img.url || img, // Store URL
+                }));
+                setUploadedFiles(existingFiles);
+            } else if (row.evidenceUrls && Array.isArray(row.evidenceUrls) && row.evidenceUrls.length > 0) {
+                // Fallback to evidenceUrls if claimImages doesn't exist
+                const existingFiles = row.evidenceUrls.map((url, index) => ({
+                    file: null,
+                    preview: url,
+                    name: `image-${index + 1}.jpg`,
+                    size: 0,
+                    url: url,
+                }));
+                setUploadedFiles(existingFiles);
+            }
             
             // Handle parts - convert from API format to form format
             // Safety: Filter out null/undefined items and ensure valid array
@@ -150,6 +213,99 @@ export default function EditClaimRequestsPage() {
         setFormData(prev => ({
             ...prev,
             [name]: value
+        }));
+    };
+    
+    // 📁 File upload handlers
+    const handleFileSelect = (e) => {
+        const files = Array.from(e.target.files);
+        handleFiles(files);
+    };
+
+    const handleFiles = (files) => {
+        const validFiles = [];
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'video/mp4', 'video/quicktime'];
+        const allowedExtensions = ['.jpg', '.jpeg', '.png', '.mp4', '.mov'];
+
+        files.forEach((file) => {
+            // Check file size
+            if (file.size > maxSize) {
+                setNotification({
+                    type: "error",
+                    message: `File "${file.name}" exceeds 10MB limit`,
+                });
+                return;
+            }
+
+            // Check file type
+            const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+            if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(fileExtension)) {
+                setNotification({
+                    type: "error",
+                    message: `File "${file.name}" is not a supported format (JPG, PNG, MP4, MOV)`,
+                });
+                return;
+            }
+
+            validFiles.push(file);
+        });
+
+        if (validFiles.length > 0) {
+            const newFiles = validFiles.map((file) => ({
+                file: file,
+                preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : null,
+                name: file.name,
+                size: file.size,
+            }));
+            
+            setUploadedFiles((prev) => {
+                const existing = new Set(prev.map(f => `${f.name}-${f.size}`));
+                const unique = newFiles.filter(f => !existing.has(`${f.name}-${f.size}`));
+                return [...prev, ...unique];
+            });
+        }
+    };
+
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const files = Array.from(e.dataTransfer.files);
+        handleFiles(files);
+    };
+
+    const handleRemoveFile = (index) => {
+        setUploadedFiles((prev) => {
+            const fileToRemove = prev[index];
+            if (fileToRemove?.preview?.startsWith('blob:')) {
+                URL.revokeObjectURL(fileToRemove.preview);
+            }
+            return prev.filter((_, i) => i !== index);
+        });
+    };
+    
+    // Cleanup preview URLs on unmount
+    useEffect(() => {
+        return () => {
+            uploadedFiles.forEach((file) => {
+                if (file.preview && file.file) {
+                    URL.revokeObjectURL(file.preview);
+                }
+            });
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    
+    // 🔘 Handle Service Center Request change
+    const handleActionTypeChange = (e) => {
+        setFormData((prev) => ({
+            ...prev,
+            actionType: parseInt(e.target.value),
         }));
     };
 
@@ -224,49 +380,101 @@ export default function EditClaimRequestsPage() {
                 }
             };
             
+            // Upload new files if any
+            let evidenceUrls = [];
+            const newFiles = uploadedFiles.filter(f => f.file); // Only files that need upload
+            if (newFiles.length > 0) {
+                try {
+                    const uploadEndpoints = ['/upload', '/files/upload', '/api/upload', '/files'];
+                    
+                    for (const fileObj of newFiles) {
+                        let uploaded = false;
+                        for (const endpoint of uploadEndpoints) {
+                            try {
+                                const formData = new FormData();
+                                formData.append('file', fileObj.file);
+                                const response = await axiousInstance.post(endpoint, formData);
+                                const fileUrl = response?.url || response?.fileUrl || response?.data?.url || response?.data;
+                                if (fileUrl && typeof fileUrl === 'string') {
+                                    evidenceUrls.push(fileUrl);
+                                    uploaded = true;
+                                    break;
+                                }
+                            } catch (error) {
+                                if (error.response?.status !== 404) continue;
+                            }
+                        }
+                        if (!uploaded && fileObj.url) {
+                            // Use existing URL if upload failed
+                            evidenceUrls.push(fileObj.url);
+                        }
+                    }
+                } catch (error) {
+                    console.error("❌ File upload failed:", error);
+                }
+            }
+            
+            // Collect existing file URLs (files that were already uploaded)
+            const existingUrls = uploadedFiles
+                .filter(f => !f.file && f.url) // Files without file object but with URL
+                .map(f => f.url);
+            
+            // Combine new and existing URLs
+            const allUrls = [...existingUrls, ...evidenceUrls];
+            
+            // Format ClaimImages: backend expects array of objects
+            let claimImages = [];
+            if (allUrls.length > 0) {
+                claimImages = allUrls.map(url => ({
+                    imageUrl: url,
+                    fileName: url.split('/').pop() || 'image.jpg'
+                }));
+            } else if (uploadedFiles.length > 0) {
+                // Fallback: use file names if no URLs
+                claimImages = uploadedFiles.map(f => ({
+                    fileName: f.name,
+                    imageUrl: f.url || `placeholder/${f.name}`
+                }));
+            }
+            
             // Format payload according to API requirements
-            // Note: Match format used in CreateClaimRequestPage
-            const payload = {};
-            
-            // Only include non-empty fields
-            if (formData.vin && formData.vin.trim()) {
-                payload.vin = formData.vin.trim();
-            }
-            if (formData.issueDescription && formData.issueDescription.trim()) {
-                payload.issueDescription = formData.issueDescription.trim();
-            }
-            if (formData.vehicleName && formData.vehicleName.trim()) {
-                payload.vehicleName = formData.vehicleName.trim();
-            }
-            if (formData.purchaseDate) {
-                const purchaseDate = formatDateToISO(formData.purchaseDate);
-                if (purchaseDate) payload.purchaseDate = purchaseDate;
-            }
-            if (formData.mileAge) {
-                const mileage = Number(formData.mileAge);
-                if (!isNaN(mileage)) payload.mileage = mileage;
-            }
-            if (formData.claimDate) {
-                const claimDate = formatDateToISO(formData.claimDate);
-                if (claimDate) payload.claimDate = claimDate;
-            }
-            
+            // Note: Use same field names as CreateClaimRequestPage to satisfy backend validation
+            const payload = {
+                // Basic & vehicle info (include to avoid validation errors)
+                ClaimDate: formData.claimDate ? new Date(formData.claimDate).toISOString() : row?.claimDate || null,
+                CenterName: row?.serviceCenterName || null,
+                VIN: formData.vin || row?.vin || null,
+                VehicleName: formData.vehicleName || row?.vehicleName || null,
+                Mileage: Number.parseInt(formData.mileAge || formData.mileage || row?.mileAge || row?.mileage || 0) || 0,
+                PurchaseDate: formData.purchaseDate ? new Date(formData.purchaseDate).toISOString() : row?.purchaseDate || null,
+                // Editable fields
+                IssueDescription: formData.issueDescription && formData.issueDescription.trim() ? formData.issueDescription.trim() : undefined,
+                ActionType: formData.actionType !== undefined ? formData.actionType : undefined,
+            };
+
             // Format partItems - match CreateClaimRequestPage format
-            const filteredParts = parts.filter(part => part.partName && part.partCode);
+            const filteredParts = parts.filter(part => part && (part.partName || part.partCode || part.partNumber));
             if (filteredParts.length > 0) {
-                payload.partItems = filteredParts.map(part => {
+                payload.PartItems = filteredParts.map(part => {
                     const item = {
-                        partName: part.partName.trim(),
-                        partNumber: part.partCode.trim(),
-                        quantity: Number(part.quantity) || 1,
-                        price: Number(part.price) || 0,
+                        PartName: (part.partName || part.partName)?.trim() || "",
+                        PartNumber: (part.partCode || part.partNumber || "").toString().trim(),
+                        // Backend requires a valid DateTime; default to now when replacementDate missing
+                        ReplacementDate: part.replacementDate
+                            ? formatDateToISO(part.replacementDate)
+                            : new Date().toISOString(),
                     };
                     // Only include partId if it exists
-                    if (part.partId && part.partId.trim()) {
-                        item.partId = part.partId.trim();
+                    if (part.partId && part.partId.toString().trim()) {
+                        item.PartId = part.partId.toString().trim();
                     }
                     return item;
                 });
+            }
+
+            // Add ClaimImages
+            if (claimImages.length > 0) {
+                payload.ClaimImages = claimImages;
             }
 
             // 🔍 Debug: Log API call details
@@ -457,18 +665,21 @@ export default function EditClaimRequestsPage() {
                                 <input
                                     type="date"
                                     name="claimDate"
-                                    className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
+                                    readOnly={true}
+                                    className="p-3 bg-[#F9FAFB] border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="Claim Date"
                                     value={formData.claimDate}
-                                    onChange={handleInputChange}
+                                    aria-disabled
                                 />
                             </div>
                             <div className="w-full">
                                 <p className="text-sm mb-2 text-[#6B716F]">Service Center</p>
                                 <input
-                                    className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
+                                    readOnly={true}
+                                    className="p-3 bg-[#F9FAFB] border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="Service Center"
                                     defaultValue={row?.serviceCenterName}
+                                    aria-disabled
                                 />
                             </div>
                             <div className="w-full">
@@ -499,11 +710,11 @@ export default function EditClaimRequestsPage() {
                                 <input
                                     type="text"
                                     name="vin"
-                                    className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
+                                    readOnly={true}
+                                    className="p-3 bg-[#F9FAFB] border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="VIN code"
                                     value={formData.vin}
-                                    onChange={handleInputChange}
-                                    required
+                                    aria-disabled
                                 />
                             </div>
                             <div className="w-full">
@@ -511,10 +722,11 @@ export default function EditClaimRequestsPage() {
                                 <input
                                     type="text"
                                     name="vehicleName"
-                                    className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
+                                    readOnly={true}
+                                    className="p-3 bg-[#F9FAFB] border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="Enter vehicle name"
                                     value={formData.vehicleName}
-                                    onChange={handleInputChange}
+                                    aria-disabled
                                 />
                             </div>
                             <div className="w-full">
@@ -524,10 +736,11 @@ export default function EditClaimRequestsPage() {
                                 <input
                                     type="date"
                                     name="purchaseDate"
-                                    className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
+                                    readOnly={true}
+                                    className="p-3 bg-[#F9FAFB] border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="Purchase Date of vehicle"
                                     value={formData.purchaseDate}
-                                    onChange={handleInputChange}
+                                    aria-disabled
                                 />
                             </div>
                             <div className="w-full">
@@ -537,11 +750,11 @@ export default function EditClaimRequestsPage() {
                                 <input
                                     type="number"
                                     name="mileAge"
-                                    className="p-3 bg-white border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
+                                    readOnly={true}
+                                    className="p-3 bg-[#F9FAFB] border-[3px] border-[#EBEBEB] rounded-2xl w-full focus:border-[#c6d2ff] focus:outline-none"
                                     placeholder="Current Mileage (km)"
                                     value={formData.mileAge}
-                                    onChange={handleInputChange}
-                                    min="0"
+                                    aria-disabled
                                 />
                             </div>
                         </div>
@@ -709,7 +922,20 @@ export default function EditClaimRequestsPage() {
                         <div className="text-md text-indigo-600 font-medium mb-6 flex items-center gap-2">
                             <CameraIcon size={20} weight="bold" /> Evidence Upload
                         </div>
-                        <div className="flex flex-col items-center justify-between border-dashed border-2 border-gray-200 rounded-md p-8 text-center">
+                        <div 
+                            className="flex flex-col items-center justify-between border-dashed border-2 border-gray-200 rounded-md p-8 text-center cursor-pointer hover:border-indigo-400 transition-colors"
+                            onDragOver={handleDragOver}
+                            onDrop={handleDrop}
+                            onClick={() => document.getElementById('file-input-edit')?.click()}
+                        >
+                            <input
+                                id="file-input-edit"
+                                type="file"
+                                multiple
+                                accept="image/jpeg,image/jpg,image/png,video/mp4,video/quicktime,.jpg,.jpeg,.png,.mp4,.mov"
+                                onChange={handleFileSelect}
+                                className="hidden"
+                            />
                             <CloudArrowUpIcon size={50} color="#9CA3AF" weight="fill" />
                             <div className="leading-1 mt-4 mb-10">
                                 <p className="mb-3 text-xl font-medium">
@@ -758,6 +984,11 @@ export default function EditClaimRequestsPage() {
                                 <p className="mt-3 text-sm text-[#6B7280]">
                                     Images from the original claim submission
                                 </p>
+                                {uploadedFiles.length > 0 && (
+                                    <p className="mt-2 text-sm text-green-600">
+                                        {uploadedFiles.length} file(s) selected
+                                    </p>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -768,15 +999,31 @@ export default function EditClaimRequestsPage() {
                         </div>
                         <div className="space-y-2 text-md">
                             <label className="flex items-center gap-2 cursor-pointer">
-                                <input type="radio" name="service" /> Request replacement part
-                                approval
+                                <input 
+                                    type="radio" 
+                                    name="actionType" 
+                                    value="0"
+                                    checked={formData.actionType === 0}
+                                    onChange={handleActionTypeChange}
+                                /> Request replacement part approval
                             </label>
                             <label className="flex items-center gap-2 cursor-pointer">
-                                <input type="radio" name="service" /> Request repair approval
+                                <input 
+                                    type="radio" 
+                                    name="actionType" 
+                                    value="1"
+                                    checked={formData.actionType === 1}
+                                    onChange={handleActionTypeChange}
+                                /> Request repair approval
                             </label>
                             <label className="flex items-center gap-2 cursor-pointer">
-                                <input type="radio" name="service" /> Request reimbursement
-                                (repair completed in advance)
+                                <input 
+                                    type="radio" 
+                                    name="actionType" 
+                                    value="2"
+                                    checked={formData.actionType === 2}
+                                    onChange={handleActionTypeChange}
+                                /> Request reimbursement (repair completed in advance)
                             </label>
                         </div>
                     </div>

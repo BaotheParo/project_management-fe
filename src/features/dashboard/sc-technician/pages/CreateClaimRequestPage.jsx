@@ -20,6 +20,32 @@ import { useVehicleApi } from "../../../../api/useVehicleApi";
 import { usePartApi } from "../../../../api/usePartApi";
 import { ErrorNotification, SuccessNotification } from "../../../../components/Notification";
 import axiousInstance from "../../../../api/axiousInstance";
+import profilePlaceholder from "../../../../assets/profile-placeholder.png";
+
+// Normalize image src for backend-relative URLs
+const normalizeSrc = (src) => {
+    if (!src) return src;
+    if (/^(https?:|data:|blob:)/.test(src)) return src;
+
+    const backendEnv = import.meta.env.VITE_API_BASE_URL;
+    const axiosBase = axiousInstance.defaults.baseURL || '';
+    let backendHost;
+    if (backendEnv) {
+        backendHost = backendEnv.replace(/\/$/, '');
+    } else if (axiosBase && axiosBase !== '/api') {
+        backendHost = axiosBase.replace(/\/$/, '');
+    } else if (import.meta.env.DEV) {
+        // In dev, if axiosBase is '/api' (Vite proxy) or not helpful, prefer local backend
+        backendHost = 'http://localhost:5081';
+    } else {
+        backendHost = window.location.origin.replace(/\/$/, '');
+    }
+
+    if (src.startsWith('/')) {
+        return backendHost + src;
+    }
+    return backendHost + '/' + src.replace(/^\//, '');
+};
 import { useCloudinaryUpload } from "../../../../hooks/useCloudinaryUpload";
 import { v4 as uuidv4 } from "uuid";
 
@@ -354,6 +380,12 @@ export default function CreateClaimRequestsPage() {
         // Validate files first
         const validFiles = [];
         files.forEach((file) => {
+            // Skip invalid files (no size, no name, etc.)
+            if (!file || !file.name || file.size === 0) {
+                console.warn("Skipping invalid file:", file);
+                return;
+            }
+
             // Check file size
             if (file.size > maxSize) {
                 setErrorNotification({
@@ -523,6 +555,8 @@ export default function CreateClaimRequestsPage() {
               description: img.description || '', // Use actual description from input
             }))
         };
+        
+        console.log("📤 Sending createClaim payload:", JSON.stringify(payload, null, 2));
 
         try {
             const result = await createClaim(id, payload);
@@ -534,16 +568,41 @@ export default function CreateClaimRequestsPage() {
                 });
                 navigate("/sc-technician/claims");
             } else {
+                console.error("❌ Create claim failed:", result.error);
+                console.error("❌ Error status:", result.error?.response?.status);
+                console.error("❌ Error data:", result.error?.response?.data);
+                
+                // Log validation errors in detail
+                if (result.error?.response?.data?.errors) {
+                    console.error("📋 Validation errors:", JSON.stringify(result.error.response.data.errors, null, 2));
+                    Object.entries(result.error.response.data.errors).forEach(([field, messages]) => {
+                        console.error(`   • ${field}:`, Array.isArray(messages) ? messages.join(', ') : messages);
+                    });
+                }
+                
                 setFailNotification({
                     type: "failed",
                     message: "Failed to create claim request.",
+                    subText: result.error?.response?.data?.title || result.error?.message || "Please check the form and try again."
                 });
             }
         } catch (err) {
+            console.error("❌ Create claim exception:", err);
+            console.error("❌ Error status:", err?.response?.status);
+            console.error("❌ Error data:", err?.response?.data);
+            
+            // Log validation errors in detail
+            if (err?.response?.data?.errors) {
+                console.error("📋 Validation errors:", JSON.stringify(err.response.data.errors, null, 2));
+                Object.entries(err.response.data.errors).forEach(([field, messages]) => {
+                    console.error(`   • ${field}:`, Array.isArray(messages) ? messages.join(', ') : messages);
+                });
+            }
+            
             setErrorNotification({
                 type: "error",
                 message: "Failed to create claim request.",
-                subText: err || "Please try again later."
+                subText: err?.response?.data?.title || err?.message || "Please try again later."
             });
         }
     }
@@ -892,11 +951,11 @@ export default function CreateClaimRequestsPage() {
                                     </div>
                                 </div>
                             ) : (
-                            <div className="flex items-center justify-center gap-3 mb-3">
-                                <div className="w-20 h-12 bg-gray-200 rounded-md" />
-                                <div className="w-20 h-12 bg-gray-200 rounded-md" />
-                                <div className="w-20 h-12 bg-gray-200 rounded-md" />
-                            </div>
+                                <div className="grid grid-cols-3 gap-4 mb-3">
+                                    <div className="aspect-[16/9] rounded-xl bg-gray-100" />
+                                    <div className="aspect-[16/9] rounded-xl bg-gray-100" />
+                                    <div className="aspect-[16/9] rounded-xl bg-gray-100" />
+                                </div>
                             )}
                             <div>
                                 <button
