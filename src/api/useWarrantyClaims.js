@@ -144,10 +144,6 @@ export const useWarrantyClaims = (userId) => {
                 claimDate: claim.claimDate ? new Date(claim.claimDate).toISOString().split("T")[0] : null,
                 vin: claim.vin,
                 claimStatus: getClaimStatusLabel(claim.claimStatus),
-                // Map backend action field (swagger uses `action`)
-                actionType: claim.action ?? claim.actionType ?? claim.ActionType ?? 0,
-                // Backwards-compatible raw action field
-                action: claim.action ?? claim.actionType ?? claim.ActionType,
                 issueDescription: claim.issueDescription,
                 vehicleName: claim.vehicleName || "Unknown",
                 purchaseDate: claim.purchaseDate ? new Date(claim.purchaseDate).toISOString().split("T")[0] : null,
@@ -173,6 +169,7 @@ export const useWarrantyClaims = (userId) => {
                 policyName: claim.policyName,
                 serviceCenterName: claim.serviceCenterName,
                 technicianName: claim.technicianName,
+                images: claim.images || [],
                 action: claim.action,
                 actionDisplay: claim.actionDisplay,
             };
