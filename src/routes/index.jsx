@@ -257,6 +257,14 @@ const router = createBrowserRouter([
         ),
       },
       {
+        path: "warranty-request/:id",
+        element: (
+          <Suspense fallback={<Loader />}>
+            <SCStaffRequestDetailPage />
+          </Suspense>
+        ),
+      },
+      {
         path: "assign-worker",
         element: (
           <Suspense fallback={<Loader />}>

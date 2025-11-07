@@ -68,10 +68,16 @@ export default function WarrantyRequestDetail() {
 
   // Fetch claim when component mounts or id changes
   useEffect(() => {
+    console.log('🔍 WarrantyRequestDetail - Fetching claim with ID:', id)
     if (id) {
       fetchClaimById(id)
     }
   }, [id, fetchClaimById])
+
+  // Log claim data when it changes
+  useEffect(() => {
+    console.log('📊 WarrantyRequestDetail - Claim data:', claimData)
+  }, [claimData])
 
   // Handler for accepting request - just navigate to assign worker
   // Note: Work orders are created by EVM Staff or backend automatically
@@ -154,8 +160,8 @@ export default function WarrantyRequestDetail() {
     )
   }
 
-  // Show not found if no claim data
-  if (!claimData) {
+  // Show not found if no claim data (only after loading is done and no error)
+  if (!loading && !error && !claimData) {
     return (
       <div className="p-12 w-full">
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
@@ -168,6 +174,15 @@ export default function WarrantyRequestDetail() {
             Back to Dashboard
           </button>
         </div>
+      </div>
+    )
+  }
+
+  // If still no data, show loading (shouldn't happen but safety check)
+  if (!claimData) {
+    return (
+      <div className="p-12 w-full flex justify-center items-center min-h-[400px]">
+        <Loader />
       </div>
     )
   }

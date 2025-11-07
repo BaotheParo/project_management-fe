@@ -132,12 +132,18 @@ export const useWarrantyClaims = (userId) => {
             setLoading(true);
             setError(null);
 
+            console.log('🔍 [useWarrantyClaims] Fetching claim by ID:', id);
             const response = await axiousInstance.get(`/claims/${id}`);
+            console.log('✅ [useWarrantyClaims] API response:', response);
+            
             const claim = response.data?.data || response.data;
 
             if (!claim) {
+                console.error('❌ [useWarrantyClaims] No claim data in response');
                 throw new Error("Claim not found");
             }
+
+            console.log('📦 [useWarrantyClaims] Raw claim data:', claim);
 
             const formattedClaim = {
                 claimId: claim.claimId,
@@ -159,7 +165,8 @@ export const useWarrantyClaims = (userId) => {
                               replacementDate: p?.replacementDate || p?.ReplacementDate || "",
                               partId: p?.partId || p?.partItemId || "",
                               quantity: p?.quantity || 1,
-                              price: p?.price || 0,
+                              price: p?.price || p?.cost || 0,
+                              cost: p?.cost || p?.price || 0, // Add cost field for detail page
                           }))
                     : [],
                 // Include images/evidence for edit form (swagger uses `images`)
@@ -175,8 +182,16 @@ export const useWarrantyClaims = (userId) => {
             };
 
             setRow(formattedClaim);
+            console.log('✅ [useWarrantyClaims] Formatted claim set:', formattedClaim);
         } catch (err) {
-            console.error("Fetch claim by ID failed: ", err);
+            console.error("❌ [useWarrantyClaims] Fetch claim by ID failed:", err);
+            console.error("❌ Error details:", {
+                message: err.message,
+                status: err.response?.status,
+                statusText: err.response?.statusText,
+                data: err.response?.data,
+                url: err.config?.url
+            });
             setError(err);
         } finally {
             setLoading(false);
