@@ -7,10 +7,7 @@ import {
   DotsThreeIcon,
 } from "@phosphor-icons/react";
 import ConfirmDialog from "../../components/ConfirmDialog.jsx";
-// TODO: Create campaignAPI file
 import campaignAPI from "../../../../../api/campaignAPI";
-
-// campaigns will be fetched from API
 
 const statusColorMap = {
   Active: "bg-green-100 text-green-700",
@@ -22,14 +19,14 @@ const cardColorMap = {
   1: "border-gray-200",
   2: "border-green-200",
   3: "border-blue-200",
-  4: "border-yellow-200",
+  4: "border-yellow-200", // Sửa lỗi '4.' thành 4
 };
 
 const titleColorMap = {
   1: "text-gray-400",
   2: "text-green-600",
   3: "text-blue-600",
-  4: "text-yellow-600",
+  4: "text-yellow-600", // Sửa lỗi '4.' thành 4
 };
 
 export default function Campaign() {
@@ -41,6 +38,10 @@ export default function Campaign() {
   });
 
   const [campaigns, setCampaigns] = useState([]);
+
+  // 1. TẠO STATE MỚI CHO CÁC THẺ STATS
+  const [campaignStats, setCampaignStats] = useState([]); // Dùng mảng rỗng
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -52,25 +53,81 @@ export default function Campaign() {
     setLoading(true);
     setError(null);
     try {
-      // TODO: Uncomment when campaignAPI is created
       const response = await campaignAPI.getAllCampaigns();
-      console.log("API Response:", response);
-      // Make sure data is an array, if not, set empty array
-      if (Array.isArray(response?.data)) {
-        setCampaigns(response.data);
-      } else if (Array.isArray(response)) {
-        setCampaigns(response);
-      } else {
-        console.error("API response is not an array:", response);
-        setCampaigns([]);
+
+      // 2. LẤY DANH SÁCH CAMPAIGNS TỪ API
+      // Thêm log này để xem chính xác API trả về cái gì
+      console.log("Dữ liệu nhận được từ campaignAPI:", response);
+
+      let fetchedCampaigns = [];
+
+      // 1. Đảo ngược thứ tự: Ưu tiên kiểm tra xem bản thân 'response' có phải là mảng không
+      //    (Vì campaignAPI.js đã trả về .data rồi)
+      if (Array.isArray(response)) {
+        fetchedCampaigns = response;
+      }
+      // 2. Nếu không, kiểm tra xem 'response' có key 'data' chứa mảng không
+      //    (Trường hợp API trả về { data: { data: [...] } })
+      else if (Array.isArray(response?.data)) {
+        fetchedCampaigns = response.data;
+      }
+      // 3. (Tùy chọn) Thêm các trường hợp phổ biến khác nếu API trả về cấu trúc lạ
+      else if (Array.isArray(response?.items)) {
+        fetchedCampaigns = response.items;
+      } else if (Array.isArray(response?.campaignList)) {
+        fetchedCampaigns = response.campaignList;
+      }
+      // 4. Nếu tất cả đều sai
+      else {
+        console.error(
+          "API response không phải là mảng hoặc cấu trúc không nhận diện được:",
+          response
+        );
+        // Để mảng rỗng
       }
 
-      // Temporary mock data
-      setCampaigns([]);
+      setCampaigns(fetchedCampaigns); // Set state cho bảng
+
+      // 3. TÍNH TOÁN DỮ LIỆU STATS TỪ DANH SÁCH
+      // (Giả sử status 0=Active, 1=Completed, 2=Pending dựa theo logic bảng của bạn)
+      const total = fetchedCampaigns.length;
+      const active = fetchedCampaigns.filter((c) => c.status === 0).length;
+      const completed = fetchedCampaigns.filter((c) => c.status === 1).length;
+      const pending = fetchedCampaigns.filter((c) => c.status === 2).length;
+
+      // 4. TẠO MẢNG STATS MỚI VÀ SET STATE
+      const statsData = [
+        {
+          id: 1,
+          title: "Total Campaigns",
+          value: total.toString(),
+          subtitle: "All time",
+        },
+        {
+          id: 2,
+          title: "Active Campaigns",
+          value: active.toString(),
+          subtitle: "Currently running",
+        },
+        {
+          id: 3,
+          title: "Completed Campaigns",
+          value: completed.toString(),
+          subtitle: "Finished",
+        },
+        {
+          id: 4,
+          title: "Pending Campaigns",
+          value: pending.toString(),
+          subtitle: "Awaiting start",
+        },
+      ];
+      setCampaignStats(statsData); // Set state cho 4 thẻ stats
     } catch (err) {
       console.error(err);
       setError("Failed to load campaigns");
       setCampaigns([]);
+      setCampaignStats([]); // Cũng reset stats nếu lỗi
     } finally {
       setLoading(false);
     }
@@ -82,7 +139,7 @@ export default function Campaign() {
 
   const handleView = (campaignId) => {
     setActiveMenu(null);
-    navigate(`/evm-staff/campaign/${campaignId}`);
+    navigate(`/evm-staff/campaign/${campaignId}/view`);
   };
 
   const handleDelete = (campaignId) => {
@@ -94,10 +151,49 @@ export default function Campaign() {
     try {
       // TODO: Uncomment when campaignAPI is created
       // await campaignAPI.deleteCampaign(deleteDialog.campaignId);
-      // remove from local list
+
+      // Tạm thời chỉ xóa ở local
       setCampaigns((prev) =>
         prev.filter((c) => c.campaignId !== deleteDialog.campaignId)
       );
+
+      // CẬP NHẬT LẠI STATS SAU KHI XÓA
+      // (Cách tốt hơn là gọi lại fetchCampaigns() nếu API đã hoạt động)
+      const newCampaigns = campaigns.filter(
+        (c) => c.campaignId !== deleteDialog.campaignId
+      );
+      const total = newCampaigns.length;
+      const active = newCampaigns.filter((c) => c.status === 0).length;
+      const completed = newCampaigns.filter((c) => c.status === 1).length;
+      const pending = newCampaigns.filter((c) => c.status === 2).length;
+
+      setCampaignStats([
+        {
+          id: 1,
+          title: "Total Campaigns",
+          value: total.toString(),
+          subtitle: "All time",
+        },
+        {
+          id: 2,
+          title: "Active Campaigns",
+          value: active.toString(),
+          subtitle: "Currently running",
+        },
+        {
+          id: 3,
+          title: "Completed Campaigns",
+          value: completed.toString(),
+          subtitle: "Finished",
+        },
+        {
+          id: 4,
+          title: "Pending Campaigns",
+          value: pending.toString(),
+          subtitle: "Awaiting start",
+        },
+      ]);
+
       setDeleteDialog({ isOpen: false, campaignId: null });
     } catch (err) {
       console.error("Delete failed", err);
@@ -116,7 +212,7 @@ export default function Campaign() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-4 gap-6 mb-8">
-        {stats.map((stat) => (
+        {campaignStats.map((stat) => (
           <div
             key={stat.id}
             className={
