@@ -58,19 +58,19 @@ export const useSCStaffClaims = (serviceCenterId) => {
             // Format claims data for display
             const formattedClaims = data.map((claim) => ({
                 id: claim.claimId,
-                claimNumber: `CL-${claim.claimId?.slice(0, 8).toUpperCase() || 'Unknown'}`,
-                vehicle: claim.vehicleName || "Unknown",
-                vin: claim.vin || "N/A",
+                date: new Date(claim.claimDate).toISOString().split("T")[0],
+                vin: claim.vin,
                 status: getClaimStatusLabel(claim.claimStatus),
                 statusCode: claim.claimStatus,
-                requester: claim.technicianName || "Unassigned",
-                date: new Date(claim.claimDate).toISOString().split("T")[0],
-                issueDescription: claim.issueDescription || "",
-                mileage: claim.mileage || 0,
-                totalCost: claim.totalCost || 0,
-                policyName: claim.policyName || "",
-                serviceCenterName: claim.serviceCenterName || "",
+                issueDescription: claim.issueDescription,
+                vehicle: claim.vehicleName || "Unknown",
+                purchaseDate: new Date(claim.purchaseDate).toISOString().split("T")[0],
+                mileage: claim.mileage,
                 parts: claim.parts || [],
+                totalCost: claim.totalCost,
+                policyName: claim.policyName,
+                serviceCenterName: claim.serviceCenterName,
+                requester: claim.technicianName || "Unassigned",
             }));
 
             // Sort by date (newest first)

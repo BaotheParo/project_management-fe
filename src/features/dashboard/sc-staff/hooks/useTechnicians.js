@@ -18,7 +18,7 @@ export function useTechnicians() {
 
         console.log('useTechnicians - Fetching technicians list')
         
-        const response = await axiosInstance.get('/user/technicians')
+        const response = await axiosInstance.get('/users/technicians')
         const techList = Array.isArray(response) ? response : []
 
         console.log('useTechnicians - Received technicians:', techList)

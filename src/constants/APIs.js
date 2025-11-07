@@ -16,6 +16,8 @@ export const CLAIM_API = {
     APPROVE_CLAIM: "/claims/:claimId/approve",
     REJECT_CLAIM: "/claims/:claimId/reject",
     UPDATE_STATUS: "/claims/:claimId/status",
+    UPLOAD_EVIDENCE: "/claims/:claimId/evidence",
+    UPLOAD_FILE: "/upload",
 }
 
 export const TODO_WORK_API = {
@@ -54,6 +56,19 @@ export const PART_ITEM_API = {
     DELETE: "/partitems/:id",
     CHECK_EXISTS: "/partitems/:id/exists",
     CHECK_PARTNUMBER_EXISTS: "/partitems/partnumber-exists",
+}
+
+export const CAMPAIGN_API = {
+    GET_ALL: "/campaigns",
+    GET_BY_ID: "/campaigns/:id",
+    GET_BY_USER: "/campaigns/user/:userId",
+    GET_BY_TECHNICIAN: "/campaigns/technician/:technicianId",
+    GET_BY_STATUS: "/campaigns/status/:status",
+    CREATE: "/campaigns",
+    UPDATE: "/campaigns/:id",
+    DELETE: "/campaigns/:id",
+    UPDATE_STATUS: "/campaigns/:id/status",
+    ASSIGN_TECHNICIAN: "/campaigns/:id/assign",
 }
 
 export const USER_API = {

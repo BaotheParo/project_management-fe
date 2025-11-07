@@ -1,195 +1,294 @@
-import React, { useEffect, useState } from "react";
-import { CaretLeftIcon, CaretRightIcon } from "@phosphor-icons/react";
-import { useNavigate } from "react-router-dom";
-import claimAPI from "../../../../../api/claimAPI";
-
-const stats = [
-  {
-    id: 1,
-    title: "Total Incoming Claims",
-    value: "237",
-    subtitle: "Pending review",
-  },
-  { id: 2, title: "Approved Claims", value: "1,842", subtitle: "This month" },
-  { id: 3, title: "Rejected Claims", value: "156", subtitle: "This month" },
-  {
-    id: 4,
-    title: "Active Campaigns",
-    value: "12",
-    subtitle: "Currently running",
-  },
-];
-
-// 1. Xóa 'sampleRows' vì chúng ta sẽ dùng dữ liệu từ API
-// const sampleRows = Array.from({ length: 10 }).map((_, i) => ({ ... }));
-
-const titleColorMap = {
-  1: "text-gray-400", // ID 1: Màu xám
-  2: "text-green-600", // ID 2: Màu xanh lá cây
-  3: "text-red-600", // ID 3: Màu đỏ
-  4: "text-blue-600", // ID 4: Màu xanh dương
-};
+import React, { useMemo, useState, useRef, useEffect } from "react";
+import {
+  CaretLeftIcon,
+  CaretRightIcon,
+  XCircleIcon,
+  CheckCircleIcon,
+  DotsThreeIcon,
+  ListDashesIcon,
+  DotsThreeCircleIcon,
+  ClockIcon,
+  PlusIcon,
+} from "@phosphor-icons/react";
+import { useNavigate, useLocation } from "react-router-dom";
+import StatusCard from "../../../../../components/StatusCard";
+import ClaimStatusDot from "../../../sc-technician/components/ClaimStatusDot";
+import { useWarrantyClaims } from "../../../../../api/useWarrantyClaims";
+import Loader from "../../../../../components/Loader";
+import { ErrorNotification, SuccessNotification } from "../../../../../components/Notification";
+import { useAuth } from "../../../../../app/AuthProvider";
 
 export default function Dashboard() {
+  const [openActionFor, setOpenActionFor] = useState(null);
+  const menuRef = useRef(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const [claims, setClaims] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [notification, setNotification] = useState(null);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const fetchedClaims = await claimAPI.getAllClaims();
-        setClaims(fetchedClaims);
-        setError(null);
-        console.log("Fetched claims:", fetchedClaims);
-      } catch (error) {
-        setError(error);
-        console.error("Error fetching claims:", error);
-      } finally {
-        setLoading(false);
+    function handleClickOutside(e) {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setOpenActionFor(null);
       }
-    };
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [menuRef]);
 
-    fetchData();
-  }, []);
+  const total = 247;
+  const perPage = 10;
+  const totalPages = Math.ceil(total / perPage);
+
+  const pages = useMemo(() => [1, 2, 3, 4], []);
+
+  // ⚠️ CRITICAL: Declare user BEFORE using it in useEffect
+  const { user } = useAuth();
+  const { rows, loading, error, fetchClaims } = useWarrantyClaims(user?.userId);
+
+  // 🔄 Refetch claims when returning from edit page
+  useEffect(() => {
+    if (location.state?.refresh && user?.userId && fetchClaims) {
+      console.log("🔄 [ClaimRequestsPage] Refreshing claims list after edit...");
+      console.log("🔄 [ClaimRequestsPage] Refresh timestamp:", location.state?.timestamp);
+      
+      // Delay slightly to ensure backend has processed
+      setTimeout(async () => {
+        try {
+          await fetchClaims(user?.userId);
+        } catch (err) {
+          console.error("❌ [ClaimRequestsPage] Failed to refresh claims:", err);
+        }
+      }, 300);
+      
+      // Clear the refresh flag to prevent unnecessary refetches
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, user?.userId, fetchClaims, navigate, location.pathname]);
+
+  const totalClaims = rows.filter(r => r.isActive === true).length;
+  const approvedClaims = rows.filter((r) => r.claimStatus === "Accepted" && r.isActive === true).length;
+  const rejectedClaims = rows.filter((r) => r.claimStatus === "Rejected" && r.isActive === true).length;
+
+  if (loading) return <Loader />;
+  if (error)
+    return (
+      <p className="text-red-500">Error loading claims: {error.message}</p>
+    );
 
   return (
     <div className="w-full">
-      {/* ...Phần tiêu đề và stats (không đổi) ... */}
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className=" text-black text-3xl font-bold">Hello, EVM staff</h1>
-          <p className="text-gray-500">An overview of your works.</p>
-        </div>
-        <div className="flex items-center text-sm text-gray-600">
-          <span>18 May, 2025</span>
+          <h1 className="text-3xl font-bold">Hi, {user?.username}</h1>
+          <p className="text-gray-500">
+            Manage and track warranty claim requests
+          </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        {stats.map((s) => (
-          <div
-            key={s.id}
-            className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm flex justify-between items-center"
-          >
-            <div>
-              <div className={`${titleColorMap[s.id]} font-medium mb-2`}>
-                {s.title}
-              </div>
-              <div className="text-3xl font-bold">{s.value}</div>
-              <div className="text-gray-600 text-sm mt-2">{s.subtitle}</div>
-            </div>
-          </div>
-        ))}
+      <div className="flex flex-wrap gap-6 mt-20 mb-12">
+        <StatusCard
+          title="Total Incoming Requests"
+          titleColor="text-indigo-600"
+          count={totalClaims}
+          description="Currently in your queue"
+          icon={ListDashesIcon}
+          iconColor={"#4f39f8"}
+        />
+        <StatusCard
+          title="Approved Claims"
+          titleColor="text-green-600"
+          count={approvedClaims}
+          description="Accepted"
+          icon={DotsThreeCircleIcon}
+          iconColor={"#979AA3"}
+        />
+        <StatusCard
+          title="Rejected Claims"
+          titleColor="text-red-500"
+          count={rejectedClaims}
+          description="Currently in your queue"
+          icon={CheckCircleIcon}
+          iconColor={"#fb2c36"}
+        />
+        <StatusCard
+          title="Active Campaigns"
+          titleColor="text-red-500"
+          count={"3"}
+          description="Currently in your queue"
+          icon={ClockIcon}
+          iconColor={"#00a63e"}
+        />
       </div>
 
-      <h2 className="text-xl font-semibold mb-4">Recent Claim Requests</h2>
-      <div className="bg-white rounded-2xl p-6 border border-gray-200">
-        <div className="overflow-x-auto">
-          <table className="w-full table-fixed text-sm">
+      <div className="bg-white rounded-2xl">
+        <div className="flex justify-between">
+          <h2 className="text-[25px] font-semibold text-black">
+            Recent Claim Requests
+          </h2>
+        </div>
+
+        <div className="border-[3px] border-[#EBEBEB] rounded-2xl overflow-visible mt-6">
+          <table className="w-full">
             <thead>
-              <tr className="text-left text-gray-500 border-b">
-                <th className="py-3 px-4 w-1/6">Claim ID</th>
-                <th className="py-3 px-4 w-1/4">Vehicle name</th>
-                <th className="py-3 px-4 w-1/3">Vin ID</th>
-                <th className="py-3 px-4 w-1/6">Status</th>
-                <th className="py-3 px-4 w-1/6">Claim Date</th>
-                <th className="py-3 px-4 w-1/6">Action</th>
+              <tr className="border-b-2 border-[#DEE1E6] bg-[#FAFAFA]">
+                <th className="text-left rounded-tl-2xl px-8 py-3 text-base font-medium text-[#686262]">
+                  Claim ID
+                </th>
+                <th className="text-left px-8 py-3 text-base font-medium text-[#686262]">
+                  Vehicle
+                </th>
+                <th className="text-left px-8 py-3 text-base font-medium text-[#686262]">
+                  Vin ID
+                </th>
+                <th className="text-left px-8 py-3 text-base font-medium text-[#686262]">
+                  Requester
+                </th>
+                <th className="text-left px-8 py-3 text-base font-medium text-[#686262]">
+                  Status
+                </th>
+                <th className="text-left px-8 py-3 text-base font-medium text-[#686262]">
+                  Request Date
+                </th>
+                <th className="text-left rounded-tr-2xl px-8 py-3 text-base font-medium text-[#686262]">
+                  Actions
+                </th>
               </tr>
             </thead>
-
-            {/* 2. Cập nhật <tbody> để render dựa trên state */}
             <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan="6" className="text-center py-6 text-gray-500">
-                    Loading claims...
+              {rows
+                .filter((r) => r.isActive)
+                .map((r) => (
+                <tr
+                  key={r.claimId}
+                  className="border-b-2 border-[#DEE1E6] bg-white hover:bg-gray-50"
+                >
+                  <td className="px-8 py-3 text-[13px] font-medium text-black">
+                    {r.claimId}
                   </td>
-                </tr>
-              ) : error ? (
-                <tr>
-                  <td colSpan="6" className="text-center py-6 text-red-500">
-                    Error fetching data: {error.message}
+                  <td className="px-8 py-3 text-[13px] font-medium text-black">
+                    {r.vehicleName}
                   </td>
-                </tr>
-              ) : claims.length === 0 ? (
-                <tr>
-                  <td colSpan="6" className="text-center py-6 text-gray-500">
-                    No recent claims found.
+                  <td className="px-8 py-3 text-[13px] font-medium text-black">
+                    {r.vin}
                   </td>
-                </tr>
-              ) : (
-                // 3. Dùng 'claims.map' thay vì 'sampleRows.map'
-                //    'r' bây giờ là một object claim từ API
-                claims.map((r) => (
-                  <tr key={r.claimId} className="border-b hover:bg-gray-50">
-                    <td className="py-3 px-4">{r.claimId}</td>
-                    <td className="py-3 px-4">{r.vehicleName}</td>
-                    <td className="py-3 px-4">{r.vin}</td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`h-2 w-2 rounded-full ${
-                            r.claimStatus === "0"
-                              ? "bg-green-400"
-                              : "bg-red-400"
-                          }`}
-                        />
-                        {/* <span className="text-gray-600">{r.claimStatus}</span> */}
-                      </div>
-                    </td>
-                    <td className="py-3 px-4">{r.claimDate}</td>
-                    <td className="py-3 px-4">
+                  <td className="px-8 py-3 text-[13px] font-medium text-black">
+                    {r.technicianName}
+                  </td>
+                  <td className="px-8 py-3 text-[13px] font-medium text-black">
+                    <div className="flex items-center">
+                      <ClaimStatusDot status={r.claimStatus} />
+                      <span>{r.claimStatus}</span>
+                    </div>
+                  </td>
+                  <td className="px-8 py-3 text-[13px] font-medium text-black">
+                    {r.claimDate}
+                  </td>
+                  <td className="px-8 py-3 text-[13px] font-medium text-black relative">
+                    <div className="relative inline-block">
                       <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          // Giả sử API trả về 'claimId' cho mỗi claim
-                          navigate(`/evm-staff/claim/${r.claimId}`, {
-                            state: { claim: r },
-                          });
+                        onClick={() => {
+                          setOpenActionFor(
+                            openActionFor === r.claimId ? null : r.claimId
+                          );
                         }}
-                        className="text-indigo-600 hover:text-indigo-800 font-medium"
+                        className="rounded-full hover:bg-gray-100 cursor-pointer"
                       >
-                        View
+                        <DotsThreeIcon size={20} weight="bold" />
                       </button>
-                    </td>
-                  </tr>
-                ))
-              )}
+
+                      {openActionFor === r.claimId && (
+                        <div
+                          ref={menuRef}
+                          className="absolute -right-10 top-7 w-32 bg-white border border-[#DEE1E6] rounded-lg shadow-lg z-50 pointer-events-auto"
+                        >
+                          <button
+                            onClick={() => {
+                              setOpenActionFor(null);
+                              navigate(`/evm-staff/claim/${r.claimId}`);
+                            }}
+                            className="w-full text-left rounded-tl-lg rounded-tr-lg transition-all px-3 py-2 hover:bg-gray-50 cursor-pointer"
+                          >
+                            View Detail
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
 
-        {/* ...Phần Pagination (không đổi) ... */}
-        <div className="flex items-center justify-between mt-4 text-sm text-gray-600">
-          <div>Showing 1 to 10 of 247 results</div>
-          <div className="flex items-center gap-3">
-            <button className="flex gap-1 items-center px-3 py-1 rounded-full bg-transparent border text-gray-600">
-              <CaretLeftIcon size={15} />
-              Previous
+        {/* Pagination */}
+        <div className="flex items-center justify-between mt-6 text-sm text-gray-600">
+          <div>Showing 1 to 10 of {total} results</div>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
+              className="flex items-center gap-2 px-3 py-1 cursor-pointer rounded-md hover:text-indigo-600 disabled:opacity-40"
+            >
+              <CaretLeftIcon size={12} /> Previous
             </button>
-            <button className="px-3 py-1 rounded-full bg-indigo-600 text-white">
-              1
-            </button>
-            <button className="px-3 py-1 rounded-full bg-transparent border text-gray-600">
-              2
-            </button>
-            <button className="px-3 py-1 rounded-full bg-transparent border text-gray-600">
-              3
-            </button>
-            <button className="px-3 py-1 rounded-full bg-transparent border text-gray-600">
-              4
-            </button>
-            <button className="flex items-center gap-1 px-3 py-1 rounded-full bg-transparent border text-gray-600">
-              Next
-              <CaretRightIcon size={15} />
+
+            <div className="flex items-center gap-2">
+              {pages.map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setCurrentPage(p)}
+                  className={`w-8 h-8 rounded-full text-[12px] font-medium flex items-center justify-center cursor-pointer ${
+                    currentPage === p
+                      ? "bg-indigo-600 text-white"
+                      : "bg-white text-[#727674] hover:text-black"
+                  }`}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() =>
+                setCurrentPage(Math.min(totalPages, currentPage + 1))
+              }
+              disabled={currentPage === totalPages}
+              className="flex items-center gap-2 px-3 py-1 cursor-pointer rounded-md hover:text-indigo-600 disabled:opacity-40"
+            >
+              Next <CaretRightIcon size={12} />
             </button>
           </div>
         </div>
       </div>
+
+      {/* Delete modal rendered here so it's inside component tree */}
+      {/* <DeleteModal
+        row={deletingRow}
+        onCancel={() => setDeletingRow(null)}
+        onSuccess={handleDeleteSuccess}
+        onError={handleDeleteError}
+      /> */}
+      {/* ✅ Notification logic */}
+      {notification?.type === "success" && (
+        <SuccessNotification
+          message={notification.message}
+          subText={notification.subText}
+          actionText="Close"
+          onAction={() => setNotification(null)}
+        />
+      )}
+
+      {notification?.type === "error" && (
+        <ErrorNotification
+          message={notification.message}
+          subText={notification.subText}
+          actionText="Close"
+          onAction={() => setNotification(null)}
+        />
+      )}
     </div>
   );
 }
