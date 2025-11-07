@@ -12,7 +12,7 @@ import {
     XCircleIcon,
 } from "@phosphor-icons/react";
 import { useWarrantyClaims } from "../../../../api/useWarrantyClaims";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Loader from "../../../../components/Loader";
 import { useAuth } from "../../../../app/AuthProvider";
@@ -20,6 +20,34 @@ import { useVehicleApi } from "../../../../api/useVehicleApi";
 import { usePartApi } from "../../../../api/usePartApi";
 import { ErrorNotification, SuccessNotification } from "../../../../components/Notification";
 import axiousInstance from "../../../../api/axiousInstance";
+import profilePlaceholder from "../../../../assets/profile-placeholder.png";
+
+// Normalize image src for backend-relative URLs
+const normalizeSrc = (src) => {
+    if (!src) return src;
+    if (/^(https?:|data:|blob:)/.test(src)) return src;
+
+    const backendEnv = import.meta.env.VITE_API_BASE_URL;
+    const axiosBase = axiousInstance.defaults.baseURL || '';
+    let backendHost;
+    if (backendEnv) {
+        backendHost = backendEnv.replace(/\/$/, '');
+    } else if (axiosBase && axiosBase !== '/api') {
+        backendHost = axiosBase.replace(/\/$/, '');
+    } else if (import.meta.env.DEV) {
+        // In dev, if axiosBase is '/api' (Vite proxy) or not helpful, prefer local backend
+        backendHost = 'http://localhost:5081';
+    } else {
+        backendHost = window.location.origin.replace(/\/$/, '');
+    }
+
+    if (src.startsWith('/')) {
+        return backendHost + src;
+    }
+    return backendHost + '/' + src.replace(/^\//, '');
+};
+import { useCloudinaryUpload } from "../../../../hooks/useCloudinaryUpload";
+import { v4 as uuidv4 } from "uuid";
 
 export default function CreateClaimRequestsPage() {
     const navigate = useNavigate();
@@ -29,12 +57,20 @@ export default function CreateClaimRequestsPage() {
     const [errorNotification, setErrorNotification] = useState(null);
     const { createClaim } = useWarrantyClaims(user?.userId);
     const { vehicles, vehicleLoading, vehicleError } = useVehicleApi();
-    const { fetchPartsByVin, fetchParts, parts, partLoading } = usePartApi();
+    const { fetchPartsByVin, fetchParts, partLoading } = usePartApi();
 
     const displayName = user?.username || user?.name || user?.fullName || "User";
     const [availableParts, setAvailableParts] = useState([]); // Store parts fetched from API
     const [uploadedFiles, setUploadedFiles] = useState([]); // Store uploaded files
-    const [fileInputRef, setFileInputRef] = useState(null);
+    
+    // Cloudinary integration
+    const fileInputRef = useRef(null);
+    const { uploadFile, error: uploadError } = useCloudinaryUpload(
+        'hqhoangvuong',
+        'warranty_claims_upload'
+    );
+    const [uploadedImages, setUploadedImages] = useState([]);
+    const [uploadingFiles, setUploadingFiles] = useState(false);
     
     // Debug: Log availableParts changes
     useEffect(() => {
@@ -330,19 +366,26 @@ export default function CreateClaimRequestsPage() {
         }));
     };
 
-    // File upload handlers
-    const handleFileSelect = (e) => {
+    // File upload handlers - Cloudinary Integration
+    const handleFileSelect = async (e) => {
         const files = Array.from(e.target.files);
-        handleFiles(files);
+        await handleFiles(files);
     };
 
-    const handleFiles = (files) => {
-        const validFiles = [];
+    const handleFiles = async (files) => {
         const maxSize = 10 * 1024 * 1024; // 10MB
         const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'video/mp4', 'video/quicktime'];
         const allowedExtensions = ['.jpg', '.jpeg', '.png', '.mp4', '.mov'];
 
+        // Validate files first
+        const validFiles = [];
         files.forEach((file) => {
+            // Skip invalid files (no size, no name, etc.)
+            if (!file || !file.name || file.size === 0) {
+                console.warn("Skipping invalid file:", file);
+                return;
+            }
+
             // Check file size
             if (file.size > maxSize) {
                 setErrorNotification({
@@ -365,7 +408,35 @@ export default function CreateClaimRequestsPage() {
             validFiles.push(file);
         });
 
-        if (validFiles.length > 0) {
+        if (validFiles.length === 0) return;
+
+        // Upload to Cloudinary
+        setUploadingFiles(true);
+        
+        try {
+            const uploadPromises = validFiles.map(async (file) => {
+                const result = await uploadFile(file);
+                return {
+                    id: uuidv4(),
+                    url: result.url,
+                    publicId: result.publicId,
+                    format: result.format,
+                    resourceType: result.resourceType,
+                    fileName: file.name,
+                    size: file.size,
+                    preview: file.type.startsWith('image/') ? result.url : null,
+                };
+            });
+
+            const results = await Promise.all(uploadPromises);
+            // Add description field to each uploaded image
+            const imagesWithDescription = results.map(img => ({
+                ...img,
+                description: '', // Empty description by default
+            }));
+            setUploadedImages(prev => [...prev, ...imagesWithDescription]);
+            
+            // Also add to uploadedFiles for backward compatibility
             const newFiles = validFiles.map((file) => ({
                 file: file,
                 preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : null,
@@ -373,6 +444,23 @@ export default function CreateClaimRequestsPage() {
                 size: file.size,
             }));
             setUploadedFiles((prev) => [...prev, ...newFiles]);
+            
+            setSuccessNotification({
+                message: `${validFiles.length} file(s) uploaded successfully`,
+                subText: 'Files uploaded to cloud storage'
+            });
+        } catch (error) {
+            console.error('Error uploading files:', error);
+            setErrorNotification({
+                message: 'Failed to upload files',
+                subText: error.message
+            });
+        } finally {
+            setUploadingFiles(false);
+            // Reset file input
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
         }
     };
 
@@ -381,11 +469,11 @@ export default function CreateClaimRequestsPage() {
         e.stopPropagation();
     };
 
-    const handleDrop = (e) => {
+    const handleDrop = async (e) => {
         e.preventDefault();
         e.stopPropagation();
         const files = Array.from(e.dataTransfer.files);
-        handleFiles(files);
+        await handleFiles(files);
     };
 
     const handleRemoveFile = (index) => {
@@ -396,6 +484,28 @@ export default function CreateClaimRequestsPage() {
             }
             newFiles.splice(index, 1);
             return newFiles;
+        });
+        // Also remove from uploadedImages if it exists
+        if (uploadedImages[index]) {
+            setUploadedImages(prev => {
+                const newImages = [...prev];
+                newImages.splice(index, 1);
+                return newImages;
+            });
+        }
+    };
+
+    // Update image description
+    const handleImageDescriptionChange = (index, description) => {
+        setUploadedImages(prev => {
+            const newImages = [...prev];
+            if (newImages[index]) {
+                newImages[index] = {
+                    ...newImages[index],
+                    description: description
+                };
+            }
+            return newImages;
         });
     };
 
@@ -418,62 +528,10 @@ export default function CreateClaimRequestsPage() {
         }));
     };
 
-    // Upload files to API
-    const uploadFiles = async (files) => {
-        const uploadedUrls = [];
-        
-        for (const fileObj of files) {
-            try {
-                const formData = new FormData();
-                formData.append('file', fileObj.file);
-                
-                // Upload file to API
-                // Note: axiousInstance interceptor returns response.data, so response is already the data
-                const response = await axiousInstance.post('/upload', formData);
-                
-                // Get file URL from response (response is already data due to interceptor)
-                const fileUrl = response?.url || response?.fileUrl || response?.data?.url || response?.data;
-                if (fileUrl && typeof fileUrl === 'string') {
-                    uploadedUrls.push(fileUrl);
-                    console.log(`✅ File ${fileObj.name} uploaded, URL:`, fileUrl);
-                } else {
-                    console.warn('⚠️ No file URL in response:', response);
-                    // If response is a string URL directly
-                    if (typeof response === 'string') {
-                        uploadedUrls.push(response);
-                    }
-                }
-            } catch (error) {
-                console.error(`❌ Failed to upload file ${fileObj.name}:`, error);
-                // Continue with other files even if one fails
-            }
-        }
-        
-        return uploadedUrls;
-    };
-
     async function handleSubmit(e) {
         e.preventDefault();
 
         const id = user?.userId;
-        
-        // Upload files first if any
-        let evidenceUrls = [];
-        if (uploadedFiles.length > 0) {
-            try {
-                console.log("📤 Uploading", uploadedFiles.length, "file(s)...");
-                evidenceUrls = await uploadFiles(uploadedFiles);
-                console.log("✅ Uploaded files, URLs:", evidenceUrls);
-            } catch (error) {
-                console.error("❌ File upload failed:", error);
-                setErrorNotification({
-                    type: "error",
-                    message: "Failed to upload files.",
-                    subText: error.message || "Please try again later."
-                });
-                return;
-            }
-        }
         
         const payload = {
             claimDate: new Date(formData.claimDate).toISOString(),
@@ -491,8 +549,14 @@ export default function CreateClaimRequestsPage() {
                     : new Date().toISOString(),
             })),
             actionType: formData.actionType,
-            evidenceUrls: evidenceUrls, // Add uploaded file URLs
+            claimImages: uploadedImages.map((img, index) => ({
+              imageUrl: img.url,
+              orderIndex: index,
+              description: img.description || '', // Use actual description from input
+            }))
         };
+        
+        console.log("📤 Sending createClaim payload:", JSON.stringify(payload, null, 2));
 
         try {
             const result = await createClaim(id, payload);
@@ -504,16 +568,41 @@ export default function CreateClaimRequestsPage() {
                 });
                 navigate("/sc-technician/claims");
             } else {
+                console.error("❌ Create claim failed:", result.error);
+                console.error("❌ Error status:", result.error?.response?.status);
+                console.error("❌ Error data:", result.error?.response?.data);
+                
+                // Log validation errors in detail
+                if (result.error?.response?.data?.errors) {
+                    console.error("📋 Validation errors:", JSON.stringify(result.error.response.data.errors, null, 2));
+                    Object.entries(result.error.response.data.errors).forEach(([field, messages]) => {
+                        console.error(`   • ${field}:`, Array.isArray(messages) ? messages.join(', ') : messages);
+                    });
+                }
+                
                 setFailNotification({
                     type: "failed",
                     message: "Failed to create claim request.",
+                    subText: result.error?.response?.data?.title || result.error?.message || "Please check the form and try again."
                 });
             }
         } catch (err) {
+            console.error("❌ Create claim exception:", err);
+            console.error("❌ Error status:", err?.response?.status);
+            console.error("❌ Error data:", err?.response?.data);
+            
+            // Log validation errors in detail
+            if (err?.response?.data?.errors) {
+                console.error("📋 Validation errors:", JSON.stringify(err.response.data.errors, null, 2));
+                Object.entries(err.response.data.errors).forEach(([field, messages]) => {
+                    console.error(`   • ${field}:`, Array.isArray(messages) ? messages.join(', ') : messages);
+                });
+            }
+            
             setErrorNotification({
                 type: "error",
                 message: "Failed to create claim request.",
-                subText: err || "Please try again later."
+                subText: err?.response?.data?.title || err?.message || "Please try again later."
             });
         }
     }
@@ -782,10 +871,9 @@ export default function CreateClaimRequestsPage() {
                             <CameraIcon size={20} weight="bold" /> Evidence Upload
                         </div>
                         <div 
-                            className="flex flex-col items-center justify-between border-dashed border-2 border-gray-200 rounded-md p-8 text-center cursor-pointer hover:border-indigo-400 transition-colors"
+                            className="flex flex-col items-center justify-between border-dashed border-2 border-gray-200 rounded-md p-8 text-center"
                             onDragOver={handleDragOver}
                             onDrop={handleDrop}
-                            onClick={() => document.getElementById('file-input')?.click()}
                         >
                             <input
                                 id="file-input"
@@ -794,7 +882,7 @@ export default function CreateClaimRequestsPage() {
                                 accept="image/jpeg,image/jpg,image/png,video/mp4,video/quicktime,.jpg,.jpeg,.png,.mp4,.mov"
                                 onChange={handleFileSelect}
                                 className="hidden"
-                                ref={(ref) => setFileInputRef(ref)}
+                                ref={fileInputRef}
                             />
                             <CloudArrowUpIcon size={50} color="#9CA3AF" weight="fill" />
                             <div className="leading-1 mt-4 mb-10">
@@ -806,39 +894,68 @@ export default function CreateClaimRequestsPage() {
                                 </p>
                             </div>
                             {uploadedFiles.length > 0 ? (
-                                <div className="flex items-center justify-center gap-3 mb-3 flex-wrap">
-                                    {uploadedFiles.map((file, index) => (
-                                        <div key={index} className="relative">
-                                            {file.preview ? (
-                                                <img 
-                                                    src={file.preview} 
-                                                    alt={file.name}
-                                                    className="w-20 h-12 object-cover rounded-md border-2 border-gray-300"
-                                                />
-                                            ) : (
-                                                <div className="w-20 h-12 bg-gray-200 rounded-md flex items-center justify-center">
-                                                    <PackageIcon size={20} color="#6B7280" />
+                                <div className="w-full mb-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {uploadedFiles.map((file, index) => (
+                                            <div key={index} className="border-2 border-gray-300 rounded-lg p-4">
+                                                <div className="flex gap-3">
+                                                    {/* Image Preview */}
+                                                    <div className="relative flex-shrink-0">
+                                                        {file.preview ? (
+                                                            <img 
+                                                                src={file.preview} 
+                                                                alt={file.name}
+                                                                className="w-24 h-24 object-cover rounded-md border-2 border-gray-300"
+                                                            />
+                                                        ) : (
+                                                            <div className="w-24 h-24 bg-gray-200 rounded-md flex items-center justify-center">
+                                                                <PackageIcon size={24} color="#6B7280" />
+                                                            </div>
+                                                        )}
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleRemoveFile(index);
+                                                            }}
+                                                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600"
+                                                        >
+                                                            ×
+                                                        </button>
+                                                    </div>
+                                                    
+                                                    {/* Description Input */}
+                                                    <div className="flex-1">
+                                                        <div className="mb-2">
+                                                            <p className="text-xs text-gray-600 mb-1">File: {file.name}</p>
+                                                            <p className="text-xs text-gray-500">
+                                                                Size: {(file.size / 1024).toFixed(2)} KB
+                                                            </p>
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-sm font-medium text-gray-700 mb-1 block">
+                                                                Description
+                                                            </label>
+                                                            <textarea
+                                                                value={uploadedImages[index]?.description || ''}
+                                                                onChange={(e) => handleImageDescriptionChange(index, e.target.value)}
+                                                                placeholder="Add description for this image..."
+                                                                className="w-full p-2 border-2 border-gray-300 rounded-md text-sm focus:border-indigo-500 focus:outline-none resize-none"
+                                                                rows="2"
+                                                            />
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                            )}
-                                            <button
-                                                type="button"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleRemoveFile(index);
-                                                }}
-                                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
-                                            >
-                                                ×
-                                            </button>
-                                        </div>
-                                    ))}
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             ) : (
-                            <div className="flex items-center justify-center gap-3 mb-3">
-                                <div className="w-20 h-12 bg-gray-200 rounded-md" />
-                                <div className="w-20 h-12 bg-gray-200 rounded-md" />
-                                <div className="w-20 h-12 bg-gray-200 rounded-md" />
-                            </div>
+                                <div className="grid grid-cols-3 gap-4 mb-3">
+                                    <div className="aspect-[16/9] rounded-xl bg-gray-100" />
+                                    <div className="aspect-[16/9] rounded-xl bg-gray-100" />
+                                    <div className="aspect-[16/9] rounded-xl bg-gray-100" />
+                                </div>
                             )}
                             <div>
                                 <button
@@ -847,15 +964,25 @@ export default function CreateClaimRequestsPage() {
                                         e.stopPropagation();
                                         document.getElementById('file-input')?.click();
                                     }}
-                                    className="px-4 py-2 rounded-full bg-indigo-600 hover:bg-indigo-700 transition-all text-white cursor-pointer">
-                                    Choose a file
+                                    disabled={uploadingFiles}
+                                    className={`px-4 py-2 rounded-full ${
+                                        uploadingFiles 
+                                            ? 'bg-gray-400 cursor-not-allowed' 
+                                            : 'bg-indigo-600 hover:bg-indigo-700 cursor-pointer'
+                                    } transition-all text-white`}>
+                                    {uploadingFiles ? 'Uploading...' : 'Choose a file'}
                                 </button>
                                 <p className="mt-3 text-sm text-[#6B7280]">
                                     Max file size: 10MB per file. Supported formats: JPG, PNG, MP4, MOV
                                 </p>
+                                {uploadError && (
+                                    <p className="mt-2 text-sm text-red-600">
+                                        Error: {uploadError}
+                                    </p>
+                                )}
                                 {uploadedFiles.length > 0 && (
                                     <p className="mt-2 text-sm text-green-600">
-                                        {uploadedFiles.length} file(s) selected
+                                        {uploadedFiles.length} file(s) uploaded to cloud storage
                                     </p>
                                 )}
                             </div>

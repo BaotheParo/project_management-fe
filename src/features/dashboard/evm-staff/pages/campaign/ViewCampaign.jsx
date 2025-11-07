@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeftIcon } from "@phosphor-icons/react";
-import ConfirmDialog from "../../../components/system-components/ConfirmDialog.jsx";
+import ConfirmDialog from "../../components/ConfirmDialog.jsx";
 
 export default function ViewCampaign() {
   const { id } = useParams(); // Lấy id từ URL

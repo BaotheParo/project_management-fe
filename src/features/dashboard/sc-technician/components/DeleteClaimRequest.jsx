@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { useWarrantyClaims } from "../../../../api/useWarrantyClaims";
+import { useAuth } from "../../../../app/AuthProvider";
 
 // Delete confirmation modal (rendered at bottom)
 function DeleteModal({ row, onCancel, onSuccess, onError }) {
-  const { deleteClaim } = useWarrantyClaims();
+  const { user } = useAuth();
+  const { deleteClaim } = useWarrantyClaims(user?.userId);
   const [loading, setLoading] = useState(false);
 
   if (!row) return null;
