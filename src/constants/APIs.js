@@ -16,6 +16,8 @@ export const CLAIM_API = {
     APPROVE_CLAIM: "/claims/:claimId/approve",
     REJECT_CLAIM: "/claims/:claimId/reject",
     UPDATE_STATUS: "/claims/:claimId/status",
+    UPLOAD_EVIDENCE: "/claims/:claimId/evidence",
+    UPLOAD_FILE: "/upload",
 }
 
 export const TODO_WORK_API = {
