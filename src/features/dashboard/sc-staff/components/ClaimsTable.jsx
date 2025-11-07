@@ -20,6 +20,8 @@ export default function ClaimsTable({
             <th className="text-left px-8 py-3 text-base font-medium text-[#686262]">Claim ID</th>
             <th className="text-left px-8 py-3 text-base font-medium text-[#686262]">Vehicle</th>
             <th className="text-left px-8 py-3 text-base font-medium text-[#686262]">Vin ID</th>
+            <th className="text-left px-8 py-3 text-base font-medium text-[#686262]">Requester</th>
+            <th className="text-left px-8 py-3 text-base font-medium text-[#686262]">Status</th>
             <th className="text-left px-8 py-3 text-base font-medium text-[#686262]">Sent Date</th>
             <th className="text-left px-8 py-3 text-base font-medium text-[#686262]">Actions</th>
           </tr>
@@ -30,6 +32,17 @@ export default function ClaimsTable({
               <td className="px-8 py-3 text-[13px] font-medium text-black">{claim.id}</td>
               <td className="px-8 py-3 text-[13px] font-medium text-black">{claim.vehicle}</td>
               <td className="px-8 py-3 text-[13px] font-medium text-black">{claim.vin}</td>
+              <td className="px-8 py-3 text-[13px] font-medium text-black">{claim.requester}</td>
+              <td className="px-8 py-3">
+                <span className={`px-3 py-1 rounded-full text-[11px] font-semibold ${
+                  claim.statusCode === 0 ? 'bg-[#FFF1C9] text-[#E29A00]' :
+                  claim.statusCode === 1 ? 'bg-[#E8F5E9] text-[#54C020]' :
+                  claim.statusCode === 2 ? 'bg-[#FFE4E4] text-[#FF3232]' :
+                  'bg-gray-100 text-gray-600'
+                }`}>
+                  {claim.status}
+                </span>
+              </td>
               <td className="px-8 py-3 text-[13px] font-medium text-black">{claim.date}</td>
               <td className="px-8 py-3">
                 <ActionDropdown
