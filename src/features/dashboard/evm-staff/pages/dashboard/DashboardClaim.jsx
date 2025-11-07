@@ -3,24 +3,20 @@
 // import { ArrowLeftIcon } from "@phosphor-icons/react";
 // import { useWarrantyClaims } from "../../../../../api/useWarrantyClaims";
 // import Loader from "../../../../../components/Loader";
-// import { usePartApi } from "../../../../../api/usePartApi";
 
 // const DashboardClaim = () => {
 //   const navigate = useNavigate();
 //   const { id } = useParams();
-//   // Use the ID from URL
 //   const claimId = id;
 
-  
 //   useEffect(() => {
 //     if (id) {
 //       fetchClaimById(id);
 //     }
 //     // eslint-disable-next-line react-hooks/exhaustive-deps
 //   }, [id]);
-
+  
 //   const { row, fetchClaimById, loading, error } = useWarrantyClaims();
-//   const { part, partLoading, partError, fetchPartsByVin } = usePartApi();
 
 //   const handleBack = () => {
 //     navigate("/evm-staff");
@@ -31,6 +27,9 @@
 //     return (
 //       <p className="text-red-500">Error loading claims: {error.message}</p>
 //     );
+
+//   // Get parts array from row and filter out null/undefined items
+//   const parts = (row.parts || []).filter(part => part !== null && part !== undefined);
 
 //   return (
 //     <div className="w-full">
@@ -77,12 +76,6 @@
 //                 {row.serviceCenterName}
 //               </div>
 //             </div>
-//             {/* <div>
-//               <div className="text-sm font-medium text-gray-500 mb-1">
-//                 Manufacturer
-//               </div>
-//               <div className="text-lg font-medium text-gray-900">VinFast</div>
-//             </div> */}
 //           </div>
 //         </div>
 
@@ -126,36 +119,64 @@
 //           </div>
 //         </div>
 
-//         <div className="rounded-2xl border-2 border-gray-200 p-6">
-//           <h3 className="text-xl font-semibold text-gray-800 mb-6">
-//             Part Information
-//           </h3>
-//           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-//             {/* <div>
-//               <div className="text-sm font-medium text-gray-500 mb-1">
-//                 Part Name
-//               </div>
-//               <div className="text-lg font-medium text-gray-900">
-//                 Battery
-//               </div>
-//             </div>
-//             <div>
-//               <div className="text-sm font-medium text-gray-500 mb-1">
-//                 Part Code
-//               </div>
-//               <div className="text-lg font-medium text-gray-900">
-//                 PIN12334SD
-//               </div>
-//             </div>
-//             <div>
-//               <div className="text-sm font-medium text-gray-500 mb-1">
-//                 Replacement Date
-//               </div>
-//               <div className="text-lg font-medium text-gray-900">
-//                 05/16/2025
-//               </div>
-//             </div> */}
+//         {/* Parts Information - Now displays all parts from API */}
+//         <div className="rounded-2xl border-2 border-gray-200 p-6 md:col-span-2">
+//           <div className="flex items-center justify-between mb-6">
+//             <h3 className="text-xl font-semibold text-gray-800">
+//               Parts Information
+//             </h3>
+//             <span className="px-3 py-1 bg-indigo-100 text-indigo-700 text-sm font-medium rounded-full">
+//               {parts.length} {parts.length === 1 ? 'Part' : 'Parts'}
+//             </span>
 //           </div>
+//           {parts.length === 0 ? (
+//             <div className="text-center py-8 text-gray-500">
+//               No parts associated with this claim
+//             </div>
+//           ) : (
+//             <div className="space-y-3">
+//               {parts.map((part, index) => (
+//                 <div
+//                   key={part.partItemId || index}
+//                   className="p-4 bg-white border-2 border-gray-200 rounded-lg hover:border-indigo-300 transition-colors"
+//                 >
+//                   <div className="flex items-start gap-4">
+//                     <div className="flex-shrink-0 w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+//                       <span className="text-indigo-700 font-semibold text-sm">
+//                         #{index + 1}
+//                       </span>
+//                     </div>
+//                     <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4">
+//                       <div>
+//                         <div className="text-xs font-medium text-gray-500 mb-1">
+//                           Part Name
+//                         </div>
+//                         <div className="text-sm font-semibold text-gray-900">
+//                           {part.partName || "N/A"}
+//                         </div>
+//                       </div>
+//                       <div>
+//                         <div className="text-xs font-medium text-gray-500 mb-1">
+//                           Part Number
+//                         </div>
+//                         <div className="text-sm font-medium text-gray-900">
+//                           {part.partNumber || "N/A"}
+//                         </div>
+//                       </div>
+//                       <div>
+//                         <div className="text-xs font-medium text-gray-500 mb-1">
+//                           Part ID
+//                         </div>
+//                         <div className="text-sm font-medium text-gray-600 truncate" title={part.partId}>
+//                           {part.partId ? `${part.partId.substring(0, 20)}...` : "N/A"}
+//                         </div>
+//                       </div>
+//                     </div>
+//                   </div>
+//                 </div>
+//               ))}
+//             </div>
+//           )}
 //         </div>
 
 //         <div className="rounded-2xl border-2 border-gray-200 p-6">
@@ -190,10 +211,17 @@
 //             Service Center Request
 //           </h3>
 //           <div className="space-y-4">
+//             {row.actionDisplay && (
+//               <div className="mb-4 p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
+//                 <p className="text-sm font-medium text-indigo-900">
+//                   {row.actionDisplay}
+//                 </p>
+//               </div>
+//             )}
 //             <div className="flex items-center gap-3">
 //               <input
 //                 type="checkbox"
-//                 checked={row.action === 0}
+//                 checked={(row.action & 1) !== 0}
 //                 disabled
 //                 className="w-4 h-4 text-indigo-600 rounded border-gray-300"
 //               />
@@ -204,7 +232,7 @@
 //             <div className="flex items-center gap-3">
 //               <input
 //                 type="checkbox"
-//                 checked={row.action === 1}
+//                 checked={(row.action & 2) !== 0}
 //                 disabled
 //                 className="w-4 h-4 text-indigo-600 rounded border-gray-300"
 //               />
@@ -215,7 +243,7 @@
 //             <div className="flex items-center gap-3">
 //               <input
 //                 type="checkbox"
-//                 checked={row.action === 2}
+//                 checked={(row.action & 4) !== 0}
 //                 disabled
 //                 className="w-4 h-4 text-indigo-600 rounded border-gray-300"
 //               />
@@ -280,25 +308,43 @@ const DashboardClaim = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const claimId = id;
+  
+  // ✅ Hook must be called BEFORE useEffect
+  const { row, fetchClaimById, loading, error } = useWarrantyClaims();
 
   useEffect(() => {
+    console.log("DashboardClaim mounted with id:", id);
     if (id) {
+      console.log("Fetching claim by ID:", id);
       fetchClaimById(id);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
-  
-  const { row, fetchClaimById, loading, error } = useWarrantyClaims();
+  }, [id]); // Removed fetchClaimById from dependencies
 
   const handleBack = () => {
     navigate("/evm-staff");
   };
+
+  console.log("DashboardClaim render - loading:", loading, "error:", error, "row:", row);
 
   if (loading) return <Loader />;
   if (error)
     return (
       <p className="text-red-500">Error loading claims: {error.message}</p>
     );
+
+  if (!row) {
+    return (
+      <div className="p-8">
+        <p className="text-gray-600">No claim data found.</p>
+        <button
+          onClick={handleBack}
+          className="mt-4 px-6 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+        >
+          Back to Dashboard
+        </button>
+      </div>
+    );
+  }
 
   // Get parts array from row and filter out null/undefined items
   const parts = (row.parts || []).filter(part => part !== null && part !== undefined);
@@ -537,9 +583,10 @@ const DashboardClaim = () => {
             </p>
             <div className="flex flex-col gap-3">
               <button
-                onClick={() =>
-                  navigate(`/evm-staff/claim/${claimId}/part-supply`)
-                }
+                onClick={() => {
+                  console.log("Navigating to part-supply with claimId:", claimId);
+                  navigate(`/evm-staff/claim/part-supply/${claimId}`);
+                }}
                 className="w-full bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors font-medium cursor-pointer"
               >
                 Approve Claim

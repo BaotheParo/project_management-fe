@@ -290,7 +290,7 @@ const router = createBrowserRouter([
         ),
       },
       {
-        path: "claim/:id/part-supply",
+        path: "claim/part-supply/:id",
         element: (
           <Suspense fallback={<Loader />}>
             <PartSupplyPage />

@@ -193,18 +193,122 @@ import { useWarrantyClaims } from "../../../../../api/useWarrantyClaims";
 import Loader from "../../../../../components/Loader";
 
 export default function PartSupply() {
-  const { claimId } = useParams();
-  const { row, fetchClaimById, loading, error } = useWarrantyClaims();
+  const { id } = useParams(); // Get id from URL params
+  const navigate = useNavigate();
+  
+  // ✅ Added updateClaim to destructured values
+  const { row, fetchClaimById, updateClaim, loading, error } = useWarrantyClaims();
 
   useEffect(() => {
-    if (claimId) fetchClaimById(claimId);
-  }, [claimId]);
+    console.log("PartSupply mounted with claimId:", id);
+    if (id) {
+      console.log("Fetching claim data for:", id);
+      fetchClaimById(id);
+    }
+  }, [id]);
 
-  if (loading) return <Loader />;
-  if (error) return <p className="text-red-500">Error: {error.message}</p>;
-  if (!row) return <p>No claim data found.</p>;
+  console.log("PartSupply render - loading:", loading, "error:", error, "row:", row);
+
+  // ✅ Added handleConfirm function
+  const handleConfirm = async () => {
+    // Show confirmation dialog
+    const userConfirmed = window.confirm(
+      `Are you sure you want to approve this part supply request?\n\n` +
+      `Claim ID: ${row.claimId}\n` +
+      `Vehicle: ${row.vehicleName}\n` +
+      `VIN: ${row.vin}\n` +
+      `Parts: ${parts.length} item(s)\n\n` +
+      `This will update the claim status to "Accepted".`
+    );
+
+    if (!userConfirmed) {
+      console.log("User cancelled confirmation");
+      return;
+    }
+
+    const confirmButton = document.getElementById('confirm-button');
+    const originalContent = confirmButton?.innerHTML;
+    try {
+      console.log("🔵 Confirming part supply for claim:", id);
+      
+      // Show loading state on button
+      if (confirmButton) {
+        confirmButton.disabled = true;
+        confirmButton.innerHTML = '<span class="animate-pulse">Processing...</span>';
+      }
+
+      // Prepare the payload to update claim status to accepted
+      // Status codes: 0 = Pending, 1 = In Progress, 2 = Accepted, 3 = Rejected, 4 = Completed
+      const payload = {
+        claimStatus: 1, // 1 = Accepted/Approved
+      };
+
+      console.log("📦 Updating claim with payload:", payload);
+      
+      // Call the updateClaim function
+      await updateClaim(id, payload);
+      
+      console.log("✅ Claim updated successfully");
+      
+      // Show success message
+      alert("✅ Part supply request confirmed!\n\nClaim status has been updated to Accepted.");
+      
+      // Navigate back to claim details
+      navigate(`/evm-staff/claim/${id}`);
+      
+    } catch (error) {
+      console.error("❌ Failed to update claim:", error);
+      
+      // Show error message
+      const errorMessage = error.response?.data?.message || error.message || 'Unknown error';
+      alert(`❌ Failed to confirm part supply:\n\n${errorMessage}\n\nPlease try again or contact support.`);
+      
+      // Re-enable button and restore original content
+      const confirmButton = document.getElementById('confirm-button');
+      if (confirmButton && originalContent) {
+        confirmButton.disabled = false;
+        confirmButton.innerHTML = originalContent;
+      }
+    }
+  };
+
+  if (loading) {
+    console.log("PartSupply - showing loader");
+    return <Loader />;
+  }
+  
+  if (error) {
+    console.error("PartSupply - error:", error);
+    return (
+      <div className="p-8">
+        <p className="text-red-500 text-lg">Error: {error.message}</p>
+        <button
+          onClick={() => navigate(`/evm-staff/claim/${id}`)}
+          className="mt-4 px-6 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+        >
+          Go Back
+        </button>
+      </div>
+    );
+  }
+  
+  if (!row) {
+    console.warn("PartSupply - no row data found");
+    return (
+      <div className="p-8">
+        <p className="text-gray-600 text-lg">No claim data found for ID: {id}</p>
+        <button
+          onClick={() => navigate(`/evm-staff/claim/${id}`)}
+          className="mt-4 px-6 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+        >
+          Go Back
+        </button>
+      </div>
+    );
+  }
 
   const parts = (row?.parts || []).filter(Boolean);
+  console.log("PartSupply - parts:", parts);
 
   return (
     <div className="w-full">
@@ -214,10 +318,9 @@ export default function PartSupply() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Part Supply</h1>
             <p className="text-gray-500">
-              Fill out the form below to submit a new warranty claim request for
-              electric vehicle components.
+              Review the claim details below and confirm part supply approval.
             </p>
-            <p className="text-gray-500">Claim ID: {row.claimId || claimId}</p>
+            <p className="text-gray-500">Claim ID: {row.claimId || id}</p>
           </div>
         </div>
       </div>
@@ -372,19 +475,16 @@ export default function PartSupply() {
       {/* Action Buttons */}
       <div className="mt-8 flex justify-end gap-4">
         <button
-          onClick={() => navigate(`/evm-staff/claim/${claimId}`)}
+          onClick={() => navigate(`/evm-staff/claim/${id}`)}
           className="flex items-center gap-2 px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors"
         >
           <XIcon size={20} />
           <span>Cancel</span>
         </button>
         <button
-          onClick={() => {
-            // Add confirmation logic here
-            alert("Part supply request confirmed!");
-            navigate(`/evm-staff/claim/${claimId}`);
-          }}
-          className="flex items-center gap-2 px-6 py-3 bg-indigo-500 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors"
+          onClick={handleConfirm}
+          id="confirm-button"
+          className="flex items-center gap-2 px-6 py-3 bg-indigo-500 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <CheckIcon size={20} />
           <span>Confirm</span>
