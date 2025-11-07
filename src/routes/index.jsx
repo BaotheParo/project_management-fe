@@ -36,6 +36,13 @@ const SCTechnicianEditClaimRequestsPage = lazy(() =>
 const SCTechnicianCreateClaimRequestsPage = lazy(() =>
   import("../features/dashboard/sc-technician/pages/CreateClaimRequestPage")
 );
+// Campaigns for SC-Technician
+const SCTechnicianCampaignsPage = lazy(() =>
+  import("../features/dashboard/sc-technician/pages/CampaignsPage")
+);
+const SCTechnicianCampaignDetailPage = lazy(() =>
+  import("../features/dashboard/sc-technician/pages/CampaignDetailPage")
+);
 const SCTechnicianTodoWorksPage = lazy(() =>
   import("../features/dashboard/sc-technician/pages/WorksPage")
 );
@@ -161,6 +168,22 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<Loader />}>
             <SCTechnicianClaimRequestsPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "campaigns",
+        element: (
+          <Suspense fallback={<Loader />}>
+            <SCTechnicianCampaignsPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "campaigns/view-detail/:id",
+        element: (
+          <Suspense fallback={<Loader />}>
+            <SCTechnicianCampaignDetailPage />
           </Suspense>
         ),
       },
