@@ -8,10 +8,63 @@ export const useWarrantyClaims = (userId) => {
     const [loading, setLoading] = useState(false); // Changed to false - only set true when fetching
     const [error, setError] = useState(null);
 
+    // Fetch all claims
+    const fetchClaims = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await axiousInstance.get(`/claims`); // GET /api/claims
+
+            const data = Array.isArray(response.data)
+                ? response.data
+                : response.data?.data || [];
+
+            if (!Array.isArray(data)) {
+                console.warn("Unexpected response structure:", response.data);
+                setRows([]);
+                return;
+            }
+
+            const formattedClaims = response.data.map((claim) => ({
+                claimId: claim.claimId,
+                claimDate: new Date(claim.claimDate).toISOString().split("T")[0],
+                vin: claim.vin,
+                claimStatus: getClaimStatusLabel(claim.claimStatus),
+                issueDescription: claim.issueDescription,
+                vehicleName: claim.vehicleName || "Unknown",
+                purchaseDate: new Date(claim.purchaseDate).toISOString().split("T")[0],
+                mileAge: claim.mileage,
+                parts: claim.parts || [],
+                totalCost: claim.totalCost,
+                policyName: claim.policyName,
+                serviceCenterName: claim.serviceCenterName,
+                userId: claim.userId,
+                technicianName: claim.technicianName,
+                isActive: claim.isActive,
+            }));
+
+            setRows(formattedClaims);
+        } catch (err) {
+            console.error("Fetch claims failed", err)
+            setError(err);
+            // fallback mock data
+            setRows([
+                {
+                    id: "RO-001",
+                    vehicle: "VinFast VF-3",
+                    vin: "LSV1E7AL0MC123456",
+                    status: "In Progress",
+                    claimDate: "2025-10-25",
+                },
+            ]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     // Fetch all claims for specific technician
-    // Accept an optional uid parameter; default to the hook's userId when omitted.
-    const fetchClaims = async (uid = userId) => {
-        if (!uid) return;
+    const fetchClaimsByTechnician = async (userId) => {
+        if (!userId) return;
         try {
             setLoading(true);
             setError(null);
@@ -120,6 +173,8 @@ export const useWarrantyClaims = (userId) => {
                 policyName: claim.policyName,
                 serviceCenterName: claim.serviceCenterName,
                 technicianName: claim.technicianName,
+                action: claim.action,
+                actionDisplay: claim.actionDisplay,
             };
 
             setRow(formattedClaim);
@@ -164,7 +219,7 @@ export const useWarrantyClaims = (userId) => {
             console.log("📝 Claim ID:", id);
             console.log("📦 Payload:", payload);
             
-            const response = await axiousInstance.put(`/claims/${id}`, payload);
+            const response = await axiousInstance.put(`/claims/${id}/approve`);
             
             console.log("✅ [useWarrantyClaims] Update response:", response);
             console.log("✅ [useWarrantyClaims] Update response data:", JSON.stringify(response, null, 2));
@@ -203,6 +258,34 @@ export const useWarrantyClaims = (userId) => {
         }
     };
 
+    const approveClaim = async (id) => {
+        try {
+            const payload = {
+                claimStatus: 1, // Accepted
+                action: 1
+            };
+            const res = await axiousInstance.put(`/claims/${id}/approve`, payload);
+            return res.data;
+        } catch (err) {
+            console.error("approveClaim error:", err.response?.data || err.message);
+            throw err;
+        }
+    };
+
+    const rejectClaim = async (id) => {
+        try {
+            const payload = {
+                claimStatus: 1, // Rejected
+                action: 1
+            };
+            const res = await axiousInstance.put(`/claims/${id}/reject`, payload);
+            return res.data;
+        } catch (err) {
+            console.error("approveClaim error:", err.response?.data || err.message);
+            throw err;
+        }
+    };
+
     const deleteClaim = async (id) => {
         try {
             await axiousInstance.delete(`/claims/${id}`);
@@ -226,7 +309,10 @@ export const useWarrantyClaims = (userId) => {
         loading,
         error,
         fetchClaims,
+        fetchClaimsByTechnician,
         fetchClaimById,
+        approveClaim,
+        rejectClaim,
         createClaim,
         updateClaim,
         deleteClaim,
