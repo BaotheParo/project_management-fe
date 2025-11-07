@@ -176,7 +176,7 @@ export const useWarrantyClaims = (userId) => {
             console.log("📝 Claim ID:", id);
             console.log("📦 Payload:", payload);
             
-            const response = await axiousInstance.put(`/claims/${id}`, payload);
+            const response = await axiousInstance.put(`/claims/${id}/approve`);
             
             console.log("✅ [useWarrantyClaims] Update response:", response);
             console.log("✅ [useWarrantyClaims] Update response data:", JSON.stringify(response, null, 2));
@@ -215,6 +215,34 @@ export const useWarrantyClaims = (userId) => {
         }
     };
 
+    const approveClaim = async (id) => {
+        try {
+            const payload = {
+                claimStatus: 1, // Accepted
+                action: 1
+            };
+            const res = await axiousInstance.put(`/claims/${id}/approve`, payload);
+            return res.data;
+        } catch (err) {
+            console.error("approveClaim error:", err.response?.data || err.message);
+            throw err;
+        }
+    };
+
+    const rejectClaim = async (id) => {
+        try {
+            const payload = {
+                claimStatus: 1, // Rejected
+                action: 1
+            };
+            const res = await axiousInstance.put(`/claims/${id}/reject`, payload);
+            return res.data;
+        } catch (err) {
+            console.error("approveClaim error:", err.response?.data || err.message);
+            throw err;
+        }
+    };
+
     const deleteClaim = async (id) => {
         try {
             await axiousInstance.delete(`/claims/${id}`);
@@ -240,6 +268,8 @@ export const useWarrantyClaims = (userId) => {
         fetchClaims,
         fetchClaimsByTechnician,
         fetchClaimById,
+        approveClaim,
+        rejectClaim,
         createClaim,
         updateClaim,
         deleteClaim,
