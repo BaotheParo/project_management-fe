@@ -73,9 +73,6 @@ export const useSCStaffClaims = (serviceCenterId) => {
                 requester: claim.technicianName || "Unassigned",
             }));
 
-            // Sort by date (newest first)
-            formattedClaims.sort((a, b) => new Date(b.date) - new Date(a.date));
-
             setClaims(formattedClaims);
             calculateStats(formattedClaims);
         } catch (err) {

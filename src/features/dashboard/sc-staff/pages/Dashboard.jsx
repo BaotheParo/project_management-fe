@@ -48,6 +48,7 @@ export default function Dashboard() {
   const { toggleDropdown, closeDropdown, openDropdown } = useDropdown()
 
   const handleViewDetails = (claimId) => {
+    console.log('🔍 [Dashboard] Navigating to claim detail with ID:', claimId);
     navigate(`/sc-staff/warranty-request/${claimId}`)
     closeDropdown()
   }
