@@ -4,8 +4,9 @@ import { CalendarBlank, Info, Car, Gear, Warning, Camera, Headphones } from 'pho
 import { useWarrantyClaims } from '../../../../api/useWarrantyClaims'
 import { useSCStaffClaims } from '../../../../api/useSCStaffClaims'
 import { useAuth } from '../../../../app/AuthProvider'
+import axiosInstance from '../../../../api/axiousInstance'
 import Loader from '../../../../components/Loader'
-import { SuccessNotification } from '../../../../components/Notification'
+import { SuccessNotification, ErrorNotification } from '../../../../components/Notification'
 
 const InfoCard = ({ icon: Icon, title, children }) => {
   const IconComponent = Icon
@@ -58,6 +59,8 @@ export default function WarrantyRequestDetail() {
   const { user } = useAuth()
   const [selectedRequest, setSelectedRequest] = useState('replacement')
   const [notification, setNotification] = useState(null)
+  const [workOrders, setWorkOrders] = useState([])
+  const [loadingWorkOrders, setLoadingWorkOrders] = useState(true)
 
   // ALL HOOKS MUST BE AT THE TOP - before any early returns
   // Get stats from SC Staff claims hook
@@ -68,27 +71,86 @@ export default function WarrantyRequestDetail() {
 
   // Fetch claim when component mounts or id changes
   useEffect(() => {
+    console.log('🔍 WarrantyRequestDetail - Fetching claim with ID:', id)
     if (id) {
       fetchClaimById(id)
     }
   }, [id, fetchClaimById])
 
-  // Handler for accepting request - just navigate to assign worker
-  // Note: Work orders are created by EVM Staff or backend automatically
-  // SC Staff only assigns technicians to existing work orders
+  // Log claim data when it changes
+  useEffect(() => {
+    console.log('📊 WarrantyRequestDetail - Claim data:', claimData)
+  }, [claimData])
+  
+  // Fetch work orders to check if this claim has a work order
+  useEffect(() => {
+    const fetchWorkOrders = async () => {
+      if (!user?.serviceCenterId) return
+      
+      try {
+        setLoadingWorkOrders(true)
+        const response = await axiosInstance.get(`/work-orders/by-center/${user.serviceCenterId}`)
+        const workOrdersData = Array.isArray(response) ? response : []
+        setWorkOrders(workOrdersData)
+        console.log('📦 Fetched work orders:', workOrdersData)
+      } catch (error) {
+        console.error('❌ Failed to fetch work orders:', error)
+      } finally {
+        setLoadingWorkOrders(false)
+      }
+    }
+    
+    fetchWorkOrders()
+  }, [user?.serviceCenterId])
+
+  // Handler for accepting request - check if work order exists first
   const handleAcceptRequest = () => {
-    console.log('Accepted claim:', claimData.claimId)
+    console.log('✅ SC Staff accepting claim')
+    console.log('📋 Claim ID:', claimData.claimId)
+    
+    // Check if this claim has a work order
+    const hasWorkOrder = workOrders.some(wo => 
+      wo.claimId === claimData.claimId || 
+      wo.claim?.claimId === claimData.claimId ||
+      wo.claim?.id === claimData.claimId
+    )
+    
+    console.log('� Has work order:', hasWorkOrder)
+    console.log('🔍 Work orders:', workOrders)
+    
+    if (!hasWorkOrder) {
+      // Show error notification if no work order exists
+      setNotification({
+        type: 'error',
+        message: 'Cannot accept claim',
+        subText: 'This claim does not have a work order yet. Please contact your administrator or wait for the work order to be created.'
+      })
+      return
+    }
+    
+    // Store accepted claim ID in localStorage
+    const acceptedClaims = JSON.parse(localStorage.getItem('acceptedClaimsBySCStaff') || '[]')
+    console.log('📦 Current accepted claims in localStorage:', acceptedClaims)
+    
+    if (!acceptedClaims.includes(claimData.claimId)) {
+      acceptedClaims.push(claimData.claimId)
+      localStorage.setItem('acceptedClaimsBySCStaff', JSON.stringify(acceptedClaims))
+      console.log('✅ Claim marked as accepted:', claimData.claimId)
+      console.log('✅ Updated localStorage:', acceptedClaims)
+    } else {
+      console.log('⚠️ Claim already accepted')
+    }
     
     // Show success notification
     setNotification({
       type: 'success',
-      message: 'Claim accepted successfully!',
-      subText: 'Redirecting to assign worker page...'
+      message: 'Claim accepted!',
+      subText: 'Work order is now available for assignment...'
     })
     
-    // Navigate after a short delay
+    // Navigate to assign worker page with refresh flag
     setTimeout(() => {
-      navigate('/sc-staff/assign-worker')
+      navigate('/sc-staff/assign-worker', { state: { refresh: true, acceptedClaim: claimData.claimId } })
     }, 1500)
   }
 
@@ -154,8 +216,8 @@ export default function WarrantyRequestDetail() {
     )
   }
 
-  // Show not found if no claim data
-  if (!claimData) {
+  // Show not found if no claim data (only after loading is done and no error)
+  if (!loading && !error && !claimData) {
     return (
       <div className="p-12 w-full">
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
@@ -168,6 +230,15 @@ export default function WarrantyRequestDetail() {
             Back to Dashboard
           </button>
         </div>
+      </div>
+    )
+  }
+
+  // If still no data, show loading (shouldn't happen but safety check)
+  if (!claimData) {
+    return (
+      <div className="p-12 w-full flex justify-center items-center min-h-[400px]">
+        <Loader />
       </div>
     )
   }

@@ -131,6 +131,7 @@ export function useWorkOrders() {
     stats: stats.cards,
     getFilterCount,
     assignTechnician,
+    refetch: refetchWorkOrders, // Add refetch function
     loading: apiLoading,
     error: apiError,
   };

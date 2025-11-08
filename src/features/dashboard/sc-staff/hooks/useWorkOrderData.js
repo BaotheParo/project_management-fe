@@ -37,6 +37,7 @@ export function useWorkOrderData() {
         // Map work orders to the format expected by components
         const mappedWorkOrders = workOrdersData.map((workOrder) => ({
           id: workOrder.workOrderId || workOrder.id,
+          claimId: workOrder.claimId || workOrder.claim?.claimId || workOrder.claim?.id, // Add claimId for filtering
           claimNumber: `RO-${workOrder.workOrderId?.slice(0, 8).toUpperCase() || 'Unknown'}`,
           vehicle: workOrder.vehicleName || workOrder.vehicle || 'Unknown Vehicle',
           status: mapWorkOrderStatus(workOrder.status),
