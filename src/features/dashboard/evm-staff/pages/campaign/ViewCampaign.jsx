@@ -1,31 +1,49 @@
-import React, { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeftIcon } from "@phosphor-icons/react";
 import ConfirmDialog from "../../components/ConfirmDialog.jsx";
+import campaignAPI from "../../../../../api/campaignAPI";
 
 export default function ViewCampaign() {
   const { id } = useParams(); // Lấy id từ URL
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const [campaign, setCampaign] = useState(location.state?.campaign || null);
+  const [loading, setLoading] = useState(!location.state?.campaign); // Chỉ loading nếu ko có data
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    // Chỉ fetch khi không có campaign
+    // Hoặc khi 'id' trên URL không khớp với 'id' của campaign đang có
+    if (!campaign || (campaign.campaignId || campaign.id) !== id) {
+      const fetchCampaign = async () => {
+        setLoading(true);
+        try {
+          const fetchedCampaign = await campaignAPI.getCampaignById(id);
+          setCampaign(fetchedCampaign); // Lưu data vừa fetch
+          setError(null);
+        } catch (err) {
+          console.error("Failed to fetch campaign:", err);
+          setError(err.message || "Failed to load campaign data");
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchCampaign();
+    }
+  }, [id, campaign]); // Chạy lại nếu 'id' trên URL thay đổi
 
   const handleBack = () => {
     navigate("/evm-staff/campaign");
   };
 
   // Sample campaign data shown on this page. In real app, fetch by id.
-  const campaignData = {
-    id,
-    title: "Summer Promotion",
-    status: "Active",
-    startDate: "July 21, 2024",
-    endDate: "August 21, 2024",
-    description:
-      "Campaign description will be displayed here. You can fetch the actual campaign data using the ID.",
-  };
 
   const handleEdit = () => {
-    // Navigate to edit page and pass campaign data in route state
     navigate(`/evm-staff/campaign/${id}/edit`, {
-      state: { campaign: campaignData },
+      state: { campaign: campaign }, // Gửi đi data campaign (đã fetch hoặc từ state)
     });
   };
 
@@ -38,12 +56,63 @@ export default function ViewCampaign() {
     setDeleteDialog({ isOpen: true, campaignId: id });
   };
 
-  const confirmDelete = () => {
-    // TODO: call delete API here
-    console.log("Deleting campaign from View page:", deleteDialog.campaignId);
-    setDeleteDialog({ isOpen: false, campaignId: null });
-    // After delete, navigate back to campaign list
-    navigate("/evm-staff/campaign");
+  const confirmDelete = async () => {
+    // Thêm 'async'
+    try {
+      // 4. Gọi API delete
+      await campaignAPI.deleteCampaign(deleteDialog.campaignId);
+
+      // 5. Thông báo thành công (tùy chọn)
+      alert(`Campaign ${deleteDialog.campaignId} đã được xóa thành công.`);
+
+      // 6. Đóng hộp thoại
+      setDeleteDialog({ isOpen: false, campaignId: null });
+
+      // 7. Điều hướng về trang danh sách
+      navigate("/evm-staff/campaign");
+    } catch (err) {
+      console.error("Delete failed", err);
+      // 8. Báo lỗi và đóng hộp thoại
+      alert(`Lỗi khi xóa campaign: ${err.message || "Unknown error"}`);
+      setDeleteDialog({ isOpen: false, campaignId: null });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="p-6 text-center text-gray-500">
+        Loading campaign details...
+      </div>
+    );
+  }
+  if (error) {
+    return <div className="p-6 text-center text-red-500">Error: {error}</div>;
+  }
+  if (!campaign) {
+    return (
+      <div className="p-6 text-center text-gray-500">Campaign not found.</div>
+    );
+  }
+  const formatDate = (iso) => {
+    try {
+      return new Date(iso).toLocaleDateString();
+    } catch {
+      return iso || "-";
+    }
+  };
+
+  const getStatusLabel = (status) => {
+    if (status === 0) return "Active";
+    if (status === 1) return "Completed";
+    if (status === 2) return "Pending";
+    return "Unknown";
+  };
+  const statusLabel = getStatusLabel(campaign.status);
+  const statusColorMap = {
+    Active: "bg-green-100 text-green-700",
+    Completed: "bg-blue-100 text-blue-700",
+    Pending: "bg-yellow-100 text-yellow-700",
+    Unknown: "bg-gray-100 text-gray-700",
   };
 
   return (
@@ -60,7 +129,9 @@ export default function ViewCampaign() {
               </button>
               <h1 className="text-3xl font-bold">Campaign Details</h1>
             </div>
-            <p className="text-gray-500">Viewing details for Campaign {id}</p>
+            <p className="text-gray-500">
+              Viewing details for Campaign: {campaign.campaignName}
+            </p>
           </div>
 
           {/* Edit and Delete buttons on the right */}
@@ -87,21 +158,25 @@ export default function ViewCampaign() {
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <p className="text-sm text-gray-500 mb-1">Campaign ID</p>
-                <p className="font-medium">{campaignData.id}</p>
+                <p className="font-medium">
+                  {campaign.campaignId || campaign.id}
+                </p>
               </div>
               <div>
                 <p className="text-sm text-gray-500 mb-1">Status</p>
-                <span className="px-3 py-1 text-sm font-medium rounded-full bg-green-100 text-green-700">
-                  {campaignData.status}
+                <span
+                  className={`px-3 py-1 text-sm font-medium rounded-full ${statusColorMap[statusLabel]}`}
+                >
+                  {statusLabel}
                 </span>
               </div>
               <div>
                 <p className="text-sm text-gray-500 mb-1">Start Date</p>
-                <p className="font-medium">{campaignData.startDate}</p>
+                <p className="font-medium">{formatDate(campaign.startDate)}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500 mb-1">End Date</p>
-                <p className="font-medium">{campaignData.endDate}</p>
+                <p className="font-medium">{formatDate(campaign.endDate)}</p>
               </div>
             </div>
           </div>
@@ -110,7 +185,7 @@ export default function ViewCampaign() {
           <div>
             <h2 className="text-xl font-bold mb-4">Description</h2>
             <p className="text-gray-600">
-              {campaignData.description} ID: {campaignData.id}
+              {campaign.description || "No description provided."}
             </p>
           </div>
         </div>

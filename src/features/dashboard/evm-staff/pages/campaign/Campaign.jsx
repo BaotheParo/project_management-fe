@@ -139,7 +139,16 @@ export default function Campaign() {
 
   const handleView = (campaignId) => {
     setActiveMenu(null);
-    navigate(`/evm-staff/campaign/${campaignId}/view`);
+
+    // 1. Tìm chính xác object campaign từ trong state 'campaigns'
+    const campaignToView = campaigns.find(
+      (c) => (c.campaignId || c.id) === campaignId
+    );
+
+    // 2. Điều hướng và đính kèm 'campaignToView' vào state
+    navigate(`/evm-staff/campaign/${campaignId}/view`, {
+      state: { campaign: campaignToView }, // Đính kèm object campaign
+    });
   };
 
   const handleDelete = (campaignId) => {
@@ -149,54 +158,23 @@ export default function Campaign() {
 
   const confirmDelete = async () => {
     try {
-      // TODO: Uncomment when campaignAPI is created
-      // await campaignAPI.deleteCampaign(deleteDialog.campaignId);
+      // 1. Gọi API delete
+      await campaignAPI.deleteCampaign(deleteDialog.campaignId);
 
-      // Tạm thời chỉ xóa ở local
-      setCampaigns((prev) =>
-        prev.filter((c) => c.campaignId !== deleteDialog.campaignId)
-      );
+      // 2. Thông báo thành công (tùy chọn)
+      alert(`Campaign ${deleteDialog.campaignId} đã được xóa thành công.`);
 
-      // CẬP NHẬT LẠI STATS SAU KHI XÓA
-      // (Cách tốt hơn là gọi lại fetchCampaigns() nếu API đã hoạt động)
-      const newCampaigns = campaigns.filter(
-        (c) => c.campaignId !== deleteDialog.campaignId
-      );
-      const total = newCampaigns.length;
-      const active = newCampaigns.filter((c) => c.status === 0).length;
-      const completed = newCampaigns.filter((c) => c.status === 1).length;
-      const pending = newCampaigns.filter((c) => c.status === 2).length;
-
-      setCampaignStats([
-        {
-          id: 1,
-          title: "Total Campaigns",
-          value: total.toString(),
-          subtitle: "All time",
-        },
-        {
-          id: 2,
-          title: "Active Campaigns",
-          value: active.toString(),
-          subtitle: "Currently running",
-        },
-        {
-          id: 3,
-          title: "Completed Campaigns",
-          value: completed.toString(),
-          subtitle: "Finished",
-        },
-        {
-          id: 4,
-          title: "Pending Campaigns",
-          value: pending.toString(),
-          subtitle: "Awaiting start",
-        },
-      ]);
-
+      // 3. Đóng hộp thoại
       setDeleteDialog({ isOpen: false, campaignId: null });
+
+      // 4. Tải lại toàn bộ dữ liệu (QUAN TRỌNG)
+      // Thay vì điều hướng (navigate), chúng ta gọi lại fetchCampaigns()
+      // để cập nhật lại danh sách VÀ các thẻ thống kê (stats).
+      await fetchCampaigns();
     } catch (err) {
       console.error("Delete failed", err);
+      // 5. Báo lỗi và đóng hộp thoại
+      alert(`Lỗi khi xóa campaign: ${err.message || "Unknown error"}`);
       setDeleteDialog({ isOpen: false, campaignId: null });
     }
   };
