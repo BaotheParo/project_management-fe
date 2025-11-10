@@ -59,6 +59,7 @@ export const useSCStaffClaims = (serviceCenterId) => {
             const formattedClaims = data.map((claim) => ({
                 id: claim.claimId,
                 date: new Date(claim.claimDate).toISOString().split("T")[0],
+                claimDate: new Date(claim.claimDate), // Keep full date for sorting
                 vin: claim.vin,
                 status: getClaimStatusLabel(claim.claimStatus),
                 statusCode: claim.claimStatus,
@@ -73,8 +74,22 @@ export const useSCStaffClaims = (serviceCenterId) => {
                 requester: claim.technicianName || "Unassigned",
             }));
 
-            setClaims(formattedClaims);
-            calculateStats(formattedClaims);
+            // Sort claims: Accepted (status 1) first, keep backend order (most recently approved)
+            // Separate accepted and non-accepted claims
+            const acceptedClaims = formattedClaims.filter(claim => claim.statusCode === 1);
+            const otherClaims = formattedClaims.filter(claim => claim.statusCode !== 1);
+            
+            // Keep accepted claims in backend order - backend already sorts by approval order
+            // No sorting needed for accepted claims
+            
+            // Sort other claims by date descending
+            otherClaims.sort((a, b) => b.claimDate - a.claimDate);
+            
+            // Combine: accepted first, then others
+            const sortedClaims = [...acceptedClaims, ...otherClaims];
+
+            setClaims(sortedClaims);
+            calculateStats(sortedClaims);
         } catch (err) {
             console.error("Fetch claims by service center failed:", err);
             setError(err);
