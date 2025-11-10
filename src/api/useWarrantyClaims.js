@@ -68,7 +68,7 @@ export const useWarrantyClaims = (userId) => {
         try {
             setLoading(true);
             setError(null);
-            const response = await axiousInstance.get(`/claims/user/${uid}`); // GET /api/claims
+            const response = await axiousInstance.get(`/claims/user/${userId}`); // GET /api/claims/user/{userId}
 
             const data = Array.isArray(response.data)
                 ? response.data
@@ -109,18 +109,26 @@ export const useWarrantyClaims = (userId) => {
 
             setRows(formattedClaims);
         } catch (err) {
-            console.error("Fetch claims failed", err)
-            setError(err);
-            // fallback mock data
-            setRows([
-                {
-                    id: "RO-001",
-                    vehicle: "VinFast VF-3",
-                    vin: "LSV1E7AL0MC123456",
-                    status: "In Progress",
-                    claimDate: "2025-10-25",
-                },
-            ]);
+            console.error("❌ [useWarrantyClaims] Fetch claims by technician failed:", err);
+            console.error("❌ Error details:", {
+                message: err.message,
+                status: err.response?.status,
+                statusText: err.response?.statusText,
+                data: err.response?.data,
+            });
+            
+            // Set error with more details
+            const errorWithDetails = {
+                ...err,
+                code: err.response?.status || err.code,
+                message: err.response?.status === 523 
+                    ? "Backend server is unreachable (523)"
+                    : err.message || "Failed to fetch claims",
+            };
+            setError(errorWithDetails);
+            
+            // Don't set fallback data on network errors - let user see the error
+            setRows([]);
         } finally {
             setLoading(false);
         }
@@ -231,7 +239,8 @@ export const useWarrantyClaims = (userId) => {
             console.log("📝 Claim ID:", id);
             console.log("📦 Payload:", payload);
             
-            const response = await axiousInstance.put(`/claims/${id}/approve`);
+            // Use PUT /claims/{id} to update claim (not /approve endpoint)
+            const response = await axiousInstance.put(`/claims/${id}`, payload);
             
             console.log("✅ [useWarrantyClaims] Update response:", response);
             console.log("✅ [useWarrantyClaims] Update response data:", JSON.stringify(response, null, 2));
@@ -249,7 +258,7 @@ export const useWarrantyClaims = (userId) => {
                 console.log("🔄 [useWarrantyClaims] Refetching claims list after update...");
                 console.log("🔄 [useWarrantyClaims] UserId:", userId);
                 try {
-                    await fetchClaims(userId);
+                    await fetchClaimsByTechnician(userId);
                     console.log("✅ [useWarrantyClaims] Claims list refetched successfully");
                 } catch (fetchErr) {
                     console.error("❌ [useWarrantyClaims] Failed to refetch claims:", fetchErr);
@@ -311,7 +320,7 @@ export const useWarrantyClaims = (userId) => {
 
     useEffect(() => {
         if (userId) {
-            fetchClaims(userId);
+            fetchClaimsByTechnician(userId);
         }
     }, [userId]);
 
