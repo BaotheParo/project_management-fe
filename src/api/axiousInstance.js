@@ -7,7 +7,7 @@ const getBaseURL = () => {
         return "/api"; // Vite proxy will forward to backend
     }
     // In production, use full URL
-    return import.meta.env.VITE_API_BASE_URL || "https://dev-be-wm.fleeforezz.site/api";
+    return import.meta.env.VITE_API_BASE_URL || "https://dev-be-wm.hikarimoon.pro/api";
 };
 
 const axiosInstance = axios.create({
