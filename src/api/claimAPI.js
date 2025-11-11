@@ -2,33 +2,20 @@ import axiosInstance from "./axiousInstance";
 
 const claimAPI = {
   // Lấy danh sách claims
-  getAllClaims: async () => {
-    try {
-      const response = await axiosInstance.get("/claims");
-      return response.data;
-    } catch (error) {
-      console.error("Error fetching claims:", error);
-      throw error;
-    }
+  getAllClaims: () => {
+    // Bỏ async/await và try/catch
+    return axiosInstance.get("/claims");
   },
-  getClaimById: async (claimId) => {
-    console.log("ĐANG GỌI getClaimById VỚI ID:", claimId);
-    try {
-      const response = await axiosInstance.get(`/claims/${claimId}`);
-      return response.data;
-    } catch (error) {
-      console.error("Error fetching claims:", error);
-      throw error;
-    }
+
+  // Lấy 1 claim bằng ID
+  getClaimById: (claimId) => {
+    console.log("ĐANG GỌI getClaimById VỚI ID:", claimId); // Dòng này vẫn OK
+    return axiosInstance.get(`/claims/${claimId}`);
   },
-  approveClaim: async (claimId) => {
-    try {
-      const response = await axiosInstance.post(`/claims/${claimId}/approve`);
-      return response.data;
-    } catch (error) {
-      console.error("Error approving claim:", error);
-      throw error;
-    }
+
+  // Duyệt 1 claim
+  approveClaim: (claimId) => {
+    return axiosInstance.post(`/claims/${claimId}/approve`);
   },
 };
 
