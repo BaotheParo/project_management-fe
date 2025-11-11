@@ -161,24 +161,24 @@ export default function Dashboard() {
           titleColor="text-green-600"
           count={approvedClaims}
           description="Accepted"
-          icon={DotsThreeCircleIcon}
-          iconColor={"#979AA3"}
+          icon={CheckCircleIcon}
+          iconColor={"#00a63e"}
         />
         <StatusCard
           title="Rejected Claims"
           titleColor="text-red-500"
           count={rejectedClaims}
           description="Currently in your queue"
-          icon={CheckCircleIcon}
+          icon={XCircleIcon}
           iconColor={"#fb2c36"}
         />
         <StatusCard
           title="Active Campaigns"
-          titleColor="text-red-500"
+          titleColor="text-blue-500"
           count={"3"}
           description="Currently in your queue"
           icon={ClockIcon}
-          iconColor={"#00a63e"}
+          iconColor={"#3b82f6"}
         />
       </div>
 
