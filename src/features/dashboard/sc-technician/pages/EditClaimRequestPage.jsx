@@ -380,106 +380,73 @@ export default function EditClaimRequestsPage() {
                 }
             };
             
-            // Upload new files if any
-            let evidenceUrls = [];
-            const newFiles = uploadedFiles.filter(f => f.file); // Only files that need upload
-            if (newFiles.length > 0) {
-                try {
-                    const uploadEndpoints = ['/upload', '/files/upload', '/api/upload', '/files'];
-                    
-                    for (const fileObj of newFiles) {
-                        let uploaded = false;
-                        for (const endpoint of uploadEndpoints) {
-                            try {
-                                const formData = new FormData();
-                                formData.append('file', fileObj.file);
-                                const response = await axiousInstance.post(endpoint, formData);
-                                const fileUrl = response?.url || response?.fileUrl || response?.data?.url || response?.data;
-                                if (fileUrl && typeof fileUrl === 'string') {
-                                    evidenceUrls.push(fileUrl);
-                                    uploaded = true;
-                                    break;
-                                }
-                            } catch (error) {
-                                if (error.response?.status !== 404) continue;
-                            }
-                        }
-                        if (!uploaded && fileObj.url) {
-                            // Use existing URL if upload failed
-                            evidenceUrls.push(fileObj.url);
-                        }
-                    }
-                } catch (error) {
-                    console.error("❌ File upload failed:", error);
-                }
-            }
-            
-            // Collect existing file URLs (files that were already uploaded)
-            const existingUrls = uploadedFiles
-                .filter(f => !f.file && f.url) // Files without file object but with URL
-                .map(f => f.url);
-            
-            // Combine new and existing URLs
-            const allUrls = [...existingUrls, ...evidenceUrls];
-            
-            // Format ClaimImages: backend expects array of objects
+            // Collect existing image URLs from uploadedImages (already loaded from API)
+            // For Edit page, we only use existing images from the API response
+            // New file uploads should be handled separately if needed
             let claimImages = [];
-            if (allUrls.length > 0) {
-                claimImages = allUrls.map(url => ({
-                    imageUrl: url,
-                    fileName: url.split('/').pop() || 'image.jpg'
+            if (uploadedImages && Array.isArray(uploadedImages) && uploadedImages.length > 0) {
+                claimImages = uploadedImages.map((img, index) => ({
+                    imageUrl: img.url || img.imageUrl,
+                    fileName: img.fileName || img.url?.split('/').pop() || `image-${index + 1}.jpg`,
+                    description: img.description || '',
+                    orderIndex: img.orderIndex !== undefined ? img.orderIndex : index,
                 }));
-            } else if (uploadedFiles.length > 0) {
-                // Fallback: use file names if no URLs
-                claimImages = uploadedFiles.map(f => ({
-                    fileName: f.name,
-                    imageUrl: f.url || `placeholder/${f.name}`
-                }));
+            } else if (uploadedFiles && Array.isArray(uploadedFiles) && uploadedFiles.length > 0) {
+                // Fallback: use uploadedFiles if uploadedImages is empty
+                claimImages = uploadedFiles
+                    .filter(f => f.url || f.preview) // Only files with URLs
+                    .map((f, index) => ({
+                        imageUrl: f.url || f.preview,
+                        fileName: f.name || `image-${index + 1}.jpg`,
+                        description: '',
+                        orderIndex: index,
+                    }));
             }
             
             // Format payload according to API requirements
-            // Note: Use same field names as CreateClaimRequestPage to satisfy backend validation
+            // Note: Use camelCase format to match CreateClaimRequestPage
             const payload = {
                 // Basic & vehicle info (include to avoid validation errors)
-                ClaimDate: formData.claimDate ? new Date(formData.claimDate).toISOString() : row?.claimDate || null,
-                CenterName: row?.serviceCenterName || null,
-                VIN: formData.vin || row?.vin || null,
-                VehicleName: formData.vehicleName || row?.vehicleName || null,
-                Mileage: Number.parseInt(formData.mileAge || formData.mileage || row?.mileAge || row?.mileage || 0) || 0,
-                PurchaseDate: formData.purchaseDate ? new Date(formData.purchaseDate).toISOString() : row?.purchaseDate || null,
-                // Editable fields
-                IssueDescription: formData.issueDescription && formData.issueDescription.trim() ? formData.issueDescription.trim() : undefined,
-                ActionType: formData.actionType !== undefined ? formData.actionType : undefined,
+                claimDate: formData.claimDate ? new Date(formData.claimDate).toISOString() : (row?.claimDate ? new Date(row.claimDate).toISOString() : new Date().toISOString()),
+                centerName: row?.serviceCenterName || "",
+                vin: formData.vin || row?.vin || "",
+                vehicleName: formData.vehicleName || row?.vehicleName || "",
+                mileage: Number.parseInt(formData.mileAge || formData.mileage || row?.mileAge || row?.mileage || 0) || 0,
+                purchaseDate: formData.purchaseDate ? new Date(formData.purchaseDate).toISOString() : (row?.purchaseDate ? new Date(row.purchaseDate).toISOString() : new Date().toISOString()),
+                // Editable fields - always send the current formData values
+                issueDescription: formData.issueDescription || "",
+                actionType: formData.actionType !== undefined ? formData.actionType : (row?.actionType || 0),
             };
 
-            // Format partItems - match CreateClaimRequestPage format
+            // Format partItems - match CreateClaimRequestPage format (camelCase)
+            // Always include partItems array (even if empty) to match backend expectations
             const filteredParts = parts.filter(part => part && (part.partName || part.partCode || part.partNumber));
-            if (filteredParts.length > 0) {
-                payload.PartItems = filteredParts.map(part => {
-                    const item = {
-                        PartName: (part.partName || part.partName)?.trim() || "",
-                        PartNumber: (part.partCode || part.partNumber || "").toString().trim(),
-                        // Backend requires a valid DateTime; default to now when replacementDate missing
-                        ReplacementDate: part.replacementDate
-                            ? formatDateToISO(part.replacementDate)
-                            : new Date().toISOString(),
-                    };
-                    // Only include partId if it exists
-                    if (part.partId && part.partId.toString().trim()) {
-                        item.PartId = part.partId.toString().trim();
-                    }
-                    return item;
-                });
-            }
+            payload.partItems = filteredParts.map(part => {
+                const item = {
+                    partName: (part.partName || "").trim() || "",
+                    partNumber: (part.partCode || part.partNumber || "").toString().trim(),
+                    // Backend requires a valid DateTime; default to now when replacementDate missing
+                    replacementDate: part.replacementDate
+                        ? formatDateToISO(part.replacementDate)
+                        : new Date().toISOString(),
+                };
+                // Only include partId if it exists
+                if (part.partId && part.partId.toString().trim()) {
+                    item.partId = part.partId.toString().trim();
+                }
+                return item;
+            });
 
-            // Add ClaimImages
+            // Add claimImages (camelCase)
             if (claimImages.length > 0) {
-                payload.ClaimImages = claimImages;
+                payload.claimImages = claimImages;
             }
 
             // 🔍 Debug: Log API call details
             console.log("🔵 ===== API UPDATE CLAIM CALL =====");
             console.log("📤 Endpoint:", `PUT /claims/${id}`);
+            console.log("📝 Current formData:", JSON.stringify(formData, null, 2));
+            console.log("📦 Current parts:", JSON.stringify(parts, null, 2));
             console.log("📦 Payload:", JSON.stringify(payload, null, 2));
             console.log("🆔 Claim ID:", id);
             
