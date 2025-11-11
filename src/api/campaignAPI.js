@@ -2,56 +2,28 @@ import axiosInstance from "./axiousInstance";
 
 const campaignAPI = {
   // Lấy danh sách campaigns
-  getAllCampaigns: async () => {
-    try {
-      const response = await axiosInstance.get("/campaigns");
-      return response;
-    } catch (error) {
-      throw error;
-    }
+  getAllCampaigns: () => {
+    return axiosInstance.get("/campaigns");
   },
 
   // Lấy chi tiết một campaign
-  getCampaignById: async (id) => {
-    try {
-      const response = await axiosInstance.get(`/campaigns/${id}`);
-      return response;
-    } catch (error) {
-      throw error;
-    }
+  getCampaignById: (id) => {
+    return axiosInstance.get(`/campaigns/${id}`);
   },
 
   // Tạo campaign mới
-  createCampaign: async (campaignData) => {
-    try {
-      const response = await axiosInstance.post("/campaigns", campaignData);
-      return response;
-    } catch (error) {
-      throw error;
-    }
+  createCampaign: (campaignData) => {
+    return axiosInstance.post("/campaigns", campaignData);
   },
 
   // Cập nhật campaign
-  updateCampaign: async (id, campaignData) => {
-    try {
-      const response = await axiosInstance.put(
-        `/campaigns/${id}`,
-        campaignData
-      );
-      return response;
-    } catch (error) {
-      throw error;
-    }
+  updateCampaign: (id, campaignData) => {
+    return axiosInstance.put(`/campaigns/${id}`, campaignData);
   },
 
   // Xóa campaign
-  deleteCampaign: async (id) => {
-    try {
-      const response = await axiosInstance.delete(`/campaigns/${id}`);
-      return response;
-    } catch (error) {
-      throw error;
-    }
+  deleteCampaign: (id) => {
+    return axiosInstance.delete(`/campaigns/${id}`);
   },
 };
 
