@@ -4,10 +4,10 @@ import axios from "axios";
 const getBaseURL = () => {
     // In development with Vite proxy, use relative path
     if (import.meta.env.DEV) {
-        return "/api"; // Vite proxy will forward to backend
+        return "/api/v1"; // Vite proxy will forward to backend
     }
     // In production, use full URL
-    return import.meta.env.VITE_API_BASE_URL || "https://dev-be-wm.hikarimoon.pro/api";
+    return import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api/v1";
 };
 
 const axiosInstance = axios.create({
@@ -20,7 +20,7 @@ const axiosInstance = axios.create({
 // Request interceptor to add auth token
 axiosInstance.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem("token");
+        const token = localStorage.getItem("accessToken");
         if (token) {
             config.headers["Authorization"] = `Bearer ${token}`;
         }

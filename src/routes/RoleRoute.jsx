@@ -3,17 +3,37 @@ import { useAuth } from "../app/AuthProvider";
 
 const RoleRoute = ({ allowedRoles, children }) => {
     const { user } = useAuth();
-    const role = user?.role;
+    
+    console.log("🔒 RoleRoute - user:", user);
+    console.log("🔒 RoleRoute - user.roles:", user?.roles);
+    console.log("🔒 RoleRoute - allowedRoles:", allowedRoles);
 
-    console.log("RoleRoute - user:", user);
-    console.log("RoleRoute - role:", role);
-    console.log("RoleRoute - allowedRoles:", allowedRoles);
+    if (!user) {
+        console.log("❌ No user - redirecting to /login");
+        return <Navigate to="/login" replace />;
+    }
 
-    // Convert role to string for comparison
-    const roleStr = String(role);
-    const hasAccess = allowedRoles.some(allowedRole => String(allowedRole) === roleStr);
+    // Normalize user roles to array
+    let userRoles = [];
+    if (typeof user.roles === 'string') {
+        userRoles = [user.roles];
+    } else if (Array.isArray(user.roles)) {
+        userRoles = user.roles.map(r => {
+            if (typeof r === 'string') return r;
+            if (r.name) return r.name;
+            if (r.authority) return r.authority;
+            return null;
+        }).filter(Boolean);
+    }
 
-    console.log("RoleRoute - hasAccess:", hasAccess);
+    console.log("🔒 RoleRoute - normalized userRoles:", userRoles);
+
+    // Check if user has any of the allowed roles
+    const hasAccess = userRoles.some(userRole => 
+        allowedRoles.some(allowedRole => String(allowedRole) === String(userRole))
+    );
+
+    console.log("🔒 RoleRoute - hasAccess:", hasAccess);
 
     if (!hasAccess) {
         console.log("❌ Access denied - redirecting to /unauthorized");

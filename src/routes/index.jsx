@@ -130,7 +130,6 @@ const EVMProfilePage = lazy(() =>
   import("../features/dashboard/evm-staff/pages/Profile")
 );
 /*prettier-ignore-end*/
-/* eslint-enable */
 const router = createBrowserRouter([
   {
     path: "/login",
@@ -241,7 +240,7 @@ const router = createBrowserRouter([
     path: "/sc-staff",
     element: (
       <ProtectedRoute>
-        <RoleRoute allowedRoles={["SCStaff", "0"]}>
+        <RoleRoute allowedRoles={["ROLE_STAFF", "SCStaff", "0"]}>
           <SCStaffLayout />
         </RoleRoute>
       </ProtectedRoute>
@@ -310,7 +309,7 @@ const router = createBrowserRouter([
     path: "/evm-staff",
     element: (
       <ProtectedRoute>
-        <RoleRoute allowedRoles={["EVMStaff", "2"]}>
+        <RoleRoute allowedRoles={["ROLE_PASSENGER", "EVMStaff", "2"]}>
           <EVMStaffLayout />
         </RoleRoute>
       </ProtectedRoute>
@@ -453,6 +452,61 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<Loader />}>
             <EVMProfilePage />
+          </Suspense>
+        ),
+      },
+    ],
+  },
+
+  // Admin routes
+  {
+    path: "/admin",
+    element: (
+      <ProtectedRoute>
+        <RoleRoute allowedRoles={["ROLE_OPERATOR"]}>
+          <AdminLayout />
+        </RoleRoute>
+      </ProtectedRoute>
+    ),
+    children: [
+      {
+        index: true,
+        path: "dashboard",
+        element: (
+          <Suspense fallback={<Loader />}>
+            <AdminDashboardPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "users",
+        element: (
+          <Suspense fallback={<Loader />}>
+            <AdminManageUsersPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "reports",
+        element: (
+          <Suspense fallback={<Loader />}>
+            <AdminReportsPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "warranty-report",
+        element: (
+          <Suspense fallback={<Loader />}>
+            <AdminWarrantyReportPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "bill",
+        element: (
+          <Suspense fallback={<Loader />}>
+            <AdminBillPage />
           </Suspense>
         ),
       },

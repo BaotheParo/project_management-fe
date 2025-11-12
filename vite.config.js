@@ -9,9 +9,9 @@ export default defineConfig({
     proxy: {
       // Proxy API requests to backend to avoid CORS issues in development
       '/api': {
-        target: 'https://dev-be-wm.hikarimoon.pro',
+        target: 'http://localhost:8080',
         changeOrigin: true,
-        secure: true,
+        secure: false,
         rewrite: (path) => path, // Keep /api in the path
       }
     }

@@ -5,9 +5,10 @@ import car from '../../../assets/Login/car.png'
 import Loader from '../../../components/Loader';
 import { useAuth } from '../../../app/AuthProvider';
 import { ErrorNotification } from '../../../components/Notification';
+import { ROLES } from '../../../constants/Roles';
 
 export default function Login() {
-  const { login, loading } = useAuth();
+  const { login, logout, loading } = useAuth();
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -16,66 +17,114 @@ export default function Login() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    setNotification(null);
 
     const credentials = { username, password };
 
     try {
-      const data = await login(credentials);
-      const role = String(data.role);
-      let validRole = true;
+      const userInfo = await login(credentials);
       
-      switch (role) {
-        case "SCTech":
-        case "1":
-          navigate("/sc-technician/dashboard");
-          break;
-        case "SCStaff":
-        case "0":
-          navigate("/sc-staff/dashboard");
-          break;
-        case "EVMStaff":
-        case "2":
-          navigate("/evm-staff/dashboard");
-          break;
-        case "Admin":
-        case "3":
-          navigate("/admin/dashboard");
-          break;
-        default:
-          validRole = false;
-          console.error("Invalid role !!!");
-          setNotification({
-            message: "Login failed",
-            subText: `Invalid user role: ${role}. Please contact administrator.`,
-            actionText: "Retry",
-            onAction: () => { setNotification(null) },
-          });
-      }
+      console.log("🎯 [Login] Received user info:", userInfo);
+      console.log("🎯 [Login] User roles:", userInfo?.roles);
+      console.log("🎯 [Login] User roles type:", typeof userInfo?.roles);
 
-      if (validRole) {
+      if (!userInfo || !userInfo.roles) {
+        logout();
         setNotification({
-          message: "Login successful",
-          subText: new Date().toLocaleString(),
-          actionText: "Close",
+          message: "Đăng nhập thất bại",
+          subText: "Tài khoản không có quyền truy cập.",
+          actionText: "Thử lại",
           onAction: () => { setNotification(null) },
         });
+        return;
       }
-    } catch {
+
+      // Normalize roles to array of strings
+      let userRoles = [];
+      if (typeof userInfo.roles === 'string') {
+        // Single role as string: "ROLE_OPERATOR"
+        userRoles = [userInfo.roles];
+      } else if (Array.isArray(userInfo.roles)) {
+        // Array of roles: ["ROLE_OPERATOR", "ROLE_STAFF"] or [{name: "ROLE_OPERATOR"}]
+        userRoles = userInfo.roles.map(r => {
+          if (typeof r === 'string') return r;
+          if (r.name) return r.name;
+          if (r.authority) return r.authority;
+          return null;
+        }).filter(Boolean);
+      }
+
+      console.log("🎯 [Login] Normalized roles:", userRoles);
+
+      if (userRoles.length === 0) {
+        logout();
+        setNotification({
+          message: "Đăng nhập thất bại",
+          subText: "Tài khoản không có quyền truy cập.",
+          actionText: "Thử lại",
+          onAction: () => { setNotification(null) },
+        });
+        return;
+      }
+
+      // Check if user has allowed role
+      const allowedRoles = [ROLES.OPERATOR, ROLES.STAFF, ROLES.PASSENGER];
+      const hasAllowedRole = userRoles.some(role => allowedRoles.includes(role));
+
+      console.log("🎯 [Login] Has allowed role?", hasAllowedRole);
+
+      if (!hasAllowedRole) {
+        logout();
+        setNotification({
+          message: "Đăng nhập thất bại",
+          subText: "Tài khoản không có quyền truy cập hệ thống này.",
+          actionText: "Thử lại",
+          onAction: () => { setNotification(null) },
+        });
+        return;
+      }
+
+      // Determine dashboard route based on first valid role
+      let dashboardRoute = "/";
+      if (userRoles.includes(ROLES.OPERATOR)) {
+        dashboardRoute = "/admin/dashboard";
+      } else if (userRoles.includes(ROLES.STAFF)) {
+        dashboardRoute = "/sc-staff/dashboard";
+      } else if (userRoles.includes(ROLES.PASSENGER)) {
+        dashboardRoute = "/evm-staff/dashboard";
+      }
+
+      console.log("🎯 [Login] Navigating to:", dashboardRoute);
+
       setNotification({
-        message: "Login failed",
-        subText: "Username or Password is incorrect",
-        actionText: "Retry",
+        message: "Đăng nhập thành công!",
+        subText: `Chào mừng ${userInfo.firstname || userInfo.username}`,
+        actionText: "Đóng",
+        onAction: () => { setNotification(null) },
+      });
+
+      // Navigate after a short delay to show notification
+      setTimeout(() => {
+        navigate(dashboardRoute, { replace: true });
+      }, 500);
+
+    } catch (error) {
+      console.error("❌ Login error:", error);
+      setNotification({
+        message: "Đăng nhập thất bại",
+        subText: error.message || "Username hoặc Password không đúng",
+        actionText: "Thử lại",
         onAction: () => { setNotification(null) },
       });
     }
+  }
 
-    if (loading) {
-      return (
-        <div className="flex items-center justify-center h-screen bg-white">
-          <Loader />
-        </div>
-      );
-    }
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-white">
+        <Loader />
+      </div>
+    );
   }
 
   return (
