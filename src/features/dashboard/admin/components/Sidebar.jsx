@@ -1,8 +1,9 @@
 import React from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
-import { HouseIcon, UsersThreeIcon, ChartBarIcon, ClipboardTextIcon, CurrencyDollarIcon, MinusCircleIcon } from '@phosphor-icons/react'
+import { HouseIcon, UsersThreeIcon, ChartBarIcon, ClipboardTextIcon, CurrencyDollarIcon, MinusCircleIcon, BusIcon, MapPinIcon, UserListIcon } from '@phosphor-icons/react'
 import logo from '../../../../assets/group4.png'
 import { useAuthApi } from '../../../../api/useAuthApi'
+import { useAuth } from '../../../../app/AuthProvider'
 
 const NavItem = ({ to, icon: Icon, label, end, onClick }) => {
   const commonClasses = ({ isActive }) =>
@@ -42,6 +43,9 @@ const NavItem = ({ to, icon: Icon, label, end, onClick }) => {
 export default function Sidebar() {
   const navigate = useNavigate()
   const { logout } = useAuthApi();
+  const { user } = useAuth();
+  
+  const isOperator = user?.roles === 'ROLE_OPERATOR' || user?.roles?.includes('ROLE_OPERATOR');
 
   const handleLogout = () => {
     logout() // clear token, role, etc.
@@ -59,8 +63,19 @@ export default function Sidebar() {
           <div className="pt-13">
             <NavItem end={true} to="/admin/dashboard" icon={HouseIcon} label="Dashboard" />
           </div>
+          {!isOperator && (
+            <div className="py-0">
+              <NavItem to="/admin/users?view=customers" icon={UsersThreeIcon} label="Quản Lý Khách Hàng" />
+            </div>
+          )}
           <div className="py-0">
-            <NavItem to="/admin/manage-users" icon={UsersThreeIcon} label="Manage Users" />
+            <NavItem to="/admin/staff?view=staff" icon={UserListIcon} label="Quản Lý Nhân Viên" />
+          </div>
+          <div className="py-0">
+            <NavItem to="/admin/bus-types" icon={BusIcon} label="Bus Types" />
+          </div>
+          <div className="py-0">
+            <NavItem to="/admin/trips" icon={MapPinIcon} label="Trips" />
           </div>
           <div className="py-0">
             <NavItem to="/admin/reports" icon={ChartBarIcon} label="Reports" />

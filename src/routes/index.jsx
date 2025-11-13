@@ -20,6 +20,8 @@ const ForgotPasswordPage = lazy(() =>
 // Admin
 const AdminDashboardPage = lazy(() => import("../features/dashboard/admin/pages/Dashboard"));
 const AdminManageUsersPage = lazy(() => import("../features/dashboard/admin/pages/ManageUsers"));
+const AdminBusTypesPage = lazy(() => import("../features/dashboard/admin/pages/BusTypes"));
+const AdminTripsPage = lazy(() => import("../features/dashboard/admin/pages/Trips"));
 const AdminReportsPage = lazy(() => import("../features/dashboard/admin/pages/Reports"));
 const AdminWarrantyReportPage = lazy(() => import("../features/dashboard/sc-staff/pages/WarrantyReport"));
 const AdminBillPage = lazy(() => import("../features/dashboard/sc-staff/pages/BillOfCharge"));
@@ -483,6 +485,30 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<Loader />}>
             <AdminManageUsersPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "staff",
+        element: (
+          <Suspense fallback={<Loader />}>
+            <AdminManageUsersPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "bus-types",
+        element: (
+          <Suspense fallback={<Loader />}>
+            <AdminBusTypesPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "trips",
+        element: (
+          <Suspense fallback={<Loader />}>
+            <AdminTripsPage />
           </Suspense>
         ),
       },

@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, PencilSimple, X, Eye, CheckCircle, XCircle } from 'phosphor-react';
-import { useSearchParams } from 'react-router-dom';
 import { useUsersApi } from '../../../../api/useUsersApi';
-import { useAuth } from '../../../../app/AuthProvider';
 import Loader from '../../../../components/Loader';
 
-// User Form Modal (Create/Edit)
-const UserFormModal = ({ isOpen, onClose, user, onSubmit, mode = 'create', operators = [], isOperator = false }) => {
-  const [formData, setFormData] = useState(user ? {
-    ...user,
+// Staff Form Modal (Create/Edit)
+const StaffFormModal = ({ isOpen, onClose, staff, onSubmit, mode = 'create' }) => {
+  const [formData, setFormData] = useState(staff ? {
+    ...staff,
     password: ''
   } : {
     username: '',
@@ -16,14 +14,13 @@ const UserFormModal = ({ isOpen, onClose, user, onSubmit, mode = 'create', opera
     firstname: '',
     lastname: '',
     password: '',
-    dateOfBirth: '',
-    roles: 'ROLE_PASSENGER',
-    managedByOperatorId: ''
+    dateOfBirth: ''
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
     
+    // Remove empty password on edit
     const dataToSubmit = { ...formData };
     if (mode === 'edit' && !dataToSubmit.password) {
       delete dataToSubmit.password;
@@ -42,17 +39,12 @@ const UserFormModal = ({ isOpen, onClose, user, onSubmit, mode = 'create', opera
 
   if (!isOpen) return null;
 
-  const isStaff = formData.roles === 'ROLE_STAFF';
-
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
       <div className="bg-white rounded-2xl p-8 w-full max-w-3xl my-8">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-semibold text-black">
-            {isOperator 
-              ? (mode === 'create' ? 'Thêm Nhân Viên Mới' : 'Chỉnh Sửa Nhân Viên')
-              : (mode === 'create' ? 'Tạo Người Dùng Mới' : 'Chỉnh Sửa Người Dùng')
-            }
+            {mode === 'create' ? 'Thêm Nhân Viên Mới' : 'Chỉnh Sửa Nhân Viên'}
           </h2>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full">
             <X size={24} />
@@ -62,7 +54,9 @@ const UserFormModal = ({ isOpen, onClose, user, onSubmit, mode = 'create', opera
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Họ *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Họ *
+              </label>
               <input
                 type="text"
                 name="firstname"
@@ -73,8 +67,11 @@ const UserFormModal = ({ isOpen, onClose, user, onSubmit, mode = 'create', opera
                 placeholder="Nguyễn Văn"
               />
             </div>
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Tên *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Tên *
+              </label>
               <input
                 type="text"
                 name="lastname"
@@ -89,7 +86,9 @@ const UserFormModal = ({ isOpen, onClose, user, onSubmit, mode = 'create', opera
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Username *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Username *
+              </label>
               <input
                 type="text"
                 name="username"
@@ -101,8 +100,11 @@ const UserFormModal = ({ isOpen, onClose, user, onSubmit, mode = 'create', opera
                 placeholder="nguyenvanan"
               />
             </div>
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email *
+              </label>
               <input
                 type="email"
                 name="email"
@@ -130,8 +132,11 @@ const UserFormModal = ({ isOpen, onClose, user, onSubmit, mode = 'create', opera
                 placeholder={mode === 'edit' ? 'Để trống nếu không đổi' : 'Nhập mật khẩu'}
               />
             </div>
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Ngày Sinh</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Ngày Sinh
+              </label>
               <input
                 type="date"
                 name="dateOfBirth"
@@ -141,45 +146,6 @@ const UserFormModal = ({ isOpen, onClose, user, onSubmit, mode = 'create', opera
               />
             </div>
           </div>
-
-          {!isOperator && (
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Vai Trò *</label>
-                <select
-                  name="roles"
-                  value={formData.roles}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                >
-                  <option value="ROLE_PASSENGER">Hành Khách (Passenger)</option>
-                  <option value="ROLE_STAFF">Nhân Viên (Staff)</option>
-                  <option value="ROLE_OPERATOR">Nhà Điều Hành (Operator)</option>
-                </select>
-              </div>
-
-              {isStaff && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Thuộc Nhà Điều Hành *</label>
-                  <select
-                    name="managedByOperatorId"
-                    value={formData.managedByOperatorId}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    <option value="">-- Chọn Operator --</option>
-                    {operators.map((op) => (
-                      <option key={op.id} value={op.id}>
-                        {op.firstname} {op.lastname} ({op.username})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-            </div>
-          )}
 
           <div className="flex gap-4 pt-4">
             <button
@@ -193,10 +159,7 @@ const UserFormModal = ({ isOpen, onClose, user, onSubmit, mode = 'create', opera
               type="submit"
               className="flex-1 px-6 py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700"
             >
-              {isOperator
-                ? (mode === 'create' ? 'Thêm Nhân Viên' : 'Cập Nhật')
-                : (mode === 'create' ? 'Tạo Người Dùng' : 'Cập Nhật')
-              }
+              {mode === 'create' ? 'Thêm Nhân Viên' : 'Cập Nhật'}
             </button>
           </div>
         </form>
@@ -205,9 +168,9 @@ const UserFormModal = ({ isOpen, onClose, user, onSubmit, mode = 'create', opera
   );
 };
 
-// User Details Modal
-const UserDetailsModal = ({ isOpen, onClose, user }) => {
-  if (!isOpen || !user) return null;
+// Staff Details Modal
+const StaffDetailsModal = ({ isOpen, onClose, staff }) => {
+  if (!isOpen || !staff) return null;
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -219,31 +182,11 @@ const UserDetailsModal = ({ isOpen, onClose, user }) => {
     return new Date(dateString).toLocaleString('vi-VN');
   };
 
-  const getRoleBadge = (role) => {
-    const styles = {
-      ROLE_PASSENGER: 'bg-blue-100 text-blue-800',
-      ROLE_STAFF: 'bg-green-100 text-green-800',
-      ROLE_OPERATOR: 'bg-purple-100 text-purple-800'
-    };
-
-    const labels = {
-      ROLE_PASSENGER: 'Hành Khách',
-      ROLE_STAFF: 'Nhân Viên',
-      ROLE_OPERATOR: 'Nhà Điều Hành'
-    };
-
-    return (
-      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${styles[role] || 'bg-gray-100 text-gray-800'}`}>
-        {labels[role] || role}
-      </span>
-    );
-  };
-
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
       <div className="bg-white rounded-2xl p-8 w-full max-w-2xl my-8">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-semibold text-black">Chi Tiết Người Dùng</h2>
+          <h2 className="text-2xl font-semibold text-black">Chi Tiết Nhân Viên</h2>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full">
             <X size={24} />
           </button>
@@ -253,28 +196,32 @@ const UserDetailsModal = ({ isOpen, onClose, user }) => {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <span className="text-sm text-gray-600">Họ và Tên:</span>
-              <p className="font-semibold">{user.firstname} {user.lastname}</p>
+              <p className="font-semibold">{staff.firstname} {staff.lastname}</p>
             </div>
             <div>
               <span className="text-sm text-gray-600">Username:</span>
-              <p className="font-semibold">{user.username}</p>
+              <p className="font-semibold">{staff.username}</p>
             </div>
             <div>
               <span className="text-sm text-gray-600">Email:</span>
-              <p className="font-semibold">{user.email}</p>
+              <p className="font-semibold">{staff.email}</p>
             </div>
             <div>
               <span className="text-sm text-gray-600">Ngày Sinh:</span>
-              <p className="font-semibold">{formatDate(user.dateOfBirth)}</p>
+              <p className="font-semibold">{formatDate(staff.dateOfBirth)}</p>
             </div>
             <div>
               <span className="text-sm text-gray-600">Vai Trò:</span>
-              <div className="mt-1">{getRoleBadge(user.roles)}</div>
+              <div className="mt-1">
+                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                  Nhân Viên
+                </span>
+              </div>
             </div>
             <div>
               <span className="text-sm text-gray-600">Trạng Thái:</span>
               <div className="mt-1">
-                {user.isActive ? (
+                {staff.isActive ? (
                   <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
                     Đang Hoạt Động
                   </span>
@@ -287,11 +234,11 @@ const UserDetailsModal = ({ isOpen, onClose, user }) => {
             </div>
             <div>
               <span className="text-sm text-gray-600">Ngày Tạo:</span>
-              <p className="font-semibold">{formatDateTime(user.createdAt)}</p>
+              <p className="font-semibold">{formatDateTime(staff.createdAt)}</p>
             </div>
             <div>
               <span className="text-sm text-gray-600">Cập Nhật Lần Cuối:</span>
-              <p className="font-semibold">{formatDateTime(user.updatedAt)}</p>
+              <p className="font-semibold">{formatDateTime(staff.updatedAt)}</p>
             </div>
           </div>
         </div>
@@ -310,94 +257,41 @@ const UserDetailsModal = ({ isOpen, onClose, user }) => {
 };
 
 // Main Component
-const ManageUsers = () => {
-  const [searchParams] = useSearchParams();
-  const { user } = useAuth();
-  
+const ManageStaff = () => {
   const {
     users,
     pagination,
     loading,
     error,
-    fetchUsers,
     fetchStaff,
-    getUserById,
     getStaffById,
-    createUser,
     createStaff,
-    updateUser,
     updateStaff,
-    deactivateUser,
     deactivateStaff,
-    reactivateUser,
     reactivateStaff
   } = useUsersApi();
 
-  // Determine view mode from URL params and user role
-  const viewType = searchParams.get('view') || 'customers'; // 'customers' or 'staff'
-  const isOperator = user?.roles === 'ROLE_OPERATOR' || user?.roles?.includes('ROLE_OPERATOR');
-  const isStaffView = viewType === 'staff';
-  
-  // Set initial filter based on view type
-  const getInitialFilter = () => {
-    if (isOperator) {
-      // Operator can only see staff, no role filter needed
-      return { isActive: '', search: '' };
-    } else {
-      // Admin can see all users with role filter
-      return {
-        role: isStaffView ? 'ROLE_STAFF' : 'ROLE_PASSENGER',
-        isActive: '',
-        search: ''
-      };
-    }
-  };
+  const [filters, setFilters] = useState({
+    isActive: '',
+    search: ''
+  });
 
-  const [filters, setFilters] = useState(getInitialFilter());
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [selectedUserDetails, setSelectedUserDetails] = useState(null);
+  const [selectedStaff, setSelectedStaff] = useState(null);
+  const [selectedStaffDetails, setSelectedStaffDetails] = useState(null);
   const [modalMode, setModalMode] = useState('create');
-  const [operators, setOperators] = useState([]);
 
   useEffect(() => {
-    loadUsers();
-    if (!isOperator) {
-      loadOperators();
-    }
+    loadStaff();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  
-  // Reload when view type changes
-  useEffect(() => {
-    setFilters(getInitialFilter());
-    loadUsers(0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [viewType]);
 
-  const loadUsers = async (page = 0) => {
+  const loadStaff = async (page = 0) => {
     try {
-      if (isOperator) {
-        // Operator uses /operator/staff endpoint
-        await fetchStaff(filters, page, pagination.size);
-      } else {
-        // Admin uses /admin/users endpoint
-        await fetchUsers(filters, page, pagination.size);
-      }
+      await fetchStaff(filters, page, pagination.size);
     } catch (error) {
-      console.error('Failed to load users:', error);
-    }
-  };
-
-  const loadOperators = async () => {
-    try {
-      const response = await fetchUsers({ role: 'ROLE_OPERATOR' }, 0, 100);
-      if (response.content) {
-        setOperators(response.content);
-      }
-    } catch (error) {
-      console.error('Failed to load operators:', error);
+      console.error('Failed to load staff:', error);
     }
   };
 
@@ -410,112 +304,66 @@ const ManageUsers = () => {
   };
 
   const handleApplyFilters = () => {
-    loadUsers(0);
+    loadStaff(0);
   };
 
   const handleCreateClick = () => {
-    setSelectedUser(null);
+    setSelectedStaff(null);
     setModalMode('create');
     setIsFormModalOpen(true);
   };
 
-  const handleEditClick = (user) => {
-    setSelectedUser(user);
+  const handleEditClick = (staff) => {
+    setSelectedStaff(staff);
     setModalMode('edit');
     setIsFormModalOpen(true);
   };
 
-  const handleViewDetails = async (user) => {
+  const handleViewDetails = async (staff) => {
     try {
-      const details = isOperator 
-        ? await getStaffById(user.id)
-        : await getUserById(user.id);
-      setSelectedUserDetails(details);
+      const details = await getStaffById(staff.id);
+      setSelectedStaffDetails(details);
       setIsDetailsModalOpen(true);
     } catch (error) {
-      console.error('Failed to load user details:', error);
-      alert(isOperator ? 'Không thể tải chi tiết nhân viên' : 'Không thể tải chi tiết người dùng');
+      console.error('Failed to load staff details:', error);
+      alert('Không thể tải chi tiết nhân viên');
     }
   };
 
   const handleSubmit = async (formData) => {
     try {
-      if (isOperator) {
-        // Operator uses staff endpoints
-        if (modalMode === 'create') {
-          await createStaff(formData);
-          alert('Thêm nhân viên thành công!');
-        } else {
-          await updateStaff(selectedUser.id, formData);
-          alert('Cập nhật nhân viên thành công!');
-        }
+      if (modalMode === 'create') {
+        await createStaff(formData);
+        alert('Thêm nhân viên thành công!');
       } else {
-        // Admin uses user endpoints
-        if (modalMode === 'create') {
-          await createUser(formData);
-          alert('Tạo người dùng thành công!');
-        } else {
-          await updateUser(selectedUser.id, formData);
-          alert('Cập nhật người dùng thành công!');
-        }
+        await updateStaff(selectedStaff.id, formData);
+        alert('Cập nhật nhân viên thành công!');
       }
       setIsFormModalOpen(false);
-      setSelectedUser(null);
-      loadUsers(pagination.page);
+      setSelectedStaff(null);
+      loadStaff(pagination.page);
     } catch (err) {
       alert(err.response?.data?.error || err.message || 'Có lỗi xảy ra');
     }
   };
 
-  const handleToggleActive = async (user) => {
+  const handleToggleActive = async (staff) => {
     try {
-      if (isOperator) {
-        // Operator uses staff endpoints
-        if (user.isActive) {
-          await deactivateStaff(user.id);
-          alert('Đã vô hiệu hóa nhân viên');
-        } else {
-          await reactivateStaff(user.id);
-          alert('Đã kích hoạt nhân viên');
-        }
+      if (staff.isActive) {
+        await deactivateStaff(staff.id);
+        alert('Đã vô hiệu hóa nhân viên');
       } else {
-        // Admin uses user endpoints
-        if (user.isActive) {
-          await deactivateUser(user.id);
-          alert('Đã vô hiệu hóa người dùng');
-        } else {
-          await reactivateUser(user.id);
-          alert('Đã kích hoạt người dùng');
-        }
+        await reactivateStaff(staff.id);
+        alert('Đã kích hoạt nhân viên');
       }
-      loadUsers(pagination.page);
+      loadStaff(pagination.page);
     } catch (err) {
       alert(err.response?.data?.error || err.message || 'Có lỗi xảy ra');
     }
   };
 
   const handlePageChange = (newPage) => {
-    loadUsers(newPage);
-  };
-
-  const getRoleBadge = (role) => {
-    const styles = {
-      ROLE_PASSENGER: 'bg-blue-100 text-blue-800',
-      ROLE_STAFF: 'bg-green-100 text-green-800',
-      ROLE_OPERATOR: 'bg-purple-100 text-purple-800'
-    };
-
-    const labels = {
-      ROLE_PASSENGER: 'Hành Khách',
-      ROLE_STAFF: 'Nhân Viên',
-      ROLE_OPERATOR: 'Nhà Điều Hành'
-    };
-
-    return (
-      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${styles[role] || 'bg-gray-100 text-gray-800'}`}>
-        {labels[role] || role}
-      </span>
-    );
+    loadStaff(newPage);
   };
 
   if (loading && users.length === 0) return <Loader />;
@@ -524,16 +372,9 @@ const ManageUsers = () => {
     <div className="p-12 w-full">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-[30px] font-semibold text-black mb-1">
-            {isOperator ? 'Quản Lý Nhân Viên' : 'Quản Lý Người Dùng'}
-          </h1>
+          <h1 className="text-[30px] font-semibold text-black mb-1">Quản Lý Nhân Viên</h1>
           <p className="text-xl font-semibold text-[#929594]">
-            {isOperator 
-              ? 'Quản lý nhân viên của bạn'
-              : isStaffView
-              ? 'Quản lý tất cả nhân viên trong hệ thống'
-              : 'Quản lý tất cả khách hàng trong hệ thống'
-            }
+            Quản lý nhân viên của bạn
           </p>
         </div>
         <button
@@ -541,13 +382,13 @@ const ManageUsers = () => {
           className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700"
         >
           <Plus size={20} weight="bold" />
-          {isOperator || isStaffView ? 'Thêm Nhân Viên' : 'Thêm Người Dùng'}
+          Thêm Nhân Viên
         </button>
       </div>
 
       {/* Filters */}
       <div className="bg-white rounded-2xl p-6 mb-6 border-2 border-[#EBEBEB]">
-        <div className={`grid ${isOperator ? 'grid-cols-3' : 'grid-cols-4'} gap-4`}>
+        <div className="grid grid-cols-3 gap-4">
           <input
             type="text"
             name="search"
@@ -556,20 +397,6 @@ const ManageUsers = () => {
             placeholder="Tìm kiếm theo tên, email, username..."
             className="col-span-2 px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
-          
-          {!isOperator && (
-            <select
-              name="role"
-              value={filters.role}
-              onChange={handleFilterChange}
-              className="px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="">Tất cả vai trò</option>
-              <option value="ROLE_PASSENGER">Hành Khách</option>
-              <option value="ROLE_STAFF">Nhân Viên</option>
-              <option value="ROLE_OPERATOR">Nhà Điều Hành</option>
-            </select>
-          )}
 
           <select
             name="isActive"
@@ -607,22 +434,24 @@ const ManageUsers = () => {
               <th className="text-left px-6 py-4 text-sm font-semibold text-[#686262]">Họ và Tên</th>
               <th className="text-left px-6 py-4 text-sm font-semibold text-[#686262]">Email</th>
               <th className="text-left px-6 py-4 text-sm font-semibold text-[#686262]">Username</th>
-              {!isOperator && <th className="text-left px-6 py-4 text-sm font-semibold text-[#686262]">Vai Trò</th>}
               <th className="text-left px-6 py-4 text-sm font-semibold text-[#686262]">Trạng Thái</th>
               <th className="text-center px-6 py-4 text-sm font-semibold text-[#686262]">Hành Động</th>
             </tr>
           </thead>
           <tbody>
-            {users.map((user) => (
-              <tr key={user.id} className="border-b-2 border-[#DEE1E6] bg-white hover:bg-gray-50">
+            {users.map((staff) => (
+              <tr key={staff.id} className="border-b-2 border-[#DEE1E6] bg-white hover:bg-gray-50">
                 <td className="px-6 py-4">
-                  <p className="font-semibold text-black">{user.firstname} {user.lastname}</p>
+                  <p className="font-semibold text-black">{staff.firstname} {staff.lastname}</p>
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-700">{user.email}</td>
-                <td className="px-6 py-4 text-sm text-gray-700">{user.username}</td>
-                {!isOperator && <td className="px-6 py-4">{getRoleBadge(user.roles)}</td>}
+                <td className="px-6 py-4 text-sm text-gray-700">
+                  {staff.email}
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-700">
+                  {staff.username}
+                </td>
                 <td className="px-6 py-4">
-                  {user.isActive ? (
+                  {staff.isActive ? (
                     <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
                       Hoạt Động
                     </span>
@@ -635,25 +464,25 @@ const ManageUsers = () => {
                 <td className="px-6 py-4">
                   <div className="flex items-center justify-center gap-2">
                     <button
-                      onClick={() => handleViewDetails(user)}
+                      onClick={() => handleViewDetails(staff)}
                       className="p-2 hover:bg-gray-100 rounded-lg"
                       title="Xem chi tiết"
                     >
                       <Eye size={20} className="text-blue-600" />
                     </button>
                     <button
-                      onClick={() => handleEditClick(user)}
+                      onClick={() => handleEditClick(staff)}
                       className="p-2 hover:bg-gray-100 rounded-lg"
                       title="Chỉnh sửa"
                     >
                       <PencilSimple size={20} className="text-green-600" />
                     </button>
                     <button
-                      onClick={() => handleToggleActive(user)}
+                      onClick={() => handleToggleActive(staff)}
                       className="p-2 hover:bg-gray-100 rounded-lg"
-                      title={user.isActive ? 'Vô hiệu hóa' : 'Kích hoạt'}
+                      title={staff.isActive ? 'Vô hiệu hóa' : 'Kích hoạt'}
                     >
-                      {user.isActive ? (
+                      {staff.isActive ? (
                         <XCircle size={20} className="text-red-600" />
                       ) : (
                         <CheckCircle size={20} className="text-green-600" />
@@ -668,7 +497,7 @@ const ManageUsers = () => {
 
         {users.length === 0 && !loading && (
           <div className="text-center py-12 text-gray-500">
-            {isOperator || isStaffView ? 'Không có nhân viên nào' : 'Không có người dùng nào'}
+            Không có nhân viên nào
           </div>
         )}
       </div>
@@ -697,29 +526,27 @@ const ManageUsers = () => {
       )}
 
       {/* Modals */}
-      <UserFormModal
+      <StaffFormModal
         isOpen={isFormModalOpen}
         onClose={() => {
           setIsFormModalOpen(false);
-          setSelectedUser(null);
+          setSelectedStaff(null);
         }}
-        user={selectedUser}
+        staff={selectedStaff}
         onSubmit={handleSubmit}
         mode={modalMode}
-        operators={operators}
-        isOperator={isOperator}
       />
 
-      <UserDetailsModal
+      <StaffDetailsModal
         isOpen={isDetailsModalOpen}
         onClose={() => {
           setIsDetailsModalOpen(false);
-          setSelectedUserDetails(null);
+          setSelectedStaffDetails(null);
         }}
-        user={selectedUserDetails}
+        staff={selectedStaffDetails}
       />
     </div>
   );
 };
 
-export default ManageUsers;
+export default ManageStaff;
