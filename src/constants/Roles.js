@@ -4,7 +4,10 @@
  */
 
 export const ROLES = {
-  // Admin - Quản trị viên hệ thống
+  // Admin - Quản trị viên hệ thống cao cấp
+  ADMIN: "ROLE_ADMIN",
+  
+  // Operator - Nhà điều hành
   OPERATOR: "ROLE_OPERATOR",
   
   // Nhân viên SC (Service Center) - Quản lý claim, warranty
@@ -18,6 +21,7 @@ export const ROLES = {
  * Map role to dashboard route
  */
 export const ROLE_ROUTES = {
+  [ROLES.ADMIN]: "/admin/dashboard",
   [ROLES.OPERATOR]: "/admin/dashboard",
   [ROLES.STAFF]: "/sc-staff/dashboard",
   [ROLES.PASSENGER]: "/evm-staff/dashboard",
@@ -27,7 +31,8 @@ export const ROLE_ROUTES = {
  * Role display names (Vietnamese)
  */
 export const ROLE_NAMES = {
-  [ROLES.OPERATOR]: "Quản trị viên",
+  [ROLES.ADMIN]: "Quản trị viên cấp cao",
+  [ROLES.OPERATOR]: "Nhà điều hành",
   [ROLES.STAFF]: "Nhân viên",
   [ROLES.PASSENGER]: "Hành khách",
 };

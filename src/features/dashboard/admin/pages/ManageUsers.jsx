@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useUsersApi } from '../../../../api/useUsersApi';
 import { useAuth } from '../../../../app/AuthProvider';
 import Loader from '../../../../components/Loader';
+import Notification from '../../../../components/Notification';
 
 // User Form Modal (Create/Edit)
 const UserFormModal = ({ isOpen, onClose, user, onSubmit, mode = 'create', operators = [], isOperator = false }) => {
@@ -274,7 +275,7 @@ const UserDetailsModal = ({ isOpen, onClose, user }) => {
             <div>
               <span className="text-sm text-gray-600">Trạng Thái:</span>
               <div className="mt-1">
-                {user.isActive ? (
+                {(user.active !== undefined ? user.active : user.isActive) ? (
                   <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
                     Đang Hoạt Động
                   </span>
@@ -360,6 +361,12 @@ const ManageUsers = () => {
   const [selectedUserDetails, setSelectedUserDetails] = useState(null);
   const [modalMode, setModalMode] = useState('create');
   const [operators, setOperators] = useState([]);
+  const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
+
+  const showNotification = (message, type = 'success') => {
+    setNotification({ show: true, message, type });
+    setTimeout(() => setNotification({ show: false, message: '', type: 'success' }), 3000);
+  };
 
   useEffect(() => {
     loadUsers();
@@ -434,7 +441,10 @@ const ManageUsers = () => {
       setIsDetailsModalOpen(true);
     } catch (error) {
       console.error('Failed to load user details:', error);
-      alert(isOperator ? 'Không thể tải chi tiết nhân viên' : 'Không thể tải chi tiết người dùng');
+      showNotification(
+        isOperator ? 'Không thể tải chi tiết nhân viên' : 'Không thể tải chi tiết người dùng',
+        'error'
+      );
     }
   };
 
@@ -444,53 +454,55 @@ const ManageUsers = () => {
         // Operator uses staff endpoints
         if (modalMode === 'create') {
           await createStaff(formData);
-          alert('Thêm nhân viên thành công!');
+          showNotification('Thêm nhân viên thành công!', 'success');
         } else {
           await updateStaff(selectedUser.id, formData);
-          alert('Cập nhật nhân viên thành công!');
+          showNotification('Cập nhật nhân viên thành công!', 'success');
         }
       } else {
         // Admin uses user endpoints
         if (modalMode === 'create') {
           await createUser(formData);
-          alert('Tạo người dùng thành công!');
+          showNotification('Tạo người dùng thành công!', 'success');
         } else {
           await updateUser(selectedUser.id, formData);
-          alert('Cập nhật người dùng thành công!');
+          showNotification('Cập nhật người dùng thành công!', 'success');
         }
       }
       setIsFormModalOpen(false);
       setSelectedUser(null);
       loadUsers(pagination.page);
     } catch (err) {
-      alert(err.response?.data?.error || err.message || 'Có lỗi xảy ra');
+      showNotification(err.response?.data?.error || err.message || 'Có lỗi xảy ra', 'error');
     }
   };
 
   const handleToggleActive = async (user) => {
     try {
+      const isActive = user.active !== undefined ? user.active : user.isActive;
+      
       if (isOperator) {
         // Operator uses staff endpoints
-        if (user.isActive) {
+        if (isActive) {
           await deactivateStaff(user.id);
-          alert('Đã vô hiệu hóa nhân viên');
+          showNotification('Đã vô hiệu hóa nhân viên', 'success');
         } else {
           await reactivateStaff(user.id);
-          alert('Đã kích hoạt nhân viên');
+          showNotification('Đã kích hoạt nhân viên', 'success');
         }
       } else {
         // Admin uses user endpoints
-        if (user.isActive) {
+        if (isActive) {
           await deactivateUser(user.id);
-          alert('Đã vô hiệu hóa người dùng');
+          showNotification('Đã vô hiệu hóa người dùng', 'success');
         } else {
           await reactivateUser(user.id);
-          alert('Đã kích hoạt người dùng');
+          showNotification('Đã kích hoạt người dùng', 'success');
         }
       }
       loadUsers(pagination.page);
     } catch (err) {
-      alert(err.response?.data?.error || err.message || 'Có lỗi xảy ra');
+      showNotification(err.response?.data?.error || err.message || 'Có lỗi xảy ra', 'error');
     }
   };
 
@@ -622,7 +634,7 @@ const ManageUsers = () => {
                 <td className="px-6 py-4 text-sm text-gray-700">{user.username}</td>
                 {!isOperator && <td className="px-6 py-4">{getRoleBadge(user.roles)}</td>}
                 <td className="px-6 py-4">
-                  {user.isActive ? (
+                  {(user.active !== undefined ? user.active : user.isActive) ? (
                     <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
                       Hoạt Động
                     </span>
@@ -651,9 +663,9 @@ const ManageUsers = () => {
                     <button
                       onClick={() => handleToggleActive(user)}
                       className="p-2 hover:bg-gray-100 rounded-lg"
-                      title={user.isActive ? 'Vô hiệu hóa' : 'Kích hoạt'}
+                      title={(user.active !== undefined ? user.active : user.isActive) ? 'Vô hiệu hóa' : 'Kích hoạt'}
                     >
-                      {user.isActive ? (
+                      {(user.active !== undefined ? user.active : user.isActive) ? (
                         <XCircle size={20} className="text-red-600" />
                       ) : (
                         <CheckCircle size={20} className="text-green-600" />
@@ -718,6 +730,15 @@ const ManageUsers = () => {
         }}
         user={selectedUserDetails}
       />
+
+      {/* Notification */}
+      {notification.show && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification({ show: false, message: '', type: 'success' })}
+        />
+      )}
     </div>
   );
 };

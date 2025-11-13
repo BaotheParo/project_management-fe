@@ -68,7 +68,7 @@ export default function Login() {
       }
 
       // Check if user has allowed role
-      const allowedRoles = [ROLES.OPERATOR, ROLES.STAFF, ROLES.PASSENGER];
+      const allowedRoles = [ROLES.ADMIN, ROLES.OPERATOR, ROLES.STAFF, ROLES.PASSENGER];
       const hasAllowedRole = userRoles.some(role => allowedRoles.includes(role));
 
       console.log("🎯 [Login] Has allowed role?", hasAllowedRole);
@@ -86,7 +86,9 @@ export default function Login() {
 
       // Determine dashboard route based on first valid role
       let dashboardRoute = "/";
-      if (userRoles.includes(ROLES.OPERATOR)) {
+      if (userRoles.includes(ROLES.ADMIN)) {
+        dashboardRoute = "/admin/dashboard";
+      } else if (userRoles.includes(ROLES.OPERATOR)) {
         dashboardRoute = "/admin/dashboard";
       } else if (userRoles.includes(ROLES.STAFF)) {
         dashboardRoute = "/sc-staff/dashboard";

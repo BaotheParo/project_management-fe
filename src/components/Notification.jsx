@@ -42,3 +42,11 @@ export function SuccessNotification({
         </div>
     );
 }
+
+// Default export wrapper component
+export default function Notification({ message, type = 'success', onClose }) {
+    if (type === 'error') {
+        return <ErrorNotification message={message} onClose={onClose} />;
+    }
+    return <SuccessNotification message={message} onClose={onClose} />;
+}

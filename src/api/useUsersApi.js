@@ -28,7 +28,9 @@ export const useUsersApi = () => {
             params.append('size', size);
             
             if (filters.role) params.append('role', filters.role);
-            if (filters.isActive !== undefined) params.append('isActive', filters.isActive);
+            if (filters.isActive !== undefined && filters.isActive !== '') {
+                params.append('isActive', filters.isActive === 'true' || filters.isActive === true);
+            }
             if (filters.search) params.append('search', filters.search);
 
             const response = await axiosInstance.get(`/admin/users?${params.toString()}`);
@@ -191,7 +193,9 @@ export const useUsersApi = () => {
             params.append('page', page);
             params.append('size', size);
             
-            if (filters.isActive !== undefined) params.append('isActive', filters.isActive);
+            if (filters.isActive !== undefined && filters.isActive !== '') {
+                params.append('isActive', filters.isActive === 'true' || filters.isActive === true);
+            }
             if (filters.search) params.append('search', filters.search);
 
             const response = await axiosInstance.get(`/operator/staff?${params.toString()}`);

@@ -20,6 +20,7 @@ const ForgotPasswordPage = lazy(() =>
 // Admin
 const AdminDashboardPage = lazy(() => import("../features/dashboard/admin/pages/Dashboard"));
 const AdminManageUsersPage = lazy(() => import("../features/dashboard/admin/pages/ManageUsers"));
+const AdminManageTicketsPage = lazy(() => import("../features/dashboard/admin/pages/ManageTickets"));
 const AdminBusTypesPage = lazy(() => import("../features/dashboard/admin/pages/BusTypes"));
 const AdminTripsPage = lazy(() => import("../features/dashboard/admin/pages/Trips"));
 const AdminReportsPage = lazy(() => import("../features/dashboard/admin/pages/Reports"));
@@ -465,7 +466,7 @@ const router = createBrowserRouter([
     path: "/admin",
     element: (
       <ProtectedRoute>
-        <RoleRoute allowedRoles={["ROLE_OPERATOR"]}>
+        <RoleRoute allowedRoles={["ROLE_OPERATOR", "ROLE_ADMIN", "ROLE_STAFF"]}>
           <AdminLayout />
         </RoleRoute>
       </ProtectedRoute>
@@ -509,6 +510,14 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<Loader />}>
             <AdminTripsPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "tickets",
+        element: (
+          <Suspense fallback={<Loader />}>
+            <AdminManageTicketsPage />
           </Suspense>
         ),
       },
