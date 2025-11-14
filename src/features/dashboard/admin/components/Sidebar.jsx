@@ -80,12 +80,6 @@ export default function Sidebar() {
           <div className="py-0">
             <NavItem to="/admin/reports" icon={ChartBarIcon} label="Reports" />
           </div>
-          <div className="py-0">
-            <NavItem to="/admin/warranty-report" icon={ClipboardTextIcon} label="Warranty Report" />
-          </div>
-          <div className="py-0">
-            <NavItem to="/admin/bill" icon={CurrencyDollarIcon} label="Bill Of Charge" />
-          </div>
         </nav>
       </div>
 
