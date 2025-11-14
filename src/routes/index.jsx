@@ -23,9 +23,7 @@ const AdminManageUsersPage = lazy(() => import("../features/dashboard/admin/page
 const AdminManageTicketsPage = lazy(() => import("../features/dashboard/admin/pages/ManageTickets"));
 const AdminBusTypesPage = lazy(() => import("../features/dashboard/admin/pages/BusTypes"));
 const AdminTripsPage = lazy(() => import("../features/dashboard/admin/pages/Trips"));
-const AdminReportsPage = lazy(() => import("../features/dashboard/admin/pages/Reports"));
-const AdminWarrantyReportPage = lazy(() => import("../features/dashboard/sc-staff/pages/WarrantyReport"));
-const AdminBillPage = lazy(() => import("../features/dashboard/sc-staff/pages/BillOfCharge"));
+const AdminTicketValidationPage = lazy(() => import("../features/dashboard/admin/pages/TicketValidation"));
 
 // Sc-Technician
 const SCTechnicianDashboardPage = lazy(() =>
@@ -522,26 +520,10 @@ const router = createBrowserRouter([
         ),
       },
       {
-        path: "reports",
+        path: "validation",
         element: (
           <Suspense fallback={<Loader />}>
-            <AdminReportsPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "warranty-report",
-        element: (
-          <Suspense fallback={<Loader />}>
-            <AdminWarrantyReportPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "bill",
-        element: (
-          <Suspense fallback={<Loader />}>
-            <AdminBillPage />
+            <AdminTicketValidationPage />
           </Suspense>
         ),
       },

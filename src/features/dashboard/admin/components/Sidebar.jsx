@@ -1,6 +1,6 @@
 import React from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
-import { HouseIcon, UsersThreeIcon, ChartBarIcon, ClipboardTextIcon, CurrencyDollarIcon, MinusCircleIcon, BusIcon, MapPinIcon, UserListIcon, TicketIcon } from '@phosphor-icons/react'
+import { HouseIcon, UsersThreeIcon, ClipboardTextIcon, MinusCircleIcon, BusIcon, UserListIcon, TicketIcon, CheckCircleIcon } from '@phosphor-icons/react'
 import logo from '../../../../assets/group4.png'
 import { useAuthApi } from '../../../../api/useAuthApi'
 import { useAuth } from '../../../../app/AuthProvider'
@@ -78,7 +78,7 @@ export default function Sidebar() {
             <NavItem to="/admin/tickets" icon={TicketIcon} label="Quản Lý Vé" />
           </div>
           <div className="py-0">
-            <NavItem to="/admin/reports" icon={ChartBarIcon} label="Reports" />
+            <NavItem to="/admin/validation" icon={CheckCircleIcon} label="Xác Thực Vé" />
           </div>
         </nav>
       </div>
